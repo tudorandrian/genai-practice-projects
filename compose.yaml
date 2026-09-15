@@ -1,0 +1,4 @@
+services:
+  tests:
+    build: .
+    command: ["uv", "run", "pytest", "-m", "core and not network", "-q"]

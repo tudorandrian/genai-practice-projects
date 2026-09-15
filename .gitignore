@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+# Secrets and local tooling
+.env
+.claude/
+.vscode/
+.idea/
+# Generated artefacts: everything under any output/ except the two proof files
+projects/*/output/*
+!projects/*/output/.gitkeep
+!projects/*/output/metrics.txt
+!projects/*/output/*_session.txt
+!projects/*/output/curl_demo.txt
+!projects/*/output/captions.txt
+!projects/*/output/transcript.txt
+!projects/*/output/summary.txt
+/output/
+# Data caches and indexes are never tracked
+.cache/
+projects/*/data/cache/
+projects/*/chroma_index/
+projects/*/index/
+projects/*/test-images/
+projects/*/data/*.wav
+*.joblib
+*.pkl
+*.pt
+*.pth
+*.bin
+*.sqlite3
+*.h5
+*.keras
+*.ipynb
