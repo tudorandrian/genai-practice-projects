@@ -1,0 +1,4 @@
+QBANK VALIDATION SUMMARY
+========================================
+  - e00_valid_baseline.md: 1 MC, 1 T/F, 1 OE
+  - e15_multi_select_valid.md: 1 MC, 0 T/F, 0 OE
