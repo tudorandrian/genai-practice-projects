@@ -15,4 +15,6 @@ class Entry:
     target: str  # "package.module:function" returning shared.demo.DemoResult
 
 
-ENTRIES: list[Entry] = []
+ENTRIES: list[Entry] = [
+    Entry("p01-mini-etl", "core", "projects.p01_mini_etl.mini_etl:demo"),
+]

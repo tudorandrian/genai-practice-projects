@@ -1,0 +1,6 @@
+{
+  "input": "datasets/health_spending.json",
+  "strategies": {},
+  "out_dir": "output",
+  "stem": "health_clean"
+}

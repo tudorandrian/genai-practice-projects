@@ -1,0 +1,9 @@
+{
+  "input": "datasets/cars_automotive.json",
+  "strategies": {
+    "Miles_per_Gallon": "mean",
+    "Horsepower": "mean"
+  },
+  "out_dir": "output",
+  "stem": "cars_clean"
+}

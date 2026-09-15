@@ -1,0 +1,6 @@
+{
+  "input": "datasets/weather_climate.csv",
+  "strategies": {"weather": "mode", "wind": "mean"},
+  "out_dir": "output",
+  "stem": "weather_clean"
+}

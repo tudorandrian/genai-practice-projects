@@ -1,0 +1,6 @@
+{
+  "input": "datasets/iris_botany.xlsx",
+  "strategies": {},
+  "out_dir": "output",
+  "stem": "iris_clean"
+}

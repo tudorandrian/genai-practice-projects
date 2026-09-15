@@ -1,0 +1,16 @@
+{
+  "input": "datasets/movies_entertainment.json",
+  "strategies": {
+    "Title": "drop",
+    "Major Genre": "mode",
+    "Creative Type": "mode",
+    "MPAA Rating": "mode",
+    "IMDB Rating": "mean",
+    "Rotten Tomatoes Rating": "mean",
+    "Running Time min": "mean",
+    "Production Budget": "mean",
+    "Worldwide Gross": "mean"
+  },
+  "out_dir": "output",
+  "stem": "movies_clean"
+}

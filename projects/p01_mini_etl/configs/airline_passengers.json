@@ -1,0 +1,7 @@
+{
+  "input": "datasets/airline_passengers.tsv",
+  "format": "tsv",
+  "strategies": {},
+  "out_dir": "output",
+  "stem": "flights_clean"
+}

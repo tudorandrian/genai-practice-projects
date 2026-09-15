@@ -1,0 +1,7 @@
+{
+  "input": "datasets/restaurant_tips.csv",
+  "sep": ";",
+  "strategies": {},
+  "out_dir": "output",
+  "stem": "tips_clean"
+}

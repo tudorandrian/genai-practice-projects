@@ -1,0 +1,9 @@
+{
+  "input": "anti_examples/a6_mean_on_text.csv",
+  "sentinel": "?",
+  "strategies": {
+    "city": "mean"
+  },
+  "out_dir": "output",
+  "stem": "a6_out"
+}

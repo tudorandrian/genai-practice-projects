@@ -1,0 +1,12 @@
+{
+  "input": "datasets/penguins_biology.json",
+  "strategies": {
+    "Beak Length (mm)": "mean",
+    "Beak Depth (mm)": "mean",
+    "Flipper Length (mm)": "mean",
+    "Body Mass (g)": "mean",
+    "Sex": "mode"
+  },
+  "out_dir": "output",
+  "stem": "penguins_clean"
+}

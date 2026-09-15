@@ -1,0 +1,16 @@
+brand,screen_type,os,cpu_cores,screen_inch,cpu_ghz,ram_gb,ssd_gb,weight_kg,price_eur
+Acer,IPS,Linux,6,13.5,3.1,16,512,1.35,899.50
+Dell,OLED,Windows,8,15.0,2.9,32,1024,1.80,1499.00
+HP,TN,Windows,4,14.2,2.4,8,256,1.55,649.00
+Lenovo,IPS,Linux,6,?,3.3,16,512,1.42,1099.99
+Toshiba,OLED,macOS,8,16.0,2.7,24,2048,1.68,1899.00
+Acer,TN,Windows,4,13.0,?,8,256,1.20,749.00
+Dell,IPS,Linux,6,14.5,3.0,16,512,1.60,1199.00
+HP,OLED,Windows,8,15.6,2.8,32,1024,?,1699.00
+Lenovo,IPS,?,6,13.8,3.2,16,512,1.38,999.00
+Toshiba,TN,Windows,4,12.5,2.5,8,256,1.15,699.00
+Acer,OLED,Linux,8,16.2,3.4,24,1024,1.90,1599.00
+Dell,IPS,macOS,6,14.0,3.0,16,512,1.50,
+HP,TN,Windows,4,13.3,2.6,8,256,1.28,799.00
+Lenovo,OLED,Linux,8,15.8,2.9,32,2048,1.72,1799.00
+Toshiba,IPS,Windows,6,14.8,3.1,16,512,1.45,1099.00

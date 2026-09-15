@@ -10,6 +10,7 @@ dependencies = []
 
 [project.scripts]
 demo = "shared.demo:main"
+p01-mini-etl = "projects.p01_mini_etl.mini_etl:main"
 
 [dependency-groups]
 core = [
