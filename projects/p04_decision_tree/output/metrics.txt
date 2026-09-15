@@ -1,0 +1,4 @@
+drug_acc4=1.000
+drug_acc3=1.000
+iris_acc4=0.889
+iris_acc3=0.933
