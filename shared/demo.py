@@ -35,20 +35,19 @@ def run_demo(entries: list[Entry], tiers: set[str], out_path: Path) -> list[Demo
     results: list[DemoResult] = []
     for entry in entries:
         if entry.tier not in tiers:
-            note = f"tier {entry.tier} not selected"
-            results.append(DemoResult(entry.slug, "skipped", note=note))
-            continue
-        start = time.perf_counter()
-        try:
-            result = _resolve(entry.target)()
-            result.seconds = round(time.perf_counter() - start, 2)
-        except Exception as exc:  # noqa: BLE001 — one project failing must not stop the others
-            result = DemoResult(
-                entry.slug,
-                "failed",
-                seconds=round(time.perf_counter() - start, 2),
-                note=f"{type(exc).__name__}: {exc}",
-            )
+            result = DemoResult(entry.slug, "skipped", note=f"tier {entry.tier} not selected")
+        else:
+            start = time.perf_counter()
+            try:
+                result = _resolve(entry.target)()
+                result.seconds = round(time.perf_counter() - start, 2)
+            except Exception as exc:  # noqa: BLE001 — one project failing must not stop the others
+                result = DemoResult(
+                    entry.slug,
+                    "failed",
+                    seconds=round(time.perf_counter() - start, 2),
+                    note=f"{type(exc).__name__}: {exc}",
+                )
         results.append(result)
         # CLI runner output, not a library log (spec 6): one status line per project.
         print(

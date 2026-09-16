@@ -23,4 +23,5 @@ ENTRIES: list[Entry] = [
     Entry("p05-segmentation", "core", "projects.p05_segmentation.segmentation:demo"),
     Entry("p06-ml-pipeline", "core", "projects.p06_ml_pipeline.ml_pipeline:demo"),
     Entry("p07-sentiment-api", "core", "projects.p07_sentiment_api.server:demo"),
+    Entry("p08-image-captioning", "models", "projects.p08_image_captioning.captioner:demo"),
 ]

@@ -1,0 +1,6 @@
+ball.jpg: a blue circle with a white background
+gradient_gray.jpg: a black and white background with a white border
+house.png: a house with a red roof
+landscape.png: a yellow sun on a blue sky
+text.png: the cover of the book, ' the world '
+transparent.png: a red circle with a black background
