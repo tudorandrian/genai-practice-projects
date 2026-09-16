@@ -81,7 +81,6 @@ p12-study-hub: ok
   lessons_indexed: 30
   provider: stub
   wrote: output/
-  seconds: 40.03
 ```
 
 `seconds` varies run to run and is reported only on the console and in the
@@ -143,16 +142,33 @@ shape that keeps this slice on real lesson content, not a citation label.
   Correct for a real provider too, since `PROMPT_TEMPLATE` never asked it to
   cite from such a label.
 - **The relevance gate refuses before ever calling the LLM.** `tutor.ask`
-  checks the best retrieved chunk's similarity score against
-  `RELEVANCE_MIN`; an off-topic question refuses immediately with empty
-  `sources`, which is what makes a trap question ("What is the capital of
-  France?") reliably refuse regardless of which LLM provider is behind it.
-- **No private Chroma internals.** The source reached into
-  `store._collection.delete(where=...)`, a LangChain/Chroma implementation
-  detail not covered by its public API contract. `index_lessons`'s
-  incremental path instead uses the public `store.get(where=...)` to find
-  matching ids and `store.delete(ids=...)` to remove them — same effect,
-  no reliance on an attribute that could disappear on a dependency bump.
+  refuses immediately, with empty `sources`, unless the best retrieved
+  chunk's similarity clearly stands out from the rest (see "Limits" for the
+  gate's exact basis and history) — which is what makes a trap question
+  ("What is the capital of France?") reliably refuse regardless of which LLM
+  provider is behind it.
+- **Private Chroma internals: avoided where possible, disclosed where not.**
+  The source reached into `store._collection.delete(where=...)`, a
+  LangChain/Chroma implementation detail not covered by its public API
+  contract. `index_lessons`'s incremental path avoids that specific one: it
+  uses the public `store.get(where=...)` to find matching ids and
+  `store.delete(ids=...)` to remove them — same effect, no reliance on an
+  attribute that could disappear on a dependency bump. **This is no longer
+  true of the module as a whole.** The relevance gate (fix round 5, "Limits"
+  below) calls `store._collection.query(..., include=["embeddings"])` to
+  retrieve raw embedding vectors and reads `store._collection.metadata` in
+  the diagnostic — both `tutor.py`, both on the private `_collection`
+  attribute. This was not avoidable with LangChain's public `Chroma`
+  wrapper: `similarity_search_with_relevance_scores` and its siblings return
+  scores and documents, but no documented public method returns a
+  candidate's own embedding vector alongside it, which is exactly what
+  computing cosine similarity independently of the store requires (see
+  "Limits"). Consequence: a future `langchain_chroma`/`chromadb` release
+  could rename or restructure `_collection` and break the mechanism that
+  makes the relevance gate's scoring platform-independent — the same
+  fragility this bullet originally promised was absent, now knowingly
+  accepted for one specific, load-bearing reason rather than silently
+  reintroduced.
 - **Output contract.** Library functions never `print`; they log through
   `logging.getLogger(__name__)`. `main()` prints at most six summary lines
   for `--demo`; the interactive `--quiz`/`--dashboard`/`--ask` subcommands
@@ -174,6 +190,97 @@ shape that keeps this slice on real lesson content, not a citation label.
 - **No authentication or rate limiting on the Gradio server.** `build_ui()`
   is a local demo UI; the CLI binds `127.0.0.1` by default — pass `--host
   0.0.0.0` to listen on every interface.
+- **The relevance gate computes its own similarity and its own margin — the
+  only thing about it that is not platform-independent by construction is
+  one measured number.** History, across three attempted fixes: (1) the
+  tutor's Chroma collection had no explicit distance metric, so "relevance
+  score" came from applying a cosine-shaped formula to whatever Chroma
+  defaulted to — confirmed to make an off-topic "trap" question that
+  reliably refused on Windows/Linux score high enough to *not* refuse on
+  macOS. Fixing that (explicit `COLLECTION_METADATA`/`EMBED_NORMALIZE`,
+  verified actually in effect at runtime on this machine by
+  `test_embeddings_are_actually_normalized_and_cosine_configured`) was
+  necessary but not sufficient. (2) Replacing the absolute floor with a
+  margin against a wider "background" pool (`RELEVANCE_MARGIN`,
+  `RELEVANCE_POOL_K`) — still using the *store's* relevance score — fixed
+  Windows/Linux but macOS then failed with **opposite verdicts**: a
+  genuinely grounded question refused, and the trap question answered,
+  retrieving the same documents in the same order a pre-cosine-config run
+  had. Opposite verdicts rule out a mis-scaled number (that would push both
+  classes the same direction); identical retrieval across two different
+  configurations is direct evidence the configuration was not actually
+  reaching that platform's Chroma/HNSW build, even though it verifiably was
+  reaching this machine's. (3) **`tutor.ask` no longer asks the store for a
+  relevance score at all.** `_retrieve_with_own_similarities` reads raw
+  embedding vectors back from the collection and computes cosine similarity
+  itself — a plain dot product of vectors already confirmed unit-normalized
+  — so the gate's numbers are this module's own arithmetic on every
+  platform, up to float noise, regardless of what distance space the store
+  is configured (or silently defaults) to use internally. The margin logic
+  from (2) is otherwise unchanged and still scale-free by construction:
+  refuse unless the top chunk clears the median of a wider background by
+  `RELEVANCE_MARGIN`; `RELEVANCE_MIN=0.05` remains only a conservative
+  absolute sanity floor, not the discriminator.
+  **What is still per-platform-measured, and so still a residual risk:**
+  `RELEVANCE_MARGIN=0.13` and `RELEVANCE_POOL_K=12` were measured on this
+  machine only (6 on-topic / 10 off-topic questions; re-measured again in
+  fix round 5 using this module's own cosine similarity — identical to four
+  decimal places, since this machine's store relevance score and its own
+  cosine similarity already agreed; see the comment above `RELEVANCE_MARGIN`
+  in `tutor.py`). That agreement was never reproducible here in the first
+  place, so this machine cannot confirm the fix resolves the disagreement —
+  only that it removes the one channel (the store's own relevance-score
+  formula) through which a platform could silently diverge from what this
+  module actually computed and verified. If the gate ever misfires on a
+  specific platform again, first check whether `_diagnostic_snapshot`'s two
+  columns (`own_cosine` vs `store_relevance`) themselves disagree there — if
+  they do, that platform's Chroma/HNSW build is doing something unrelated to
+  this module's own arithmetic, which is a different bug from a
+  mis-calibrated margin. If they agree with each other but still misfire,
+  re-measure `RELEVANCE_MARGIN` on that platform (a mix of on-topic and
+  clearly off-topic questions, comparing top1 against the median of ranks
+  `TOP_K+1..RELEVANCE_POOL_K`, `_diagnostic_snapshot` prints exactly the
+  numbers needed) rather than adjusting it blind.
+- **Adjudicated limitation (2026-09-16): the relevance gate does not work
+  correctly on macOS, and this is a real limit of the technique, not an
+  unfixed bug.** The gate is a margin heuristic: it assumes a genuinely
+  on-topic question's best-matching chunk stands out from the rest, and
+  refuses when nothing does. That assumption holds on Windows and Linux (see
+  the measured numbers above) but does not hold on macOS, confirmed by
+  `_diagnostic_snapshot` on [heavy.yml run
+  35076304269](https://github.com/tudorandrian/genai-practice-projects/actions/runs/35076304269):
+  `own_cosine` matched `store_relevance` to four decimal places on every row
+  (the store's arithmetic was never the problem, and computing cosine
+  independently changed nothing there), and the collection metadata read
+  back from the live store on that run was correctly `{'hnsw:space':
+  'cosine'}` (the configuration *was* in effect — the identical retrieval
+  order noticed in an earlier round was a coincidence of a flat score field,
+  not a sign of a stale configuration). The scores themselves show why: for
+  the genuinely on-topic question "What is a sentinel value in a messy
+  dataset?", the top candidates on that platform were `0.4138, 0.3990,
+  0.3928, 0.3870, …, 0.3643` — nearly flat, and the correct lesson
+  (`02-sentinel-values-and-missing-markers.md`) ranked **second**, not
+  first; margin ≈ 0.04, well under `RELEVANCE_MARGIN=0.13`, so the gate
+  refuses a question the lessons do cover. For the trap question "What is
+  the capital city of France?", the same platform produced a genuine peak —
+  `0.4006`, then a `0.2230`–`0.3263` tail — margin ≈ 0.16, clearing
+  `RELEVANCE_MARGIN`, so the gate answers a question the lessons do not
+  cover. On that platform, the same model over the same corpus produces a
+  **flat** field for an on-topic question and a **peaked** one for an
+  off-topic question — the opposite of what a standout-match heuristic
+  needs. This is not fixable by recalibrating a threshold, switching to a
+  ratio or a z-score, or changing who computes the similarity (all three
+  were tried, in that order, across fix rounds 3-5) — the geometry of the
+  scores on that platform contradicts the heuristic's premise directly. The
+  two `rag` tests that exercise this (`test_index_and_ask_end_to_end`,
+  `test_trap_question_refuses_via_relevance_gate`) are marked
+  `xfail(sys.platform == "darwin", strict=False)` for exactly this reason —
+  not skipped, so the known failure stays visible, and not strict, so a
+  future runner, model revision, or embedding library update that happens
+  to fix this is free to surprise everyone by passing. To re-measure whether
+  this is still true on a given macOS runner, call `tutor._diagnostic_snapshot`
+  with an on-topic and an off-topic question and compare the shape of the
+  `own_cosine` column, the same way this finding was produced.
 
 ## Datasets and licences
 

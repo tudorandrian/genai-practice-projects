@@ -79,7 +79,6 @@ p07-sentiment-api: ok
   requests: 4
   avg_ms: 7.10
   wrote: output/
-  seconds: 0.03
 ```
 
 `avg_ms` (mean request latency) varies run to run and is reported only on

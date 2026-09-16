@@ -193,7 +193,12 @@ def test_demo_skips_cleanly_when_tts_engine_is_unavailable(
     missing an optional system package).
     """
 
-    def fake_generate(data_dir: Path, force: bool = False) -> dict[str, Path]:
+    def fake_generate(
+        data_dir: Path,
+        force: bool = False,
+        only: object = None,
+        facts_out: dict[str, synthetic_audio.AudioFacts] | None = None,
+    ) -> dict[str, Path]:
         raise synthetic_audio.TTSEngineUnavailableError(
             "No text-to-speech engine is available (pyttsx3.init() failed: boom); "
             "install it with `sudo apt-get install espeak-ng` (or your distro's equivalent)."
@@ -203,3 +208,215 @@ def test_demo_skips_cleanly_when_tts_engine_is_unavailable(
     result = assistant.demo()
     assert result.status == "skipped"
     assert "espeak-ng" in result.note
+
+
+# =============================================================================
+# demo() — fix round 1: an implausibly short transcript must fail, not "ok"
+# =============================================================================
+
+
+def _fake_generate_returning(wav_path: Path, facts: synthetic_audio.AudioFacts) -> object:
+    """Builds a ``synthetic_audio.generate``-compatible stand-in that skips
+    pyttsx3/AIFF conversion entirely and hands back a fixed path plus facts,
+    matching ``generate()``'s real ``facts_out`` output-parameter contract."""
+
+    def fake_generate(
+        data_dir: Path,
+        force: bool = False,
+        only: object = None,
+        facts_out: dict[str, synthetic_audio.AudioFacts] | None = None,
+    ) -> dict[str, Path]:
+        if facts_out is not None:
+            facts_out["standup.wav"] = facts
+        return {"standup.wav": wav_path}
+
+    return fake_generate
+
+
+@pytest.mark.core
+def test_demo_fails_when_transcript_is_implausibly_short(
+    tmp_path: Path, tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Reproduces the real fix-round-1 incident without a real TTS engine or
+    Whisper: heavy.yml's macOS run went green (no crash — the AIFF/WAV bug
+    from round 0 is fixed) but transcribed only 4 of the synthesized
+    73-word script — demo() must not report "ok" for that. A wrong
+    threshold, or a guard that never fires, would let this test pass with
+    "ok" instead."""
+    wav_path = tmp_path / "standup.wav"
+    wav_path.write_bytes(b"not real audio - transcribe() is stubbed below")
+    facts = synthetic_audio.AudioFacts(
+        container="AIFF",
+        compression="NONE",
+        channels=1,
+        sample_width=2,
+        sample_rate=22050,
+        declared_frames=500,
+        actual_frames=20,
+        duration_seconds=20 / 22050,
+        file_size_bytes=4000,
+    )
+    monkeypatch.setattr(synthetic_audio, "generate", _fake_generate_returning(wav_path, facts))
+    monkeypatch.setattr(assistant, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(assistant, "transcribe", lambda path: "only four words here")
+    monkeypatch.setenv("MEETING_LLM_PROVIDER", "stub")
+
+    result = assistant.demo()
+
+    assert result.status == "failed"
+    assert "4" in result.note  # the transcript's own word count
+    assert "73" in result.note  # SCRIPTS["standup.wav"]'s word count
+    assert "AIFF" in result.note  # the audio facts made it into the note
+    assert "only four words here" in result.note  # transcript excerpt
+    # A failed demo must not write metrics.txt with bogus numbers — that
+    # file is the committed, byte-identical-across-runs proof.
+    assert not (tmp_output / "metrics.txt").exists()
+
+
+@pytest.mark.core
+def test_demo_still_ok_when_transcript_word_count_is_plausible(
+    tmp_path: Path, tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The companion to the test above: a transcript at/above
+    ``MIN_TRANSCRIPT_WORD_RATIO`` of the script's word count (here, a stand-in
+    transcript with plenty of words) must still report "ok" and write
+    metrics.txt — this is the Windows/Linux baseline the guard must not
+    break. A guard that always fires (or a threshold set too high) would
+    turn this into "failed" instead."""
+    wav_path = tmp_path / "standup.wav"
+    wav_path.write_bytes(b"not real audio - transcribe() is stubbed below")
+    facts = synthetic_audio.AudioFacts(
+        container="RIFF",
+        compression="PCM",
+        channels=1,
+        sample_width=2,
+        sample_rate=22050,
+        declared_frames=200000,
+        actual_frames=200000,
+        duration_seconds=200000 / 22050,
+        file_size_bytes=400044,
+    )
+    monkeypatch.setattr(synthetic_audio, "generate", _fake_generate_returning(wav_path, facts))
+    monkeypatch.setattr(assistant, "OUT_DIR", tmp_output)
+    plausible_transcript = " ".join(["word"] * 80)  # >= 73 * 0.5
+    monkeypatch.setattr(assistant, "transcribe", lambda path: plausible_transcript)
+    monkeypatch.setenv("MEETING_LLM_PROVIDER", "stub")
+
+    result = assistant.demo()
+
+    assert result.status == "ok"
+    assert result.figures["words"] == "80"
+    metrics = (tmp_output / "metrics.txt").read_text(encoding="utf-8")
+    assert "words=80" in metrics
+
+
+# =============================================================================
+# load_asr_model — fix round 4: Whisper pinned to CPU/float32, and the
+# device it actually landed on is logged and carried into the failure note
+# =============================================================================
+
+
+class _FakeModel:
+    """Stands in for a loaded Whisper model. Its device/dtype deliberately
+    differ from the arguments ``load_asr_model`` passes, so a facts line
+    that merely echoed those arguments (instead of reading the model back)
+    would fail the assertions below."""
+
+    device = "fake-readback-device:7"
+    dtype = "fake.float32-readback"
+
+
+class _FakePipeline:
+    model = _FakeModel()
+
+
+def _install_fake_transformers(
+    monkeypatch: pytest.MonkeyPatch, calls: list[tuple[tuple[object, ...], dict[str, object]]]
+) -> None:
+    """Replace ``transformers`` (installed or not — the core env has no
+    transformers) with a module whose ``pipeline`` records its arguments and
+    returns ``_FakePipeline`` — no model download, no torch. Also resets the
+    cached pipeline/facts and swaps in a throwaway ASR-facts logger so the
+    handler ``load_asr_model`` attaches never leaks into other tests."""
+    import logging
+    import sys
+    import types
+
+    def fake_pipeline(*args: object, **kwargs: object) -> _FakePipeline:
+        calls.append((args, kwargs))
+        return _FakePipeline()
+
+    fake_module = types.ModuleType("transformers")
+    fake_module.pipeline = fake_pipeline  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "transformers", fake_module)
+    monkeypatch.setattr(assistant, "_ASR", None)
+    monkeypatch.setattr(assistant, "_ASR_FACTS", None)
+    monkeypatch.setattr(assistant, "asr_log", logging.Logger("test-p10-asr-facts"))
+
+
+@pytest.mark.core
+def test_load_asr_model_pins_cpu_and_float32(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Without the explicit pin, transformers may auto-place Whisper on an
+    accelerator (Apple's MPS on macos-latest — the suspected cause of
+    heavy.yml run 35086969752's noise transcript). Removing either keyword,
+    or changing its value, fails this test."""
+    calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+    _install_fake_transformers(monkeypatch, calls)
+
+    asr = assistant.load_asr_model()
+
+    assert isinstance(asr, _FakePipeline)
+    assert len(calls) == 1
+    _, kwargs = calls[0]
+    assert kwargs["device"] == "cpu"
+    assert kwargs["dtype"] == "float32"
+    assert "torch_dtype" not in kwargs  # deprecated in transformers 5
+    # The facts line is printed (visible without any logging configuration,
+    # as under `uv run demo --all`) and reads the model back.
+    out = capsys.readouterr().out
+    assert "device=fake-readback-device:7" in out
+    assert "dtype=fake.float32-readback" in out
+    assert "torch=" in out and "transformers=" in out
+
+
+@pytest.mark.core
+def test_demo_failure_note_includes_asr_device_facts(
+    tmp_path: Path, tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The transcript guard's failure note must carry the device/dtype
+    Whisper actually ran on (read back from the loaded model) next to the
+    audio facts, so the next macOS failure says where transcription ran."""
+    calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
+    _install_fake_transformers(monkeypatch, calls)
+    wav_path = tmp_path / "standup.wav"
+    wav_path.write_bytes(b"not real audio - transcribe() is stubbed below")
+    facts = synthetic_audio.AudioFacts(
+        container="AIFC",
+        compression="twos",
+        channels=1,
+        sample_width=2,
+        sample_rate=22050,
+        declared_frames=608937,
+        actual_frames=608937,
+        duration_seconds=608937 / 22050,
+        file_size_bytes=1222000,
+    )
+    monkeypatch.setattr(synthetic_audio, "generate", _fake_generate_returning(wav_path, facts))
+    monkeypatch.setattr(assistant, "OUT_DIR", tmp_output)
+
+    def fake_transcribe(path: object) -> str:
+        assistant.load_asr_model()  # the real loader, against the fake transformers
+        return "il Tottenham ca cagggg"
+
+    monkeypatch.setattr(assistant, "transcribe", fake_transcribe)
+    monkeypatch.setenv("MEETING_LLM_PROVIDER", "stub")
+
+    result = assistant.demo()
+
+    assert result.status == "failed"
+    assert "AIFC" in result.note  # audio facts still present
+    assert "device=fake-readback-device:7" in result.note
+    assert "dtype=fake.float32-readback" in result.note
+    assert "torch=" in result.note and "transformers=" in result.note

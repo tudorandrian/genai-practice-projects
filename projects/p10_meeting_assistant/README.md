@@ -79,7 +79,6 @@ p10-meeting-assistant: ok
   words: 73
   sections: 3
   wrote: output/
-  seconds: 21.07
 ```
 
 `seconds` varies run to run and is reported only on the console and in the
@@ -139,7 +138,12 @@ pipeline and the three-section contract; see "Design notes" for why
   weights need the caller's attention.
 - **Determinism.** `load_asr_model` passes `generate_kwargs={"num_beams": 1,
   "do_sample": False}` explicitly, so the same audio always transcribes to
-  the same text. `synthetic_audio.generate()` also skips a script whose WAV
+  the same text. It also pins Whisper to `device="cpu"` and
+  `dtype="float32"`, so the committed transcript is reproducible across
+  platforms instead of depending on which accelerator transformers picks
+  (a macOS Apple Silicon run produced a noise transcript from healthy audio,
+  and the device it ran on was not recorded); the device and dtype actually
+  used are logged on load. `synthetic_audio.generate()` also skips a script whose WAV
   already exists unless `force=True`, so repeated `--demo` calls reuse the
   same audio bytes. With the pinned `stub` provider, this keeps
   `output/transcript.txt` and `output/summary.txt` byte-identical across
@@ -159,6 +163,13 @@ pipeline and the three-section contract; see "Design notes" for why
   serve` + a pulled model; an `OPENAI_API_KEY`; or a second Hugging Face
   download for `local`). CI runs none of them — the tests force `stub` or a
   monkeypatched seam throughout, and `demo()` force-pins `stub` too.
+- **On macOS, `pyttsx3`'s driver (`NSSpeechSynthesizer`) writes AIFF/AIFF-C
+  bytes to the `.wav` path it is given.** `synthetic_audio.generate()`
+  detects this and converts uncompressed AIFF/AIFF-C output to a standard
+  RIFF WAV in place immediately after synthesis, so `assistant.load_audio`
+  (which only reads RIFF via `scipy.io.wavfile`) never sees a mislabelled
+  file; a compressed or unrecognized file instead raises
+  `TTSEngineUnavailableError`, degrading `demo()` to `skipped`.
 - **`whisper-tiny.en` is the smallest, fastest, English-only Whisper
   checkpoint** — a trade of accuracy for a fast CPU demo. A larger
   checkpoint (`openai/whisper-base.en`, `-small.en`, ...) would transcribe

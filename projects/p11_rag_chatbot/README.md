@@ -72,7 +72,6 @@ p11-rag-chatbot: ok
   provider: stub
   questions: 3
   wrote: output/
-  seconds: 27.21
 ```
 
 `seconds` varies run to run and is reported only on the console and in the
@@ -105,11 +104,12 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   constructed; `provider` falls back to `RAG_LLM_PROVIDER` (default `ollama`).
   `stub` returns a small `LLM` subclass that echoes the retrieved context, used
   by the tests and `demo()`. An earlier stub answered the same fixed string
-  regardless of its input — a defect caught in review, since it made both the
-  source-rank test and the trap test pass by construction rather than by
-  exercising retrieval; deriving the answer from the prompt closes that gap and
-  reserves the exact `REFUSAL` string for a real provider's own grounding
-  behaviour. No API key ever lives in code, and every model/URL name is read
+  regardless of its input — found when both the source-rank test and the trap
+  test kept passing with retrieval effectively disabled, which meant neither
+  was exercising retrieval at all, only the stub's constant output; deriving
+  the answer from the prompt closes that gap and reserves the exact
+  `REFUSAL` string for a real provider's own grounding behaviour. No API key
+  ever lives in code, and every model/URL name is read
   from the environment at call time, not cached, so tests can override them
   without reloading the module.
 - **`demo()` force-pins `stub`, not "whichever provider is configured".** The
@@ -128,12 +128,14 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   with `test_wrong_document_is_not_ranked_first` as a negative control. An
   earlier version asserted only *somewhere in the result* — with `TOP_K=3`
   retrieving the whole tiny corpus regardless of the query, that could not fail
-  even for a deliberately wrong source, a defect caught in review (see
-  `CHUNK_SIZE` below). The trap question is asserted at the retrieval layer
-  directly (`test_trap_question_retrieves_no_revenue_related_chunk`: no
-  retrieved chunk mentions revenue), not through the stub's answer text, which
-  is now true by construction regardless of the question — another defect from
-  the same review.
+  even for a deliberately wrong source, found because a negative control
+  (`test_wrong_document_is_not_ranked_first`) needs to be able to fail on a
+  wrong answer, and this one could not (see `CHUNK_SIZE` below). The trap
+  question is asserted at the retrieval layer directly
+  (`test_trap_question_retrieves_no_revenue_related_chunk`: no retrieved
+  chunk mentions revenue), not through the stub's answer text, which is true
+  by construction regardless of the question and so could never have caught
+  anything on its own.
 - **Persistence, and why `CHUNK_SIZE` is small.** `build_index(reindex=False)`
   loads an existing `chroma_index/` directory without re-embedding;
   `reindex=True` (or `--reindex`) rebuilds it from `data/`; `demo()` always

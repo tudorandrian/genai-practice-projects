@@ -67,7 +67,6 @@ p01-mini-etl: ok
   rows: 14
   missing_before: 5
   missing_after: 0
-  seconds: 0.09
 ```
 
 Running every shipped config once (13 datasets, 6 input forms):

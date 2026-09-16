@@ -55,7 +55,6 @@ p03-regression: ok
   tips_r2: 0.481
   co2_r2: 0.903
   wrote: output/
-  seconds: 0.45
 ```
 
 `output/metrics.txt` (figures only, committed, deterministic):

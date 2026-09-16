@@ -64,7 +64,6 @@ p05-segmentation: ok
   silhouette: 0.664
   ground_truth_agreement: 0.982
   wrote: output/
-  seconds: 0.95
 ```
 
 `output/metrics.txt` (figures only, committed, deterministic):

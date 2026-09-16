@@ -67,6 +67,17 @@ TARGET_SR = 16000  # Whisper expects 16 kHz mono
 CHUNK_LENGTH_S = 30  # segment long audio
 LLM_MAX_NEW_TOKENS = 160  # per focused section call
 
+# Fix round 1: heavy.yml's macOS run stopped crashing (the AIFF/WAV bug is
+# fixed) but silently transcribed only 4 of the synthesized script's 73
+# words — `demo()` still reported "ok". If the transcript's word count falls
+# below this fraction of the synthesized script's own word count, `demo()`
+# treats it as an implausibly short transcription (a truncated/broken audio
+# file that happened not to raise, not a genuine "nothing to transcribe")
+# and reports `failed`, not `skipped` — the cause may be our own code (see
+# synthetic_audio.AudioFacts), so it must not be waved through as an
+# environment limitation.
+MIN_TRANSCRIPT_WORD_RATIO = 0.5
+
 # The three sections the summary must always contain. Assembling them under
 # fixed headers guarantees every section exists regardless of model quality.
 SECTIONS: list[tuple[str, str]] = [
@@ -87,8 +98,22 @@ SECTIONS: list[tuple[str, str]] = [
     ),
 ]
 
+# Fix round 4: Whisper runs on CPU in float32, pinned explicitly (see
+# load_asr_model). ASR_DTYPE is passed as a string so this module (and its
+# core-tier tests) never needs torch just to name the dtype.
+ASR_DEVICE = "cpu"
+ASR_DTYPE = "float32"
+
 _ASR: Any = None
+# One-line runtime facts (device/dtype the model actually landed on, torch
+# and transformers versions), captured when the pipeline is first loaded so
+# demo()'s failure note can carry them next to the audio facts.
+_ASR_FACTS: str | None = None
 _LOCAL_LLM: Any = None
+# A dedicated child logger for the ASR runtime-facts line, so it can be made
+# visible under `uv run demo --all` (see load_asr_model) without also
+# un-silencing every other INFO line this module logs.
+asr_log = logging.getLogger(f"{__name__}.asr")
 
 
 # =============================================================================
@@ -130,18 +155,70 @@ def load_asr_model() -> Any:
     ``output/transcript.txt`` to be byte-identical across repeated ``--demo``
     runs. Imports transformers lazily so this module stays importable without
     it (only the ``models`` dependency group needs it).
+
+    Fix round 4: the device and dtype are pinned (``ASR_DEVICE``/``ASR_DTYPE``)
+    and, once loaded, the device/dtype the model *actually* landed on plus
+    the torch/transformers versions are logged as one INFO line (see
+    ``asr_runtime_facts``) and kept for ``demo()``'s failure note.
     """
-    global _ASR
+    global _ASR, _ASR_FACTS
     if _ASR is None:
         from transformers import pipeline  # noqa: PLC0415 — lazy heavy import, see module docstring
 
+        from projects.p10_meeting_assistant import synthetic_audio
+
+        # Pinned to CPU/float32 rather than left to transformers' device and
+        # dtype auto-selection, for three reasons: (1) reproducibility — the
+        # committed output/transcript.txt must be byte-identical across runs
+        # and platforms, and different backends/dtypes produce different
+        # floating-point results; (2) the committed proofs were produced on
+        # CPU, so that is the configuration they prove; (3) heavy.yml run
+        # 35086969752 on macos-latest (Apple Silicon) transcribed repeated-
+        # token noise ('il Tottenham ca cagggg...', 4/73 words) from audio
+        # proven healthy upstream (complete file, correct byte order, RMS
+        # 0.10, no clipping, correct 16 kHz float32 decode) — consistent with
+        # the pipeline having been placed on Apple's MPS backend, where that
+        # failure mode is known. That last point is a hypothesis; the facts
+        # line logged below exists to confirm or refute it on the next run.
         _ASR = pipeline(
             "automatic-speech-recognition",
             model=WHISPER_MODEL,
             chunk_length_s=CHUNK_LENGTH_S,
             generate_kwargs={"num_beams": 1, "do_sample": False},
+            device=ASR_DEVICE,
+            dtype=ASR_DTYPE,
         )
+        _ASR_FACTS = asr_runtime_facts(_ASR)
+        synthetic_audio._ensure_facts_logging_visible(asr_log)
+        asr_log.info(_ASR_FACTS)
     return _ASR
+
+
+def _package_version(name: str) -> str:
+    from importlib.metadata import PackageNotFoundError, version  # noqa: PLC0415
+
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return "not installed"
+
+
+def asr_runtime_facts(asr: Any) -> str:
+    """One single-line summary of where a loaded ASR pipeline actually runs:
+    the device and dtype read back from its model (not the arguments passed
+    to ``pipeline()``), plus the installed torch and transformers versions.
+    Best-effort: an attribute that cannot be read is reported as
+    ``unknown`` rather than raising."""
+    model = getattr(asr, "model", None)
+    device = getattr(model, "device", None)
+    if device is None:
+        device = getattr(asr, "device", None)
+    dtype = getattr(model, "dtype", None)
+    return (
+        f"whisper: model={WHISPER_MODEL} device={device if device is not None else 'unknown'} "
+        f"dtype={dtype if dtype is not None else 'unknown'} "
+        f"torch={_package_version('torch')} transformers={_package_version('transformers')}"
+    )
 
 
 def transcribe(audio_path: str | Path) -> str:
@@ -391,13 +468,30 @@ def demo() -> DemoResult:
     touched; this is caught here and turned into a ``skipped`` result
     carrying an actionable note, never a raised exception or ``failed``
     status — a missing optional system package should not fail the gate.
+
+    Fix round 1: a missing/broken engine is not the only way this can go
+    wrong silently. ``synthesis`` succeeding and ``load_audio``/Whisper
+    raising nothing is not proof the audio was any good — macOS's driver
+    wrote a file Whisper accepted but transcribed almost nothing from. If
+    the transcript's word count falls below ``MIN_TRANSCRIPT_WORD_RATIO`` of
+    the synthesized script's own word count, this returns ``failed`` (never
+    ``skipped`` — an implausibly short transcript from audio that parsed
+    fine is treated as our own bug until proven otherwise), with a note
+    carrying both word counts, the audio facts logged during synthesis, the
+    ASR runtime facts (device/dtype/versions, fix round 4) and a truncated
+    transcript excerpt.
     """
     start = time.perf_counter()
 
     from projects.p10_meeting_assistant import synthetic_audio
 
+    audio_facts: dict[str, synthetic_audio.AudioFacts] = {}
     try:
-        audio_paths = synthetic_audio.generate(DATA_DIR)
+        # Only standup.wav: the demo never uses budget.wav, and not requesting it
+        # sidesteps a real pyttsx3/eSpeak bug entirely — see generate()'s docstring.
+        audio_paths = synthetic_audio.generate(
+            DATA_DIR, only={"standup.wav"}, facts_out=audio_facts
+        )
     except synthetic_audio.TTSEngineUnavailableError as exc:
         seconds = time.perf_counter() - start
         log.warning("demo: %s", exc)
@@ -417,6 +511,27 @@ def demo() -> DemoResult:
             os.environ["MEETING_LLM_PROVIDER"] = previous_provider
 
     words = len(result["transcript"].split())
+    script_words = len(synthetic_audio.SCRIPTS["standup.wav"].split())
+    if words < MIN_TRANSCRIPT_WORD_RATIO * script_words:
+        seconds = time.perf_counter() - start
+        facts = audio_facts.get("standup.wav")
+        facts_line = (
+            facts.format("standup.wav")
+            if facts is not None
+            else "standup.wav: (no audio facts captured — reused from a previous run)"
+        )
+        asr_facts_line = _ASR_FACTS or "whisper: (no ASR runtime facts captured)"
+        excerpt = result["transcript"][:200].replace("\n", " ")
+        note = (
+            f"transcript has {words} word(s) but the synthesized script has {script_words}; "
+            f"ratio {words / script_words:.2f} is below MIN_TRANSCRIPT_WORD_RATIO="
+            f"{MIN_TRANSCRIPT_WORD_RATIO} — treating this as a broken/truncated audio file, "
+            f"not a genuine transcription. {facts_line} {asr_facts_line} "
+            f"transcript={excerpt!r}"
+        )
+        log.warning("demo: %s", note)
+        return DemoResult("p10-meeting-assistant", "failed", seconds=round(seconds, 2), note=note)
+
     sections = result["summary"].count("## ")
     metrics_lines = ["provider=stub", f"words={words}", f"sections={sections}"]
     (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
@@ -449,10 +564,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.demo:
         result = demo()
         print(f"p10-meeting-assistant: {result.status}")
-        if result.status == "skipped":
+        if result.status in ("skipped", "failed"):
             if result.note:
                 print(f"  note: {result.note}")
-            return 0
+            return 0 if result.status == "skipped" else 1
         for key, value in result.figures.items():
             print(f"  {key}: {value}")
         print("  wrote: output/")

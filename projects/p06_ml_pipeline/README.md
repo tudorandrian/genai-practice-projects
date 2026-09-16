@@ -68,7 +68,6 @@ p06-ml-pipeline: ok
   f1: 0.850
   roc_auc: 0.921
   wrote: output/
-  seconds: 7.36
 ```
 
 `output/metrics.txt` (figures only, committed, deterministic):

@@ -80,7 +80,6 @@ p09-chatbot: ok
   model: facebook/blenderbot-400M-distill
   avg_s: 1.84
   wrote: output/
-  seconds: 5.52
 ```
 
 `avg_s`/`seconds` (generation time) vary run to run and are reported only on

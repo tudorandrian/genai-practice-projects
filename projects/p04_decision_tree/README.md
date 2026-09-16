@@ -61,8 +61,15 @@ p04-decision-tree: ok
   drug_acc: 1.000
   iris_acc: 0.889
   wrote: output/
-  seconds: 1.74
 ```
+
+`drug_acc: 1.000` is not an accident or an overfit number to be suspicious of:
+`drug` is a synthetic generator written for this project (see "Datasets and
+licences" below), and its rules are constructed to be exactly recoverable by
+a tree of depth 4 — `test_synthetic_drug_is_perfectly_separable_at_depth4`
+asserts this directly. Perfect accuracy here means the tree found the exact
+rule the generator used, which is the point: `iris`, a real dataset with no
+such guarantee, tops out at `0.889` a few lines below.
 
 `output/metrics.txt` (figures only, committed, deterministic):
 

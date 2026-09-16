@@ -66,7 +66,6 @@ p08-image-captioning: ok
   device: cpu
   model: Salesforce/blip-image-captioning-base
   wrote: output/
-  seconds: 23.63
 ```
 
 `seconds` (model load + inference time) varies run to run and is reported

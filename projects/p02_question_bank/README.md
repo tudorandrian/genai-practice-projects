@@ -63,7 +63,6 @@ p02-question-bank: ok
   lessons: 2
   questions: 4
   wrote: output/
-  seconds: 0.00
 ```
 
 `output/summary.txt` (the committed proof, deterministic, no absolute
