@@ -38,6 +38,7 @@ from shared.demo import DemoResult
 log = logging.getLogger(__name__)
 
 HERE = Path(__file__).resolve().parent
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost")
 OUT_DIR = HERE / "output"
 
 # ---------------------------------------------------------------------------
@@ -312,6 +313,11 @@ def main(argv: list[str] | None = None) -> int:
         print("  wrote: output/")
         print(f"  seconds: {result.seconds:.2f}")
         return 0 if result.status == "ok" else 1
+
+    if args.host in LOOPBACK_HOSTS:
+        # A page on another site can point its own host name at 127.0.0.1 (DNS
+        # rebinding); refusing any other Host header keeps such pages out.
+        app.config["TRUSTED_HOSTS"] = list(LOOPBACK_HOSTS)
 
     if args.production:
         import waitress

@@ -69,3 +69,37 @@ def test_no_tracked_text_file_contains_an_em_dash() -> None:
         if em_dash in path.read_text(encoding="utf-8", errors="replace")
     ]
     assert offenders == [], "use the ASCII hyphen '-' instead of the em dash"
+
+
+def test_default_hugging_face_models_are_pinned_to_a_hub_commit() -> None:
+    import re
+
+    from projects.p08_image_captioning import captioner
+    from projects.p09_chatbot import engine
+    from projects.p10_meeting_assistant import assistant
+    from projects.p11_rag_chatbot import rag_chatbot
+    from projects.p12_study_hub import tutor
+
+    revisions = [
+        captioner.MODEL_REVISION,
+        engine.MODEL_REVISION,
+        assistant.WHISPER_REVISION,
+        assistant.DEFAULT_LOCAL_LLM_REVISION,
+        rag_chatbot.EMBED_REVISION,
+        tutor.EMBED_REVISION,
+    ]
+    assert all(re.fullmatch(r"[0-9a-f]{40}", rev) for rev in revisions)
+    assert rag_chatbot.EMBED_REVISION == tutor.EMBED_REVISION
+
+
+def test_container_images_are_pinned_by_digest_and_ollama_matches_ci() -> None:
+    import re
+
+    pinned = re.compile(r"(?:FROM|--from=|image:)\s*(\S+)")
+    found = {
+        name: pinned.findall((ROOT / name).read_text(encoding="utf-8"))
+        for name in ("Dockerfile", "compose.yaml", ".github/workflows/heavy.yml")
+    }
+    images = [image for names in found.values() for image in names]
+    assert images and all("@sha256:" in image for image in images)
+    assert set(found["compose.yaml"]) == set(found[".github/workflows/heavy.yml"])

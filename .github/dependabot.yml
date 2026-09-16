@@ -18,3 +18,8 @@ updates:
     ignore:
       - dependency-name: python
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+  # compose.yaml's Ollama image; heavy.yml's service container must be moved to the same pin.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: monthly }
+    groups: { docker-compose: { patterns: ["*"] } }

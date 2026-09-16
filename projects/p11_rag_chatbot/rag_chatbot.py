@@ -57,6 +57,9 @@ OUT_DIR = HERE / "output"
 EVAL_QUESTIONS_PATH = HERE / "eval_questions.md"
 
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# The Hub commit the committed proofs were produced with. Pinned so that a re-published
+# model cannot silently change results or the code that loads it; bump it deliberately.
+EMBED_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 # Small enough that the synthetic corpus splits into several chunks per document
 # (9 total, vs. TOP_K=3) so retrieval must genuinely discriminate between
 # candidates instead of trivially returning the entire corpus for every query -
@@ -154,7 +157,7 @@ def _embeddings() -> Any:
         HuggingFaceEmbeddings,
     )
 
-    return HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+    return HuggingFaceEmbeddings(model_name=EMBED_MODEL, model_kwargs={"revision": EMBED_REVISION})
 
 
 def _load_and_split(folder: str | Path | None = None) -> list[Any]:

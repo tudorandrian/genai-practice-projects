@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 60
     services:
       ollama:
-        image: ollama/ollama:0.31.1
+        image: ollama/ollama:0.31.1@sha256:f1a705f2bd113fb8d15f85f7c217f0dc5f6bebda6b0cc42b82c3ad165ffcb9dc # the same pin as compose.yaml (a core test checks)
         ports: ["11434:11434"]
         options: >-
           --health-cmd "ollama list" --health-interval 5s --health-timeout 5s --health-retries 30

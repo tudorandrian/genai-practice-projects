@@ -34,6 +34,9 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
 
 MODEL_NAME = "facebook/blenderbot-400M-distill"
+# The Hub commit the committed proofs were produced with. Pinned so that a re-published
+# model cannot silently change results or the code that loads it; bump it deliberately.
+MODEL_REVISION = "eaaf64e3be20ad1f1fb0bdf689565ba52c97eafe"
 MAX_NEW_TOKENS = 60
 HISTORY_WINDOW = 6  # keep the last N turns as context
 
@@ -71,13 +74,14 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
             AutoTokenizer,
         )
 
-        _TOKENIZER = AutoTokenizer.from_pretrained(model_name)
+        revision = MODEL_REVISION if model_name == MODEL_NAME else "main"
+        _TOKENIZER = AutoTokenizer.from_pretrained(model_name, revision=revision)
         # Explicit `Any`: with transformers installed, `from_pretrained`'s overloads
         # would need a `# type: ignore` on some call sites; without transformers
         # installed (`ignore_missing_imports` makes the import `Any` already), that
         # ignore would be flagged as unused. Widening the type here avoids the
         # overload check in either environment, so no ignore comment is needed.
-        model: Any = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        model: Any = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=revision)
         _MODEL = model
     return _TOKENIZER, _MODEL
 

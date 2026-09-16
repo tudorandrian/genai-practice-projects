@@ -38,6 +38,9 @@ MANIFEST_PATH = INDEX_DIR / "manifest.json"
 OUT_DIR = HERE / "output"
 
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# The Hub commit the committed proofs were produced with. Pinned so that a re-published
+# model cannot silently change results or the code that loads it; bump it deliberately.
+EMBED_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 # Explicit cosine space + normalized embeddings. EMBED_NORMALIZE keeps every embedding a
 # unit vector (checked at runtime by
 # test_embeddings_are_actually_normalized_and_cosine_configured), so a dot product of two
@@ -134,7 +137,9 @@ def _embeddings() -> Any:
     )
 
     return HuggingFaceEmbeddings(
-        model_name=EMBED_MODEL, encode_kwargs={"normalize_embeddings": EMBED_NORMALIZE}
+        model_name=EMBED_MODEL,
+        model_kwargs={"revision": EMBED_REVISION},
+        encode_kwargs={"normalize_embeddings": EMBED_NORMALIZE},
     )
 
 

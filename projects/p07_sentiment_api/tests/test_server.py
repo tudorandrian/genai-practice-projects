@@ -194,3 +194,14 @@ def test_production_flag_uses_waitress(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert server.main(["--production", "--port", "8123"]) == 0
     assert called == {"host": "127.0.0.1", "port": 8123}
+
+
+def test_a_loopback_server_rejects_a_foreign_host_header(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(server.app.config, "TRUSTED_HOSTS", None)
+    monkeypatch.setattr("waitress.serve", lambda app, host, port: None)
+    assert server.main(["--production"]) == 0
+    with server.app.test_client() as client:
+        assert client.get("/health", headers={"Host": "127.0.0.1:5000"}).status_code == 200
+        foreign = client.get("/health", headers={"Host": "rebind.example:5000"})
+        assert foreign.status_code == 400
+        assert foreign.get_json() == {"error": "Bad request."}

@@ -38,6 +38,9 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
 
 MODEL_NAME = "Salesforce/blip-image-captioning-base"
+# The Hub commit the committed proofs were produced with. Pinned so that a re-published
+# model cannot silently change results or the code that loads it; bump it deliberately.
+MODEL_REVISION = "82a37760796d32b1411fe092ab5d4e227313294b"
 MAX_NEW_TOKENS = 50
 
 # Module-level singletons so the weights load exactly once per process.
@@ -73,7 +76,8 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
             BlipProcessor,
         )
 
-        _PROCESSOR = BlipProcessor.from_pretrained(model_name)
+        revision = MODEL_REVISION if model_name == MODEL_NAME else "main"
+        _PROCESSOR = BlipProcessor.from_pretrained(model_name, revision=revision)
         # Explicitly `Any`, not the inferred `BlipForConditionalGeneration`: with
         # transformers installed, its `from_pretrained`/`nn.Module.to()` overloads
         # make mypy reject `.to(device())` (a str) below; without transformers
@@ -81,7 +85,9 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
         # call needs no such ignore, so a fixed `# type: ignore` would be flagged
         # as unused in the other environment. Widening the type here avoids the
         # overload check altogether, so no ignore comment is needed in either case.
-        blip_model: Any = BlipForConditionalGeneration.from_pretrained(model_name)
+        blip_model: Any = BlipForConditionalGeneration.from_pretrained(
+            model_name, revision=revision
+        )
         _MODEL = blip_model.to(device())
     return _PROCESSOR, _MODEL
 

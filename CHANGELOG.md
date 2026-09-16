@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Supply chain: the default Hugging Face models load a pinned Hub commit (P08-P12), and the
+  Docker, compose and CI service images are pinned by digest (Dependabot keeps both the
+  Dockerfile and compose.yaml current). P07 and P09 reject requests whose Host header is not
+  a loopback name when they listen on loopback, which blocks DNS rebinding.
 - Pre-publication security and privacy review. Runs on the user's own data write to the
   gitignored `output/runs/` (P08, P10, P11, P12), so only `--demo` writes the committed
   outputs. Gradio analytics are off; the Gradio apps limit upload size and keep exception

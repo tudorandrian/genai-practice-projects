@@ -34,6 +34,7 @@ from projects.p09_chatbot import engine
 log = logging.getLogger(__name__)
 
 DEFAULT_HOST = "127.0.0.1"
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost")
 DEFAULT_PORT = 5000
 
 app = Flask(__name__)
@@ -123,6 +124,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> None:
     """Load the model once, then start the dev server."""
     args = parse_args(argv)
+    if args.host in LOOPBACK_HOSTS:
+        # A page on another site can point its own host name at 127.0.0.1 (DNS
+        # rebinding); refusing any other Host header keeps such pages out.
+        app.config["TRUSTED_HOSTS"] = list(LOOPBACK_HOSTS)
     engine.load_model()  # warm the cache before serving
     app.run(host=args.host, port=args.port, debug=False)  # FLASK_DEBUG cannot turn on the debugger
 

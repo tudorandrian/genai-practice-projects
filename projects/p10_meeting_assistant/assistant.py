@@ -54,6 +54,9 @@ OUT_DIR = HERE / "output"
 DATA_DIR = HERE / "data"
 
 WHISPER_MODEL = "openai/whisper-tiny.en"
+# The Hub commit the committed proofs were produced with. Pinned so that a re-published
+# model cannot silently change results or the code that loads it; bump it deliberately.
+WHISPER_REVISION = "87c7102498dcde7456f24cfd30239ca606ed9063"
 # LLM: default provider is Ollama, so the model lives outside this repo's
 # Python cache. The transformers "local" provider is kept as an opt-in
 # offline fallback. Every knob is read from the environment at call time
@@ -62,6 +65,7 @@ WHISPER_MODEL = "openai/whisper-tiny.en"
 DEFAULT_OLLAMA_MODEL = "qwen2.5:1.5b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_LOCAL_LLM_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_LOCAL_LLM_REVISION = "7ae557604adf67be50417f59c2c2f167def9a775"  # Hub commit, as above
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 TARGET_SR = 16000  # Whisper expects 16 kHz mono
 CHUNK_LENGTH_S = 30  # segment long audio
@@ -175,6 +179,7 @@ def load_asr_model() -> Any:
         _ASR = pipeline(
             "automatic-speech-recognition",
             model=WHISPER_MODEL,
+            revision=WHISPER_REVISION,
             chunk_length_s=CHUNK_LENGTH_S,
             generate_kwargs={"num_beams": 1, "do_sample": False},
             device=ASR_DEVICE,
@@ -348,14 +353,17 @@ def summarize_with_llm(prompt: str) -> str:
             )
 
             model_name = os.environ.get("MEETING_LLM_MODEL", DEFAULT_LOCAL_LLM_MODEL)
-            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            revision = (
+                DEFAULT_LOCAL_LLM_REVISION if model_name == DEFAULT_LOCAL_LLM_MODEL else "main"
+            )
+            tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
             # Explicit `Any`: with transformers installed, `from_pretrained`'s
             # overloads would need a `# type: ignore` on some call sites;
             # without transformers installed (`ignore_missing_imports` makes
             # the import `Any` already), that ignore would be flagged as
             # unused. Widening the type here avoids the overload check in
             # either environment, so no ignore comment is needed.
-            causal_model: Any = AutoModelForCausalLM.from_pretrained(model_name)
+            causal_model: Any = AutoModelForCausalLM.from_pretrained(model_name, revision=revision)
             _LOCAL_LLM = (tokenizer, causal_model)
         tokenizer, causal_model = _LOCAL_LLM
         messages = [
