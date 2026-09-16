@@ -1,4 +1,4 @@
-"""The twelve demo entries. Each project appends its own line in its port PR."""
+"""The demo entries. Each project appends its own line in its port PR."""
 
 from __future__ import annotations
 
@@ -26,4 +26,5 @@ ENTRIES: list[Entry] = [
     Entry("p08-image-captioning", "models", "projects.p08_image_captioning.captioner:demo"),
     Entry("p09-chatbot", "models", "projects.p09_chatbot.engine:demo"),
     Entry("p10-meeting-assistant", "models", "projects.p10_meeting_assistant.assistant:demo"),
+    Entry("p11-rag-chatbot", "rag", "projects.p11_rag_chatbot.rag_chatbot:demo"),
 ]

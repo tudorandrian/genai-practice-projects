@@ -1,0 +1,11 @@
+Q: How many paid vacation days do employees get?
+A: STUB: Every full-time employee receives 25 days of paid vacation p
+Sources: acme_handbook.pdf (p.1), support_faq.txt
+
+Q: Who is the CEO of ACME Robotics?
+A: STUB: ACME Robotics - Employee Handbook ACME Robotics was founded
+Sources: acme_handbook.pdf (p.1), support_faq.txt, engineering_notes.md
+
+Q: What is the guest WiFi password?
+A: STUB: The guest WiFi password is acme-guest-2024. Expense reports
+Sources: acme_handbook.pdf (p.1), support_faq.txt
