@@ -184,6 +184,7 @@ compose.yaml         the Linux test container and the optional Ollama service
 - [docs/decisions/](docs/decisions/): architecture decision records (monorepo with uv, English
   identifiers, P12's original corpus, CI matrix, package naming, P07's API contract, P10's
   provider fallback).
+- [docs/publication.md](docs/publication.md): the publication runbook, step by step.
 - [docs/release-gate.md](docs/release-gate.md): the publication checklist, with the evidence
   for each item and a dated record of the publication steps.
 - [CHANGELOG.md](CHANGELOG.md): changes by release. The

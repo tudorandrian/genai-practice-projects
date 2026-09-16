@@ -68,6 +68,7 @@ dev = [
   "pandas-stubs",
   "types-requests",
   "waitress>=3",
+  "git-filter-repo>=2.47",  # scripts/prepare_public_history.py
 ]
 
 [tool.uv]

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Publication tooling: `docs/publication.md` is the runbook for the owner's publication steps;
+  `scripts/prepare_public_history.py` builds and verifies a publishable copy of the history
+  (release-gate A8) without pushing anything; `.github/branch-protection.json` holds the
+  branch protection as code. `git-filter-repo` joins the `dev` group.
 - Supply chain: the default Hugging Face models load a pinned Hub commit (P08-P12), and the
   Docker, compose and CI service images are pinned by digest (Dependabot keeps both the
   Dockerfile and compose.yaml current). P07 and P09 reject requests whose Host header is not

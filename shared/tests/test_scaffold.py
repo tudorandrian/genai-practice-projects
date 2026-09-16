@@ -103,3 +103,17 @@ def test_container_images_are_pinned_by_digest_and_ollama_matches_ci() -> None:
     images = [image for names in found.values() for image in names]
     assert images and all("@sha256:" in image for image in images)
     assert set(found["compose.yaml"]) == set(found[".github/workflows/heavy.yml"])
+
+
+def test_branch_protection_as_code_requires_the_ci_jobs() -> None:
+    import json
+
+    protection = json.loads((ROOT / ".github" / "branch-protection.json").read_text("utf-8"))
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "matrix: { os: [ubuntu-latest, windows-latest] }" in ci and "\n  gitleaks:\n" in ci
+    assert protection["required_status_checks"]["contexts"] == [
+        "checks (ubuntu-latest)",
+        "checks (windows-latest)",
+        "gitleaks",
+    ]
+    assert protection["enforce_admins"] and protection["required_linear_history"]
