@@ -1,0 +1,5 @@
+ML PIPELINE — CROSS-DATASET SUMMARY (RF vs LR)
+============================================================
+Dataset           Winner                      F1   ROC AUC
+------------------------------------------------------------
+weather           Random Forest           0.8500    0.9215

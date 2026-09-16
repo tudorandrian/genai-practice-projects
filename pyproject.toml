@@ -15,6 +15,7 @@ p02-question-bank = "projects.p02_question_bank.qbank:main"
 p03-regression = "projects.p03_regression.regression:main"
 p04-decision-tree = "projects.p04_decision_tree.decision_tree:main"
 p05-segmentation = "projects.p05_segmentation.segmentation:main"
+p06-ml-pipeline = "projects.p06_ml_pipeline.ml_pipeline:main"
 
 [dependency-groups]
 core = [

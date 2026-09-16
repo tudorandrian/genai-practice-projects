@@ -21,4 +21,5 @@ ENTRIES: list[Entry] = [
     Entry("p03-regression", "core", "projects.p03_regression.regression:demo"),
     Entry("p04-decision-tree", "core", "projects.p04_decision_tree.decision_tree:demo"),
     Entry("p05-segmentation", "core", "projects.p05_segmentation.segmentation:demo"),
+    Entry("p06-ml-pipeline", "core", "projects.p06_ml_pipeline.ml_pipeline:demo"),
 ]
