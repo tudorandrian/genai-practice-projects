@@ -18,6 +18,7 @@ p05-segmentation = "projects.p05_segmentation.segmentation:main"
 p06-ml-pipeline = "projects.p06_ml_pipeline.ml_pipeline:main"
 p07-sentiment-api = "projects.p07_sentiment_api.server:main"
 p08-image-captioning = "projects.p08_image_captioning.captioner:main"
+p09-chatbot = "projects.p09_chatbot.engine:main"
 
 [dependency-groups]
 core = [

@@ -21,6 +21,7 @@ projects/*/output/*
 !projects/*/output/captions.txt
 !projects/*/output/transcript.txt
 !projects/*/output/summary.txt
+!projects/*/output/conversation_transcript.txt
 /output/
 # Data caches and indexes are never tracked
 .cache/

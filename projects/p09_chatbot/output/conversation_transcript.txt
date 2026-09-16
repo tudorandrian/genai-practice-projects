@@ -1,0 +1,10 @@
+# P09 chatbot — demo conversation transcript
+
+user: Hello, how are you?
+bot: I am doing well, how about yourself?    I am just getting ready to go to work.
+
+user: What is your favorite hobby?
+bot: I love to play video games. What about you?  What do you do for fun?
+
+user: That sounds fun, tell me more.
+bot: I like to play games on my computer. I like playing Call of Duty. What do your hobbies?

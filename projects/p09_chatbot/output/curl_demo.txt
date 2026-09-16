@@ -1,0 +1,20 @@
+# P09 chatbot — demo curl transcript
+# Generated via app.test_client() against /chatbot, /reset and / (no live server)
+
+$ curl -s -X POST http://127.0.0.1:5000/chatbot -H 'Content-Type: application/json' -d '{"message": "Hello! Who are you?"}'
+{"reply": "I am a student, I am studying to be a doctor.  How about you?"}
+
+$ curl -s -X POST http://127.0.0.1:5000/chatbot -H 'Content-Type: application/json' -d '{"message": "What can you help me with?"}'
+{"reply": "I can help you with anything you need. What do you need help with?"}
+
+$ curl -s -X POST http://127.0.0.1:5000/chatbot -H 'Content-Type: application/json' -d '{}'
+{"error": "Send a JSON body with a 'message' field."}
+
+$ curl -s -X POST http://127.0.0.1:5000/reset
+{"status": "reset"}
+
+$ curl -s -X GET http://127.0.0.1:5000/chatbot
+{"error": "HTTP method not allowed for this route."}
+
+$ curl -s -o /dev/null -w 'GET / -> HTTP %{http_code}\n' http://127.0.0.1:5000/
+GET / -> HTTP 200
