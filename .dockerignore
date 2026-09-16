@@ -1,7 +1,15 @@
+# .git is kept on purpose: core tests call `git ls-files`.
 .venv/
+__pycache__/
+*.pyc
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+.coverage
+htmlcov/
 /output/
 .superpowers/
+.claude/
 .env
+projects/*/chroma_index/
+projects/*/data/cache/

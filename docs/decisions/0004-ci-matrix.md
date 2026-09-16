@@ -22,3 +22,13 @@ before the private-to-public flip and after any dependency bump.
   Linux-only CI would miss.
 - Branch protection requires both `checks (ubuntu-latest)` and
   `checks (windows-latest)`, plus `gitleaks`.
+
+## Later
+
+The "no OS-specific logic" premise stopped holding with P10 and P12. P10's synthetic
+audio depends on each OS's own speech engine and handles their differences
+(`synthetic_audio.py` converts the AIFF/AIFF-C files macOS writes to WAV, waits for
+engines that write asynchronously, and gives a Linux-specific install hint); `heavy.yml`
+installs `espeak-ng` on Linux only. Two P12 retrieval tests are `xfail` on macOS (see
+P12's README, "Limits"). Both projects are exercised on Ubuntu and macOS by `heavy.yml`,
+not by the per-PR matrix.

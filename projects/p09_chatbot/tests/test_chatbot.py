@@ -10,6 +10,7 @@ Run:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -167,6 +168,30 @@ def test_wrong_method_405(client: FlaskClient) -> None:
 
 
 @pytest.mark.core
+def test_deeply_nested_json_returns_json_error(client: FlaskClient) -> None:
+    # Small in bytes (well under MAX_CONTENT_LENGTH) but deep enough to blow
+    # Python's recursion limit inside json.loads — request.get_json(silent=True)
+    # only swallows ValueError/BadRequest, so the RecursionError used to
+    # escape as Flask's default HTML 500 page. This never reaches ``engine``,
+    # so it needs no model/weights and stays a fast ``core`` test.
+    n = 3000
+    body = "[" * n + "]" * n
+    resp = client.post("/chatbot", data=body, content_type="application/json")
+    assert resp.status_code != 200
+    assert resp.content_type == "application/json"
+    assert "error" in resp.get_json()
+
+
+@pytest.mark.core
+def test_oversized_body_returns_413_json(client: FlaskClient) -> None:
+    body = json.dumps({"message": "a" * (app_module.app.config["MAX_CONTENT_LENGTH"] + 1)})
+    resp = client.post("/chatbot", data=body, content_type="application/json")
+    assert resp.status_code == 413
+    assert resp.content_type == "application/json"
+    assert "error" in resp.get_json()
+
+
+@pytest.mark.core
 def test_error_response_is_json(client: FlaskClient) -> None:
     r = client.post("/chatbot", json={})
     assert r.content_type == "application/json"
@@ -192,6 +217,33 @@ def test_reset_clears_history(
 # =============================================================================
 # / index route
 # =============================================================================
+
+
+@pytest.mark.core
+def test_curl_demo_records_the_real_index_status(
+    client: FlaskClient,
+    stub_reply: Callable[[list[str], str], str],
+    tmp_path: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """curl_demo.txt's `GET /` line must come from a real request, so a broken
+    index route shows up in the proof instead of a hard-coded 200."""
+    monkeypatch.setattr(engine, "OUT_DIR", tmp_path)
+
+    class BrokenIndexClient:
+        def post(self, *args: Any, **kwargs: Any) -> Any:
+            return client.post(*args, **kwargs)
+
+        def get(self, path: str) -> Any:
+            if path == "/":
+                return type("Response", (), {"status_code": 503})()
+            return client.get(path)
+
+    engine._write_curl_demo(client, app_module)
+    assert (tmp_path / "curl_demo.txt").read_text(encoding="utf-8").endswith("GET / -> HTTP 200\n")
+
+    engine._write_curl_demo(BrokenIndexClient(), app_module)
+    assert (tmp_path / "curl_demo.txt").read_text(encoding="utf-8").endswith("GET / -> HTTP 503\n")
 
 
 @pytest.mark.core

@@ -1,5 +1,5 @@
 {
-  "input": "datasets/penguins_biology.json",
+  "input": "../datasets/penguins_biology.json",
   "strategies": {
     "Beak Length (mm)": "mean",
     "Beak Depth (mm)": "mean",
@@ -7,6 +7,6 @@
     "Body Mass (g)": "mean",
     "Sex": "mode"
   },
-  "out_dir": "output",
+  "out_dir": "../output",
   "stem": "penguins_clean"
 }

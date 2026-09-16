@@ -1,7 +1,9 @@
 {
-  "input": "datasets/population_demographics.tsv",
+  "input": "../datasets/population_demographics.tsv",
   "format": "tsv",
-  "strategies": {"Value": "drop"},
-  "out_dir": "output",
+  "strategies": {
+    "Value": "drop"
+  },
+  "out_dir": "../output",
   "stem": "population_clean"
 }

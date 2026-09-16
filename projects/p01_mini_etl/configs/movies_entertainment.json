@@ -1,5 +1,5 @@
 {
-  "input": "datasets/movies_entertainment.json",
+  "input": "../datasets/movies_entertainment.json",
   "strategies": {
     "Title": "drop",
     "Major Genre": "mode",
@@ -11,6 +11,6 @@
     "Production Budget": "mean",
     "Worldwide Gross": "mean"
   },
-  "out_dir": "output",
+  "out_dir": "../output",
   "stem": "movies_clean"
 }

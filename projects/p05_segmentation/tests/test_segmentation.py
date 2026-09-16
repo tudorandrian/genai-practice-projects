@@ -20,6 +20,17 @@ pytestmark = pytest.mark.core
 OFFLINE_DATASETS = ("customers", "digits")
 NETWORK_DATASETS = ("wholesale", "taxis", "planets", "winequality")
 
+# Dataset -> the column name its reference label would carry if load_data
+# ever leaked it into the feature frame (None where no such column exists).
+LABEL_COLUMNS: dict[str, str | None] = {
+    "customers": None,
+    "digits": None,
+    "wholesale": "Channel",
+    "taxis": None,
+    "planets": None,
+    "winequality": "quality",
+}
+
 
 # =============================================================================
 # Registry
@@ -42,6 +53,9 @@ def test_offline_datasets_load_numeric_and_unlabelled(name: str) -> None:
     ds = segmentation.load_data(name)
     assert all(np.issubdtype(dt, np.number) for dt in ds.X.dtypes), name
     assert ds.X.shape[1] >= 3, name
+    label_col = LABEL_COLUMNS[name]
+    if label_col is not None:
+        assert label_col not in ds.X.columns, name
 
 
 @pytest.mark.network
@@ -50,6 +64,9 @@ def test_downloaded_datasets_load_numeric_and_unlabelled(name: str) -> None:
     ds = segmentation.load_data(name)
     assert all(np.issubdtype(dt, np.number) for dt in ds.X.dtypes), name
     assert ds.X.shape[1] >= 3, name
+    label_col = LABEL_COLUMNS[name]
+    if label_col is not None:
+        assert label_col not in ds.X.columns, name
 
 
 def test_unknown_dataset_raises() -> None:

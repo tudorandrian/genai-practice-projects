@@ -63,7 +63,7 @@ Support tickets are handled within 48 hours of being opened.
 
 
 def _write_pdf(lines: list[str], path: Path) -> None:
-    from fpdf import FPDF  # noqa: PLC0415 — lazy import, see module docstring
+    from fpdf import FPDF  # lazy import, see module docstring
 
     pdf = FPDF()
     pdf.add_page()

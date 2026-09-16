@@ -148,7 +148,9 @@ def test_depth4_at_least_as_accurate_as_depth3_on_drug() -> None:
     x_tr, x_te, y_tr, y_te = decision_tree.stratified_split(x, ds.y)
     acc4 = decision_tree.evaluate(decision_tree.train_tree(x_tr, y_tr, 4), x_te, y_te)["accuracy"]
     acc3 = decision_tree.evaluate(decision_tree.train_tree(x_tr, y_tr, 3), x_te, y_te)["accuracy"]
-    assert acc4 >= acc3  # extra depth recovers the last rule
+    # Both reach 1.0 on `drug` (depth 3 already recovers every rule); the extra
+    # depth is never worse, which is what this asserts.
+    assert acc4 >= acc3
 
 
 # =============================================================================

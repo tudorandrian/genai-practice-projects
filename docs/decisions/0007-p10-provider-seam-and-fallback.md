@@ -20,6 +20,6 @@ depends on whether Ollama is running.
 ## Consequences
 
 - The default provider stays usable offline, no traceback.
-- Callers needing a real model ran check the `[ollama unavailable ...]`
+- Callers needing a real model can check the `[ollama unavailable ...]`
   prefix, not a separate exception type.
 - `openai`/`local` failures still raise; only `ollama` degrades.

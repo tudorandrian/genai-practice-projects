@@ -7,8 +7,9 @@ Twelve self-directed practice projects I built while completing the IBM Generati
 ## Practice work, professional standard
 
 These are not products, and this repository does not suggest they are. What is senior-level is
-the engineering around them: every project is reproducible from a clean clone, tested in CI on
-two operating systems ([workflow runs](https://github.com/tudorandrian/genai-practice-projects/actions/workflows/ci.yml)),
+the engineering around them: every project is reproducible from a clean clone (P10's
+synthetic audio needs a working text-to-speech engine; on the Ubuntu runner it reports
+`skipped`), tested in CI on two operating systems ([workflow runs](https://github.com/tudorandrian/genai-practice-projects/actions/workflows/ci.yml)),
 documented in English with its limits stated, and free of any material that belongs to IBM or
 Coursera. The judgement on display is in the boundaries drawn, the tests written, and the
 delivery discipline — one pull request per project, squash-merged, history readable end to end
@@ -51,7 +52,7 @@ Run every project's demo in one command:
                               # run, then cached locally: BLIP (P08) ~950 MB, BlenderBot
                               # (P09) ~700 MB, Whisper-tiny.en (P10) ~150 MB
     uv run demo --all        # + rag group, P11-P12 — + the embedding model (~90 MB);
-                              # LLM steps use a stub provider unless Ollama or a key is present
+                              # LLM steps always use the deterministic stub provider in the demo
 
 ## More
 

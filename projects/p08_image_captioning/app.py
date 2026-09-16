@@ -36,7 +36,7 @@ def describe_image(image: Image.Image | None) -> str:
         return "Upload an image first."
     try:
         return caption(image)
-    except Exception as exc:  # noqa: BLE001 — never crash the server on a bad upload
+    except Exception as exc:  # never crash the server on a bad upload
         return f"Could not process the image: {exc}"
 
 

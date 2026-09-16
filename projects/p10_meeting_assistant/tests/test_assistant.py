@@ -18,10 +18,12 @@ import pytest
 
 from projects.p10_meeting_assistant import assistant, synthetic_audio
 
-# No blanket module-level ``pytestmark`` here: every test is marked
-# individually (``core``) so a future real-Whisper test added to this file
-# stays opt-in under ``models`` instead of being swept up by a blanket
-# marker — matching projects/p08_image_captioning and projects/p09_chatbot.
+# No blanket module-level ``pytestmark`` in this file: every test is marked
+# individually (``core``) so a future real-Whisper test added here stays
+# opt-in under ``models`` instead of being swept up by a blanket marker —
+# matching projects/p08_image_captioning and projects/p09_chatbot. The
+# sibling test_synthetic_audio.py does use a module-level ``core`` marker:
+# nothing in it can ever need model weights.
 
 
 def _write_wav(path: Path, sr: int, seconds: float = 1, stereo: bool = False) -> None:
@@ -55,6 +57,19 @@ def test_stereo_is_downmixed(tmp_path: Path) -> None:
     p = tmp_path / "s.wav"
     _write_wav(p, sr=16000, seconds=1, stereo=True)
     assert assistant.load_audio(p).ndim == 1
+
+
+@pytest.mark.core
+def test_8_bit_unsigned_wav_is_centred_and_scaled(tmp_path: Path) -> None:
+    """8-bit WAV is unsigned: 128 is silence, 0 and 255 are the extremes.
+    Dividing by 255 without centring would map silence to about +0.5."""
+    from scipy.io import wavfile
+
+    p = tmp_path / "u8.wav"
+    wavfile.write(p, 16000, np.array([128, 0, 255, 128], dtype=np.uint8))
+    audio = assistant.load_audio(p)
+    assert audio.dtype == np.float32
+    assert audio.tolist() == pytest.approx([0.0, -1.0, 127 / 128, 0.0])
 
 
 @pytest.mark.core
@@ -176,6 +191,20 @@ def test_stub_pipeline_produces_all_three_sections(
         assert header in summary and header in result["summary"]
 
 
+@pytest.mark.core
+def test_stub_summary_is_derived_from_the_transcript(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every section prompt starts with a long instruction, so a stub that
+    echoed only the start of the prompt would give the same summary for any
+    transcript. Two different transcripts must give two different summaries,
+    each echoing its own transcript."""
+    monkeypatch.setenv("MEETING_LLM_PROVIDER", "stub")
+    first = assistant.summarize_structured("We agreed to ship on Friday.")
+    second = assistant.summarize_structured("The budget review moved to March.")
+    assert first != second
+    assert "We agreed to ship on Friday." in first
+    assert "The budget review moved to March." in second
+
+
 # =============================================================================
 # demo() — must degrade to "skipped", never "failed", without a speech engine
 # =============================================================================
@@ -211,7 +240,7 @@ def test_demo_skips_cleanly_when_tts_engine_is_unavailable(
 
 
 # =============================================================================
-# demo() — fix round 1: an implausibly short transcript must fail, not "ok"
+# demo() — an implausibly short transcript must fail, not "ok"
 # =============================================================================
 
 
@@ -237,10 +266,8 @@ def _fake_generate_returning(wav_path: Path, facts: synthetic_audio.AudioFacts) 
 def test_demo_fails_when_transcript_is_implausibly_short(
     tmp_path: Path, tmp_output: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Reproduces the real fix-round-1 incident without a real TTS engine or
-    Whisper: heavy.yml's macOS run went green (no crash — the AIFF/WAV bug
-    from round 0 is fixed) but transcribed only 4 of the synthesized
-    73-word script — demo() must not report "ok" for that. A wrong
+    """Audio that parses and transcribes without raising, but yields only 4
+    of the synthesized script's 73 words, must not report "ok". A wrong
     threshold, or a guard that never fires, would let this test pass with
     "ok" instead."""
     wav_path = tmp_path / "standup.wav"
@@ -268,9 +295,11 @@ def test_demo_fails_when_transcript_is_implausibly_short(
     assert "73" in result.note  # SCRIPTS["standup.wav"]'s word count
     assert "AIFF" in result.note  # the audio facts made it into the note
     assert "only four words here" in result.note  # transcript excerpt
-    # A failed demo must not write metrics.txt with bogus numbers — that
-    # file is the committed, byte-identical-across-runs proof.
+    # A failed demo must not overwrite any committed, byte-identical-across-runs
+    # proof with output from broken audio.
     assert not (tmp_output / "metrics.txt").exists()
+    assert not (tmp_output / "transcript.txt").exists()
+    assert not (tmp_output / "summary.txt").exists()
 
 
 @pytest.mark.core
@@ -308,11 +337,15 @@ def test_demo_still_ok_when_transcript_word_count_is_plausible(
     assert result.figures["words"] == "80"
     metrics = (tmp_output / "metrics.txt").read_text(encoding="utf-8")
     assert "words=80" in metrics
+    assert (tmp_output / "transcript.txt").read_text(
+        encoding="utf-8"
+    ) == plausible_transcript + "\n"
+    assert "## Action items" in (tmp_output / "summary.txt").read_text(encoding="utf-8")
 
 
 # =============================================================================
-# load_asr_model — fix round 4: Whisper pinned to CPU/float32, and the
-# device it actually landed on is logged and carried into the failure note
+# load_asr_model — Whisper pinned to CPU/float32, and the device it actually
+# landed on is logged and carried into the failure note
 # =============================================================================
 
 
@@ -359,9 +392,9 @@ def test_load_asr_model_pins_cpu_and_float32(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Without the explicit pin, transformers may auto-place Whisper on an
-    accelerator (Apple's MPS on macos-latest — the suspected cause of
-    heavy.yml run 35086969752's noise transcript). Removing either keyword,
-    or changing its value, fails this test."""
+    accelerator (Apple's MPS on Apple Silicon, where it transcribed healthy
+    audio as noise). Removing either keyword, or changing its value, fails
+    this test."""
     calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
     _install_fake_transformers(monkeypatch, calls)
 

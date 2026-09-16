@@ -120,7 +120,7 @@ def test_formats_file_and_page_and_dedupes() -> None:
 
 @pytest.mark.rag
 def test_stub_provider_needs_no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stub is deterministic and derived from its own input (T13-e) — never a
+    """The stub is deterministic and derived from its own input — never a
     single fixed string regardless of the prompt, and never the exact ``REFUSAL``
     string (that's reserved for a real provider's grounding behaviour)."""
     monkeypatch.setenv("RAG_LLM_PROVIDER", "stub")
@@ -152,6 +152,26 @@ def test_ask_returns_answer_and_sources() -> None:
     result = rag_chatbot.ask(qa, "How many vacation days?")
     assert result["answer"] == "25 days."
     assert result["sources"] == ["acme_handbook.pdf (p.1)"]
+
+
+@pytest.mark.core
+def test_rebuild_index_explains_an_empty_corpus(tmp_path: Path) -> None:
+    """A fresh clone's data/ holds only .gitkeep; indexing nothing must say how to
+    create the corpus instead of failing inside Chroma."""
+    with pytest.raises(rag_chatbot.EmptyCorpusError, match="--demo"):
+        rag_chatbot._rebuild_index([], tmp_path / "index")
+
+
+@pytest.mark.core
+def test_cli_reports_an_empty_corpus_without_a_traceback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def empty_index(reindex: bool = False) -> Any:
+        raise rag_chatbot.EmptyCorpusError("no documents to index in data/ — run --demo")
+
+    monkeypatch.setattr(rag_chatbot, "build_index", empty_index)
+    assert rag_chatbot.main(["-q", "How many vacation days?"]) == 1
+    assert "no documents to index" in capsys.readouterr().out
 
 
 # =============================================================================
@@ -187,12 +207,11 @@ def eval_qa(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
 @pytest.mark.rag
 def test_evaluation_questions_retrieve_the_expected_source(eval_qa: Any) -> None:
     """Each grounded question's expected source must be the TOP-ranked source, not
-    merely present somewhere in the returned list. With ``CHUNK_SIZE=250`` the
+    merely present somewhere in the returned list. With ``CHUNK_SIZE=200`` the
     corpus splits into 9 chunks for ``TOP_K=3`` (see ``rag_chatbot.py``'s comment
     next to ``CHUNK_SIZE``), so retrieval only ever returns a third of the corpus
     and must genuinely discriminate — a presence-only assertion would still pass
-    if every query returned the whole corpus (see Fix round 1 in the port report
-    for the RED/GREEN evidence this replaced)."""
+    if every query returned the whole corpus."""
     for question, expected_source in rag_chatbot.load_eval_questions():
         result = rag_chatbot.ask(eval_qa, question)
         top_source = result["sources"][0]
@@ -216,7 +235,7 @@ def test_trap_question_retrieves_no_revenue_related_chunk(eval_qa: Any) -> None:
     """The evaluation set's trap question has no answer anywhere in the corpus —
     asserted at the retrieval layer directly. This deliberately does NOT go
     through the stub's answer text: the stub now echoes whatever context WAS
-    retrieved (T13-e) rather than judging whether an answer exists, so an
+    retrieved rather than judging whether an answer exists, so an
     answer-text assertion here would be true by construction regardless of the
     question (the corpus contains no chunk about revenue, so this is checkable
     offline without a real LLM; an end-to-end refusal from a real provider is a

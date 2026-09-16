@@ -15,6 +15,8 @@ from typing import Literal
 from shared.registry import ENTRIES, Entry
 
 Status = Literal["ok", "skipped", "failed"]
+# Anchored to the repository, not the working directory, like every project's output/.
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @dataclass
@@ -41,7 +43,7 @@ def run_demo(entries: list[Entry], tiers: set[str], out_path: Path) -> list[Demo
             try:
                 result = _resolve(entry.target)()
                 result.seconds = round(time.perf_counter() - start, 2)
-            except Exception as exc:  # noqa: BLE001 — one project failing must not stop the others
+            except Exception as exc:  # one project failing must not stop the others
                 result = DemoResult(
                     entry.slug,
                     "failed",
@@ -58,6 +60,12 @@ def run_demo(entries: list[Entry], tiers: set[str], out_path: Path) -> list[Demo
     return results
 
 
+def _cell(text: str) -> str:
+    """Make free text safe inside one Markdown table cell: exception messages often
+    carry newlines or a literal `|`, either of which would break the row."""
+    return " ".join(text.replace("|", r"\|").splitlines())
+
+
 def _write_summary(results: list[DemoResult], out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
@@ -67,8 +75,8 @@ def _write_summary(results: list[DemoResult], out_path: Path) -> None:
         "|---|---|---|---|---|",
     ]
     for r in results:
-        figures = " ".join(f"{k}={v}" for k, v in r.figures.items())
-        lines.append(f"| {r.name} | {r.status} | {r.seconds} | {figures} | {r.note} |")
+        figures = _cell(" ".join(f"{k}={v}" for k, v in r.figures.items()))
+        lines.append(f"| {r.name} | {r.status} | {r.seconds} | {figures} | {_cell(r.note)} |")
     ok = sum(r.status == "ok" for r in results)
     lines += ["", f"{ok}/{len(results)} ok"]
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -91,7 +99,7 @@ def tiers_from_args(argv: list[str]) -> set[str]:
 
 def main(argv: list[str] | None = None) -> int:
     tiers = tiers_from_args(sys.argv[1:] if argv is None else argv)
-    results = run_demo(ENTRIES, tiers, Path("output") / "demo-summary.md")
+    results = run_demo(ENTRIES, tiers, REPO_ROOT / "output" / "demo-summary.md")
     return 0 if all(r.status != "failed" for r in results) else 1
 
 

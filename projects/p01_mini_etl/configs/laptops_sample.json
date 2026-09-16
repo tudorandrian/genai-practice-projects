@@ -1,11 +1,18 @@
 {
-  "input": "data/sample_raw.csv",
+  "input": "../data/sample_raw.csv",
   "sentinel": "?",
-  "numeric_cols": ["screen_inch", "cpu_ghz", "weight_kg"],
+  "numeric_cols": [
+    "screen_inch",
+    "cpu_ghz",
+    "weight_kg"
+  ],
   "strategies": {
-    "screen_inch": "mean", "cpu_ghz": "mean", "weight_kg": "mean",
-    "os": "mode", "price_eur": "drop"
+    "screen_inch": "mean",
+    "cpu_ghz": "mean",
+    "weight_kg": "mean",
+    "os": "mode",
+    "price_eur": "drop"
   },
-  "out_dir": "output",
+  "out_dir": "../output",
   "stem": "laptops_sample_clean"
 }

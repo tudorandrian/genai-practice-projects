@@ -45,10 +45,16 @@ def fetch(name: str, url: str, sha256: str, cache_dir: Path | None = None) -> Pa
     dest = base / (name + Path(urlsplit(url).path).suffix)
     if dest.exists() and _sha256(dest) == sha256:
         return dest
+    # Download next to the destination and move it into place only once the checksum
+    # passes, so an interrupted or corrupt download never leaves a file under `dest`.
+    part = dest.with_name(dest.name + ".part")
     log.info("downloading %s -> %s", url, dest)
-    _download(url, dest)
-    actual = _sha256(dest)
-    if actual != sha256:
-        dest.unlink(missing_ok=True)
-        raise ChecksumError(f"{name}: expected {sha256[:12]}…, got {actual[:12]}…")
+    try:
+        _download(url, part)
+        actual = _sha256(part)
+        if actual != sha256:
+            raise ChecksumError(f"{name}: expected {sha256[:12]}…, got {actual[:12]}…")
+        part.replace(dest)
+    finally:
+        part.unlink(missing_ok=True)
     return dest

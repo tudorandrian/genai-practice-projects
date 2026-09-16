@@ -33,9 +33,10 @@ uv run p03-regression --dataset all           # all seven + comparison table
 `--verbose` logs each pipeline step at `INFO`; by default only the summary
 prints. Every run writes `metrics_<name>.txt` and
 `predicted_vs_actual_<name>.png` into `output/` for the dataset(s) it ran;
-`--dataset all` additionally writes `output/summary.txt` (a cross-dataset
-comparison table); `--demo` writes `output/metrics.txt` (compact figures)
-and `output/summary.txt` (the tips + co2 comparison table) directly, without
+`--dataset all` additionally writes `output/summary_all.txt` (a
+seven-dataset comparison table, gitignored — it is not the committed proof);
+`--demo` writes `output/metrics.txt` (compact figures) and
+`output/summary.txt` (the tips + co2 comparison table) directly, without
 shell redirection, so both files are reproducible byte-for-byte.
 
 ### CLI flags
@@ -104,8 +105,8 @@ co2            1067   6      12.901      19.985   0.903
   `logging.getLogger(__name__)`. `main()` prints at most six summary lines
   and sets the logging level (`WARNING`, or `INFO` with `--verbose`).
 - **Determinism.** `RANDOM_STATE = 42` is fixed for the split; two runs over
-  the same dataset produce byte-identical metrics files (see
-  `test_two_runs_identical_metrics`).
+  the same dataset produce identical metrics (see `test_two_runs_identical_metrics`,
+  which compares the in-memory MAE/MSE/RMSE/R2 of two fits).
 
 ## Limits
 
@@ -133,9 +134,9 @@ one (`diamonds`, the largest) is fetched once through `shared.datasets.fetch`.
 | `diabetes` | health | disease progression [index] | 442 | 10 | 0.453 | `sklearn.datasets.load_diabetes` — Efron et al. (2004); ships with scikit-learn (BSD-3). Offline reference |
 | `california` | real-estate | median house value [$100k] | 20,640 | 8 | 0.576 | `sklearn.datasets.fetch_california_housing` — Pace & Barry (1997), StatLib; downloaded and cached by scikit-learn on first use |
 | `co2` | automotive / emissions | CO₂ emissions [g/km] | 1,067 | 6 | 0.903 | Fuel consumption ratings — Government of Canada open data (Open Government Licence – Canada). Contains information licensed under the Open Government Licence – Canada. Committed at `data/FuelConsumptionCo2.csv` |
-| `mpg` | automotive / efficiency | fuel economy [mpg] | 392 | 6 | 0.794 | UCI *Auto MPG* via [seaborn-data](https://github.com/mwaskom/seaborn-data) — public domain. Committed at `data/auto_mpg.csv` (6 missing-`horsepower` rows dropped: 398→392) |
-| `tips` | dining / hospitality | tip [$] | 244 | 2 | 0.481 | seaborn *tips* (Bryant & Smith, 1995) — public domain. `data/tips.csv` |
-| `diamonds` | retail / jewelry | price [$] | 53,940 | 6 | 0.859 | seaborn *diamonds* — public domain. Fetched once via `shared.datasets.fetch` and checksum-verified on every load (largest set; not committed) |
+| `mpg` | automotive / efficiency | fuel economy [mpg] | 392 | 6 | 0.794 | UCI *Auto MPG* via [seaborn-data](https://github.com/mwaskom/seaborn-data) — no explicit licence upstream (redistributed via seaborn-data for teaching). Committed at `data/auto_mpg.csv` (6 missing-`horsepower` rows dropped: 398→392) |
+| `tips` | dining / hospitality | tip [$] | 244 | 2 | 0.481 | seaborn *tips* (Bryant & Smith, 1995) — no explicit licence upstream (redistributed via seaborn-data for teaching). `data/tips.csv` |
+| `diamonds` | retail / jewelry | price [$] | 53,940 | 6 | 0.859 | seaborn *diamonds* — no explicit licence upstream (redistributed via seaborn-data for teaching). Fetched once via `shared.datasets.fetch` and checksum-verified on every load (largest set; not committed) |
 | `penguins` | biology | body mass [g] | 342 | 3 | 0.788 | seaborn *palmerpenguins* (Gorman et al. 2014) — CC0. `data/penguins.csv` (2 rows with missing measurements dropped: 344→342) |
 
 **Feature selection per dataset:** `diabetes`/`california` use all provided
@@ -146,7 +147,9 @@ constant `MODELYEAR` dropped); `mpg` uses `cylinders`, `displacement`,
 dropped); `tips` uses `total_bill`, `size`; `diamonds` uses `carat`, `depth`,
 `table`, `x`, `y`, `z`; `penguins` uses `bill_length_mm`, `bill_depth_mm`,
 `flipper_length_mm`. Each dataset remains under its own licence as listed
-above.
+above. seaborn-data ships no licence file of its own and disclaims being a
+general-purpose data archive; "no explicit licence upstream" above means
+exactly that — not that the data is dedicated to the public domain.
 
 ## Courses drawn on
 

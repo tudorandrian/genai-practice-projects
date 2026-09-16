@@ -22,7 +22,7 @@ writes CSV + JSON + XLSX.
 
 ```bash
 uv run p01-mini-etl --demo                       # shipped synthetic fixture
-uv run p01-mini-etl --config configs/penguins_biology.json
+uv run p01-mini-etl --config projects/p01_mini_etl/configs/penguins_biology.json
 uv run p01-mini-etl --input my.csv --sentinel "?" \
     --numeric-cols age,income --mean-cols age --mode-cols city --drop-cols id
 uv run p01-mini-etl --input data.json             # format auto-detected
@@ -35,7 +35,11 @@ uv run p01-mini-etl --input headerless.csv --headers-file headers.csv --drop-col
 prints. On success the exit code is `0`; on a controlled error it prints
 `error: ...` to stderr and exits `1`. Every run writes `{stem}.csv`,
 `{stem}.json`, `{stem}.xlsx` and `cleaning_report.txt` into `out-dir`
-(default `output`, default stem `clean`).
+(default `output`, default stem `clean`). A shipped `configs/*.json` file's
+`input` and `out_dir` are resolved against the config file's own directory,
+not the caller's working directory, so the command above runs unchanged from
+the repository root or from inside `projects/p01_mini_etl` (where the
+shorter `--config configs/penguins_biology.json` also works).
 
 ### CLI flags
 
@@ -67,7 +71,12 @@ p01-mini-etl: ok
   rows: 14
   missing_before: 5
   missing_after: 0
+  wrote: output/
+  seconds: 0.47
 ```
+
+(the `seconds:` line varies run to run; it is left out of the committed
+`output/summary.txt`, which is otherwise the same transcript.)
 
 Running every shipped config once (13 datasets, 6 input forms):
 
@@ -114,8 +123,8 @@ synthetic fixture.
 
 ## Limits
 
-`anti_examples/` ships eleven deliberately-broken inputs, grouped by how
-loudly the tool fails:
+`anti_examples/` ships nine deliberately-broken scenarios across twelve
+files, grouped by how loudly the tool fails:
 
 | Class | What you see | Severity |
 |-------|--------------|----------|
@@ -127,7 +136,7 @@ loudly the tool fails:
 |------|---------------|:-:|
 | `a1_inconsistent_sentinels.csv` / `a1_corrected.csv` | Mixed missing-value markers (`N/A`, `-`, empty, `missing`) vs. one documented sentinel | A |
 | `a2_currency_and_thousands_separator.csv` | Currency symbols / thousands separators in a numeric column | A |
-| `a3_european_decimal_comma.csv` | `;`-delimited, comma-decimal CSV read with anglophone defaults | A |
+| `a3_european_decimal_comma.csv` | `;`-delimited, comma-decimal CSV read with anglophone defaults: pandas' own header/data field-count mismatch is caught and raised as `error: '...': rows have a different number of fields than the header when split on delimiter ','. The delimiter may be wrong for this file (e.g. pass --sep ';').`, exit 1 (`--sep ';'` loads the four real columns cleanly instead) | A |
 | `a4_no_header.csv` + `a4_wrong_headers.csv` | Header count that does not match the column count | A |
 | `a5_fully_empty_column.csv` | `mode` on a 100%-empty column → `KeyError` | B |
 | `a6_mean_on_text.csv` + config | `mean` strategy on a text column → `TypeError` | B |
@@ -135,12 +144,13 @@ loudly the tool fails:
 | `a8_encoding_latin1.csv` | Latin-1 file read with the tool's fixed `utf-8` decoder | A |
 | `a9_leading_zeros.csv` | Leading-zero codes silently coerced to `int` at read time | C (silent) |
 
-Three robustness gaps these expose (none is a correctness bug in what the
+Two robustness gaps these expose (neither is a correctness bug in what the
 tool does today): `impute` raises a raw `KeyError` for `mode` on an
 all-missing column and a raw `TypeError` for `mean` on text instead of a
 named `error:`; and there is no `--string-cols` escape hatch, so an
 identifier that "looks numeric" (postal code, leading-zero ID) is corrupted
-silently at `read_csv` time — the only silent (class C) failure of the set.
+silently at `read_csv` time — `a9` is the only remaining silent (class C)
+failure in the table above.
 
 ## Datasets and licences
 
@@ -150,15 +160,15 @@ six input forms (JSON, CSV, `;`-CSV, TSV, Excel, `|`-TXT), each under 100 KB:
 | Dataset | Domain | Form | Source & licence |
 |---------|--------|------|-------------------|
 | `penguins_biology.json` | biology | JSON | Palmer Penguins via vega-datasets — CC0 |
-| `cars_automotive.json` | automotive | JSON | UCI *Auto MPG* via vega-datasets — public domain (UCI ML Repository); whitespace-minified to stay under 100 KB |
-| `gdp_economics.xlsx` | economics | Excel | World Bank GDP via datahub.io/core/gdp — ODC-BY, filtered 7 countries 2010-2020 |
-| `population_demographics.tsv` | demographics | TSV | World Bank population via datahub.io/core/population — ODC-BY, filtered 7 countries 2010-2020 |
+| `cars_automotive.json` | automotive | JSON | UCI *Auto MPG* via vega-datasets — no explicit licence upstream (redistributed via vega-datasets for teaching); whitespace-minified to stay under 100 KB |
+| `gdp_economics.xlsx` | economics | Excel | World Bank GDP via datahub.io/core/gdp — CC-BY-4.0, filtered 7 countries 2010-2020 |
+| `population_demographics.tsv` | demographics | TSV | World Bank population via datahub.io/core/population — ODC-PDDL-1.0, filtered 7 countries 2010-2020 |
 | `weather_climate.csv` | climate | CSV | Seattle weather via vega-datasets — public domain (NOAA), filtered to 2012 |
-| `movies_entertainment.json` | film/media | JSON | vega-datasets *movies* (first 250 rows) — BSD-3-Clause; rich real missing values |
-| `titanic_history.csv` | history | CSV | Titanic passenger list via seaborn-data — public domain; `deck` dropped (77% missing) |
-| `restaurant_tips.csv` | food/hospitality | CSV (`;`) | Tips (Bryant & Smith, 1995) via seaborn-data — public domain; semicolon-delimited |
-| `airline_passengers.tsv` | aviation | TSV | AirPassengers (Box & Jenkins) via seaborn-data — public domain |
-| `iris_botany.xlsx` | botany | Excel | Fisher's *Iris* (1936) via seaborn-data / UCI — public domain |
+| `movies_entertainment.json` | film/media | JSON | vega-datasets *movies* (first 250 rows, 9 of 16 upstream columns) — BSD-3-Clause; rich real missing values |
+| `titanic_history.csv` | history | CSV | Titanic passenger list via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching); `deck` dropped (77% missing) |
+| `restaurant_tips.csv` | food/hospitality | CSV (`;`) | Tips (Bryant & Smith, 1995) via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching); semicolon-delimited |
+| `airline_passengers.tsv` | aviation | TSV | AirPassengers (Box & Jenkins) via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching) |
+| `iris_botany.xlsx` | botany | Excel | Fisher's *Iris* (1936) via seaborn-data / UCI — no explicit licence upstream (redistributed via seaborn-data for teaching) |
 | `stocks_finance.txt` | finance | TXT (`\|`) | Tech-stock monthly prices via vega-datasets — BSD-3-Clause; filtered to four tickers (MSFT, AMZN, GOOG, AAPL) |
 | `health_spending.json` | health | JSON | Health spending vs. life expectancy — Our World in Data (from OECD data), CC BY 4.0, via seaborn-data |
 | `data/sample_raw.csv` | retail/tech | CSV (`?`-sentinel) | synthetic, written for this repository |
@@ -166,6 +176,9 @@ six input forms (JSON, CSV, `;`-CSV, TSV, Excel, `|`-TXT), each under 100 KB:
 Datasets 6-12 were fetched from vega-datasets / seaborn-data and
 re-serialised into the form listed above to exercise every input type the
 tool supports; the underlying values are unchanged from the upstream source.
+seaborn-data ships no licence file of its own and disclaims being a
+general-purpose data archive; "no explicit licence upstream" above means
+exactly that — not that the data is dedicated to the public domain.
 
 ## Courses drawn on
 

@@ -14,12 +14,14 @@ jobs:
         with: { enable-cache: true }
       - run: uv python install 3.13
       - run: uv sync --frozen --group rag
+      - run: uv run mypy
       - name: Install speech engine for P10's synthetic audio (Linux only)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y espeak-ng
       - uses: actions/cache@v6
         with: { path: ~/.cache/huggingface, key: "hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}" }
-      - run: uv run pytest -m "models or rag" -q
+      - run: uv run pytest -m "models or rag or network" -q
       - run: uv run demo --all
       - uses: actions/upload-artifact@v7
+        if: always()
         with: { name: "demo-summary-${{ matrix.os }}", path: output/demo-summary.md }

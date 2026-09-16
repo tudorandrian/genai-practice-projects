@@ -11,8 +11,9 @@ joblib and round-trip-verified.
 
 Two guarantees the architecture buys us:
   * No data leakage — every CV fold fits its OWN preprocessing (nothing is fit on
-    test). For the weather set the target is reframed (RainToday -> RainYesterday)
-    so only information available *before* the prediction is used as a feature.
+    test). The weather set's generator emits `rain_yesterday` directly as a
+    feature and `rain_today` only as the target, so only information
+    available *before* the prediction is used as a feature.
   * A fair, reproducible A/B of two models as one deployable artifact.
 
 The same pipeline runs across six binary-classification datasets with mixed
@@ -620,9 +621,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dataset == "all":
         results = [run_one(name, suffix=f"_{name}") for name in DATASETS]
-        write_summary(results, OUT_DIR / "summary.txt")
+        write_summary(results, OUT_DIR / "summary_all.txt")
         print(f"p06-ml-pipeline: all ({len(results)} datasets)")
-        print("  wrote: output/summary.txt")
+        print("  wrote: output/summary_all.txt")
         return 0
 
     dataset_result = run_one(args.dataset)

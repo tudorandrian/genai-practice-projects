@@ -4,7 +4,7 @@ Project P11 — the repository's first ``rag``-tier project. Answers questions a
 *your* private documents (PDF, Markdown, text) rather than from the model's general
 knowledge. The pipeline:
 
-    load -> split (1000/100, keep source+page) -> embed (MiniLM) -> Chroma (on disk)
+    load -> split (200/20, keep source+page) -> embed (MiniLM) -> Chroma (on disk)
     question -> embed -> top-k similar chunks -> grounded prompt -> LLM -> answer + sources
 
 The answer is generated ONLY from the retrieved context, and every answer cites the
@@ -91,6 +91,10 @@ PROMPT_TEMPLATE = (
 DEMO_QUESTION_COUNT = 3
 
 
+class EmptyCorpusError(ValueError):
+    """Raised when there is nothing in ``data/`` to index."""
+
+
 # =============================================================================
 # Ingestion
 # =============================================================================
@@ -102,7 +106,7 @@ def load_documents(folder: str | Path | None = None) -> list[Any]:
     .pdf via PyPDFLoader (one Document per page, with a ``page`` in metadata),
     .md/.txt via TextLoader. Returns a list of LangChain Documents.
     """
-    from langchain_community.document_loaders import (  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_community.document_loaders import (  # lazy import, see module docstring
         PyPDFLoader,
         TextLoader,
     )
@@ -121,7 +125,7 @@ def load_documents(folder: str | Path | None = None) -> list[Any]:
 def split_documents(documents: list[Any]) -> list[Any]:
     """Split documents into overlapping chunks, preserving provenance metadata
     (source file + page) on every chunk."""
-    from langchain_text_splitters import (  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_text_splitters import (  # lazy import, see module docstring
         RecursiveCharacterTextSplitter,
     )
 
@@ -135,7 +139,7 @@ def split_documents(documents: list[Any]) -> list[Any]:
 
 
 def _embeddings() -> Any:
-    from langchain_huggingface import (  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_huggingface import (  # lazy import, see module docstring
         HuggingFaceEmbeddings,
     )
 
@@ -151,13 +155,21 @@ def _load_and_split(folder: str | Path | None = None) -> list[Any]:
 
 def _rebuild_index(chunks: list[Any], persist_dir: str | Path | None = None) -> Any:
     """(Re)embed ``chunks`` into a fresh persistent Chroma index, replacing
-    whatever was at ``persist_dir`` (default: ``PERSIST_DIR``, read at call time)."""
-    from langchain_chroma import Chroma  # noqa: PLC0415 — lazy import, see module docstring
+    whatever was at ``persist_dir`` (default: ``PERSIST_DIR``, read at call time).
+    Raises ``EmptyCorpusError`` if ``chunks`` is empty."""
+    if not chunks:
+        # Chroma would otherwise fail with an unexplained "Expected Embeddings to be
+        # non-empty" error. data/ is empty on a fresh clone until the corpus is written.
+        raise EmptyCorpusError(
+            "no documents to index in data/ — run `uv run p11-rag-chatbot --demo` or "
+            "`uv run python -m projects.p11_rag_chatbot.synthetic_docs` first"
+        )
+    from langchain_chroma import Chroma  # lazy import, see module docstring
 
     persist_dir = Path(persist_dir) if persist_dir is not None else PERSIST_DIR
     log.info("build_index: embedding %d chunks...", len(chunks))
     if persist_dir.exists():
-        import shutil  # noqa: PLC0415 — lazy import, see module docstring
+        import shutil  # lazy import, see module docstring
 
         shutil.rmtree(persist_dir)
     return Chroma.from_documents(chunks, _embeddings(), persist_directory=str(persist_dir))
@@ -176,7 +188,7 @@ def build_index(
     module-level ``DATA_DIR``/``PERSIST_DIR`` *read at call time*, so tests can
     monkeypatch those module attributes instead of passing arguments.
     """
-    from langchain_chroma import Chroma  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_chroma import Chroma  # lazy import, see module docstring
 
     folder = Path(folder) if folder is not None else DATA_DIR
     persist_dir = Path(persist_dir) if persist_dir is not None else PERSIST_DIR
@@ -209,7 +221,7 @@ def create_llm(provider: str | None = None) -> Any:
     provider = (provider or os.environ.get("RAG_LLM_PROVIDER", "ollama")).lower()
 
     if provider == "stub":
-        from langchain_core.language_models.llms import (  # noqa: PLC0415 — lazy import, see module docstring
+        from langchain_core.language_models.llms import (  # lazy import, see module docstring
             LLM,
         )
 
@@ -221,11 +233,10 @@ def create_llm(provider: str | None = None) -> Any:
             **kwargs: Any,
         ) -> str:
             """A deterministic offline answer *derived from its own prompt*
-            rather than a single fixed string (T13-e): it echoes a snippet of
-            the retrieved context, in the spirit of ``shared.testing.stub_llm``'s
-            ``"STUB: " + prompt[:40]``. A grounded question therefore visibly
-            gets a grounded-looking answer instead of every question — grounded
-            or not — reading as a refusal; ``REFUSAL`` is reserved for a real
+            rather than a single fixed string: it echoes a snippet of the
+            retrieved context (``"STUB: " + context[:60]``). A grounded question
+            therefore visibly gets a grounded-looking answer instead of every
+            question — grounded or not — reading as a refusal; ``REFUSAL`` is reserved for a real
             provider's grounding behaviour (see the retrieval-layer trap test,
             which checks this offline without one)."""
             context = prompt.split("Context:\n", 1)[-1].split("\n\nQuestion:", 1)[0]
@@ -253,12 +264,12 @@ def create_llm(provider: str | None = None) -> Any:
         return stub_llm_cls()
 
     if provider == "openai":
-        from langchain_openai import ChatOpenAI  # noqa: PLC0415 — lazy import, see module docstring
+        from langchain_openai import ChatOpenAI  # lazy import, see module docstring
 
         model = os.environ.get("RAG_OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
         return ChatOpenAI(model=model, temperature=LLM_TEMPERATURE)
 
-    from langchain_ollama import ChatOllama  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_ollama import ChatOllama  # lazy import, see module docstring
 
     model = os.environ.get("RAG_OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
     url = os.environ.get("RAG_OLLAMA_URL", DEFAULT_OLLAMA_URL)
@@ -267,10 +278,10 @@ def create_llm(provider: str | None = None) -> Any:
 
 def build_chain(vector_store: Any, llm: Any = None) -> Any:
     """Wire the RetrievalQA chain with the grounding prompt and source return."""
-    from langchain.chains import (  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain.chains import (  # lazy import, see module docstring
         RetrievalQA,
     )
-    from langchain_core.prompts import (  # noqa: PLC0415 — lazy import, see module docstring
+    from langchain_core.prompts import (  # lazy import, see module docstring
         PromptTemplate,
     )
 
@@ -318,8 +329,8 @@ def load_eval_questions(path: str | Path | None = None) -> list[tuple[str, str]]
     Skips the header and separator rows. The table's final row is a **trap**
     question with no expected source (``Source`` column reads ``(absent)``) — it
     is deliberately excluded here, since a row with no expected source cannot
-    assert a retrieval hit; see ``test_trap_question_triggers_refusal`` for the
-    assertion the trap row exists to prove.
+    assert a retrieval hit; see ``test_trap_question_retrieves_no_revenue_related_chunk``
+    for the assertion the trap row exists to prove.
     """
     path = Path(path) if path is not None else EVAL_QUESTIONS_PATH
     pairs: list[tuple[str, str]] = []
@@ -368,7 +379,7 @@ def _show(question: str, result: dict[str, Any]) -> None:
 
 def build_ui(qa: Any) -> Any:
     """Gradio chat UI over the RAG chain."""
-    import gradio as gr  # noqa: PLC0415 — lazy import, see module docstring
+    import gradio as gr  # lazy import, see module docstring
 
     def _respond(message: str, _history: Any) -> str:
         result = ask(qa, message)
@@ -403,7 +414,7 @@ def demo() -> DemoResult:
     to be running on this machine — see the README for running the chain against a
     real provider. Retrieval itself is real (the MiniLM embeddings and the Chroma
     index), and the stub's answer echoes the retrieved context rather than a fixed
-    string (T13-e), so both ``sources`` and ``answer`` in ``output/session.txt``
+    string, so both ``sources`` and ``answer`` in ``output/session.txt``
     demonstrate genuine grounding.
 
     The index is always rebuilt (``reindex=True``) so the reported ``chunks`` figure
@@ -474,7 +485,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  seconds: {result.seconds:.2f}")
         return 0 if result.status == "ok" else 1
 
-    vector_store = build_index(reindex=args.reindex)
+    try:
+        vector_store = build_index(reindex=args.reindex)
+    except EmptyCorpusError as exc:
+        print(f"p11-rag-chatbot: {exc}")
+        return 1
     qa = build_chain(vector_store)
 
     if args.ui:

@@ -40,10 +40,11 @@ uv run p05-segmentation --dataset all               # all six + comparison table
 `--verbose` logs each pipeline step at `INFO`; by default only the summary
 prints. Every run writes `elbow_silhouette<tag>.png`, `pca_segments<tag>.png`
 and `metrics<tag>.txt` into `output/` for the dataset(s) it ran, where `<tag>`
-defaults to `_<name>`; `--dataset all` additionally writes `output/summary.txt`
-(a cross-dataset comparison table); `--demo` writes `output/metrics.txt`
-(compact figures) and `output/summary.txt` (the one-row `customers`
-transcript) directly from code, without shell redirection, so both files are
+defaults to `_<name>`; `--dataset all` additionally writes
+`output/summary_all.txt` (a six-dataset comparison table, gitignored — it is
+not the committed proof); `--demo` writes `output/metrics.txt` (compact
+figures) and `output/summary.txt` (the one-row `customers` transcript)
+directly from code, without shell redirection, so both files are
 reproducible byte-for-byte.
 
 ### CLI flags
@@ -100,9 +101,9 @@ customers        360     3       3      0.6640     96.4%   0.982
   to check whether the unsupervised result agrees with a known answer.
 - **Silhouette sampling on large sets.** `_silhouette` caps the sample at
   `SILHOUETTE_SAMPLE = 2000` rows (fixed `random_state`) once a dataset grows
-  past that, since silhouette is O(n²); `taxis` (6433 rows) and `digits`
-  (1797 rows, 64 features) both rely on this to stay fast without losing
-  determinism.
+  past that, since silhouette is O(n²); only `taxis` (6433 rows) is large
+  enough to trigger the cap. `digits` (1797 rows) stays under the threshold
+  and is scored exhaustively.
 - **Download once, verify always.** `wholesale`, `taxis`, `planets` and
   `winequality` go through `shared.datasets.fetch(name, url, sha256)`, which
   caches the file under `GENAI_DATA_DIR` and re-verifies its SHA-256 on every
@@ -120,8 +121,10 @@ customers        360     3       3      0.6640     96.4%   0.982
   and sets the logging level (`WARNING`, or `INFO` with `--verbose`).
 - **Determinism.** `RANDOM_STATE = 42` seeds every `KMeans`/`PCA`/silhouette
   sample and `DATA_SEED = 7` seeds the synthetic `customers` generator; two
-  runs over the same dataset produce byte-identical labels and metrics (see
-  `test_two_runs_identical`).
+  runs over the same dataset produce identical `best_k`, cluster labels and
+  silhouette scores (see `test_two_runs_identical`, which compares all
+  three). The committed proof files are the byte-level evidence: `--demo`
+  regenerates them and leaves `git status` clean.
 
 ## Limits
 
@@ -132,6 +135,10 @@ customers        360     3       3      0.6640     96.4%   0.982
   over `2..k_max`; there is no gap statistic, no BIC/AIC-style criterion, and
   no manual elbow override — the point is one clear, repeatable rule, not an
   exhaustive comparison of selection methods.
+- **`digits`'s reported k is the search ceiling, not a peak.** Its silhouette
+  keeps rising through `k_max=12` instead of turning over, so `argmax` lands
+  on the last k searched rather than a genuine maximum; the true class count
+  is 10. Raising `k_max` would very likely move the reported k further.
 - **K-Means only.** No DBSCAN, no hierarchical or Gaussian-mixture
   clustering — the discipline demonstrated (scale, choose k objectively,
   profile, validate, project) applies to any of them, but only K-Means is

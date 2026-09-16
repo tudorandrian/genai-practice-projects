@@ -1,6 +1,6 @@
 [project]
 name = "genai-practice-projects"
-version = "0.1.0"
+version = "1.0.0"
 description = "Twelve practice projects in data, machine learning and generative AI — reproducible, tested, English."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -98,7 +98,7 @@ markers = [
   "network: downloads public data",
   "models: needs Hugging Face weights",
   "rag: needs LangChain + Chroma",
-  "llm: needs Ollama or an API key; always skipped in CI",
+  "llm: needs Ollama or an API key; not selected by any workflow",
 ]
 
 [tool.ruff]

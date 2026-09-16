@@ -52,7 +52,7 @@ def device() -> str:
     importable and testable (with a monkeypatched ``sys.modules["torch"]`` or
     without torch installed at all) without the ``models`` dependency group.
     """
-    import torch  # noqa: PLC0415 — lazy heavy import, see module docstring
+    import torch  # lazy heavy import, see module docstring
 
     return "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -68,7 +68,7 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
     global _PROCESSOR, _MODEL
     if _PROCESSOR is None or _MODEL is None:
         # Lazy heavy import so this module is importable/testable without transformers.
-        from transformers import (  # noqa: PLC0415
+        from transformers import (
             BlipForConditionalGeneration,
             BlipProcessor,
         )

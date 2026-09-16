@@ -24,8 +24,8 @@ process_meeting(audio_path) -> {"transcript", "summary"}  # full chain, writes b
 `summarize_with_llm` dispatches on `MEETING_LLM_PROVIDER`: `ollama`
 (default, a local model over HTTP, no key), `openai` (Chat Completions,
 needs `OPENAI_API_KEY`), `local` (an offline `transformers` causal LM,
-downloads its own weights), and `stub` (a fixed canned reply, no model at
-all — used by the tests and by `demo()`). If `ollama` is unreachable,
+downloads its own weights), and `stub` (no model at all; it echoes the start
+of the transcript — used by the tests and by `demo()`). If `ollama` is unreachable,
 `summarize_with_llm` logs a warning and falls back to the stub with a
 visible `[ollama unavailable ...]` marker instead of raising — see
 [ADR 0007](../../docs/decisions/0007-p10-provider-seam-and-fallback.md).
@@ -65,8 +65,9 @@ export OPENAI_API_KEY=sk-...             # MEETING_OPENAI_MODEL overrides the de
 uv run p10-meeting-assistant path/to/audio.wav
 ```
 
-`.env.example` lists every key P10 reads (copy to `.env`, gitignored); no
-key is required for the default `ollama` provider (it degrades to the stub
+`.env.example` lists every key P10 reads. Nothing loads `.env` automatically:
+export the variables, or copy the file to `.env` (gitignored) and run with
+`uv run --env-file .env p10-meeting-assistant …`. No key is required for the default `ollama` provider (it degrades to the stub
 if nothing is listening) or for `stub` itself.
 
 ## Example output
@@ -99,16 +100,17 @@ released timeline. Second, the customer feedback from last week. ...
 
 ```
 ## Topics discussed
-- (stub) List up to five main topics discussed in the meeting below.
+- (stub) Good morning team. Today we discussed three topics. First, t
 
 ## Decisions
-- (stub) List every decision that was made in the meeting below. Answ
+- (stub) Good morning team. Today we discussed three topics. First, t
 ```
 
-The `stub` provider always returns `"- (stub) " + prompt[:60]`, so the
-summary content is intentionally not meaningful — it exists to prove the
-pipeline and the three-section contract; see "Design notes" for why
-`demo()` pins it.
+The `stub` provider returns `"- (stub) "` plus the first 60 characters of
+the transcript in its prompt, so every section repeats the same excerpt.
+That proves Whisper's transcript reaches the summarizer and that the
+three-section contract holds; it is not a summary. See "Design notes" for
+why `demo()` pins it.
 
 ## Design notes
 
@@ -139,11 +141,13 @@ pipeline and the three-section contract; see "Design notes" for why
 - **Determinism.** `load_asr_model` passes `generate_kwargs={"num_beams": 1,
   "do_sample": False}` explicitly, so the same audio always transcribes to
   the same text. It also pins Whisper to `device="cpu"` and
-  `dtype="float32"`, so the committed transcript is reproducible across
-  platforms instead of depending on which accelerator transformers picks
-  (a macOS Apple Silicon run produced a noise transcript from healthy audio,
-  and the device it ran on was not recorded); the device and dtype actually
-  used are logged on load. `synthetic_audio.generate()` also skips a script whose WAV
+  `dtype="float32"` for reproducibility rather than letting transformers
+  pick an accelerator (on Apple Silicon it picked MPS, where Whisper
+  transcribed healthy audio as noise; pinning CPU fixed that). The committed
+  proofs come from Windows; on macOS the word and section counts
+  (`words=73 sections=3`) matched, and the transcript text itself was not
+  compared. The device and dtype actually used are logged on load.
+  `synthetic_audio.generate()` also skips a script whose WAV
   already exists unless `force=True`, so repeated `--demo` calls reuse the
   same audio bytes. With the pinned `stub` provider, this keeps
   `output/transcript.txt` and `output/summary.txt` byte-identical across
@@ -169,14 +173,23 @@ pipeline and the three-section contract; see "Design notes" for why
   RIFF WAV in place immediately after synthesis, so `assistant.load_audio`
   (which only reads RIFF via `scipy.io.wavfile`) never sees a mislabelled
   file; a compressed or unrecognized file instead raises
-  `TTSEngineUnavailableError`, degrading `demo()` to `skipped`.
+  `TTSEngineUnavailableError`, degrading `demo()` to `skipped`. The macOS
+  driver also writes asynchronously, so `generate()` waits (up to 60 s) until
+  the file is long enough for its script and has stopped growing; a file
+  that never gets there is deleted and the demo reports `skipped`.
+- **On Linux, `pyttsx3` needs `espeak-ng`** (`sudo apt-get install
+  espeak-ng`); without it, `--demo` reports `skipped` with that hint. Even
+  with it installed, `pyttsx3` on GitHub's `ubuntu-latest` runner reported
+  success without writing `standup.wav`, so the demo reports `skipped`
+  there too, not `failed`. Whisper transcription of the synthesized audio is
+  therefore verified on Windows and macOS only.
 - **`whisper-tiny.en` is the smallest, fastest, English-only Whisper
   checkpoint** — a trade of accuracy for a fast CPU demo. A larger
   checkpoint (`openai/whisper-base.en`, `-small.en`, ...) would transcribe
   more accurately at proportionally more load/inference time; swapping it
   in only requires overriding `WHISPER_MODEL`.
 - **The `stub` provider produces a summary with no real content** — it
-  echoes the first 60 characters of its own prompt, to prove the pipeline
+  echoes the first 60 characters of the transcript, to prove the hand-off
   and the three-section contract deterministically, not to demonstrate
   summarization quality; see "Run" for exercising a real provider.
 - **`local` downloads its own weights**, separate from Whisper's, and is

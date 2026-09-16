@@ -51,14 +51,24 @@ def test_discovery_is_not_tied_to_a_file_naming_scheme(tmp_path: Path) -> None:
     assert qbank.unit_id_from_filename("course-x", found[0]) == "course-x/any-name"
 
 
-def test_valid_bank_matches_the_json_schema(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fixture_name", ["e00_valid_baseline", "e15_multi_select_valid"])
+def test_valid_bank_matches_the_json_schema(fixture_name: str, tmp_path: Path) -> None:
+    (tmp_path / "lesson.md").write_text(
+        (FIXTURES / f"{fixture_name}.md").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    bank, errors = qbank.build_bank(tmp_path)
+    assert errors == []
+    schema = json.loads(qbank.SCHEMA_PATH.read_text(encoding="utf-8"))
+    jsonschema.validate(bank, schema)  # raises on mismatch, including a Multi-Select
+    # question's `correct` list with more than one entry (e15).
+
+
+def test_valid_baseline_bank_has_one_of_each_type(tmp_path: Path) -> None:
     (tmp_path / "lesson.md").write_text(
         (FIXTURES / "e00_valid_baseline.md").read_text(encoding="utf-8"), encoding="utf-8"
     )
     bank, errors = qbank.build_bank(tmp_path)
     assert errors == []
-    schema = json.loads(qbank.SCHEMA_PATH.read_text(encoding="utf-8"))
-    jsonschema.validate(bank, schema)  # raises on mismatch
     assert bank["question_counts"] == {"multiple_choice": 1, "true_false": 1, "open_ended": 1}
 
 
@@ -149,7 +159,7 @@ def test_section_but_no_question_blocks() -> None:
     assert "no `### Qn. (Type)` question headers found" in errors
 
 
-def test_missing_file_is_caught_by_run() -> None:
+def test_empty_course_dir_is_caught_by_run() -> None:
     # discover_lessons on an empty dir -> run() exits 1 with no output.
     with tempfile.TemporaryDirectory() as d:
         rc = qbank.run(Path(d), Path(d) / "out.json", False, "demo-course")
@@ -258,6 +268,21 @@ def test_unit_id_from_filename() -> None:
     assert qbank.unit_id_from_filename("demo-course", Path("quiz-1.md")) == "demo-course/quiz-1"
 
 
+def test_source_dir_is_repo_relative_for_a_dir_inside_the_repo() -> None:
+    course_dir = qbank.HERE / "fixtures"
+    bank, _errors = qbank.build_bank(course_dir)
+    assert bank["source_dir"] == "projects/p02_question_bank/fixtures"
+    assert ":" not in bank["source_dir"]  # never a Windows drive letter / absolute path
+
+
+def test_source_dir_falls_back_to_dir_name_outside_the_repo(tmp_path: Path) -> None:
+    course = tmp_path / "some-course"
+    course.mkdir()
+    (course / "lesson.md").write_text(fixture("e00_valid_baseline.md"), encoding="utf-8")
+    bank, _errors = qbank.build_bank(course)
+    assert bank["source_dir"] == "some-course"
+
+
 def test_qid_starts_with_course_id_slash() -> None:
     # Pinned for projects/p12: qid always starts with "<course_id>/", so the
     # module can be recovered with qid.split("/")[0].
@@ -343,7 +368,8 @@ def test_broken_file_blocks_output() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_demo_is_deterministic() -> None:
+def test_demo_is_deterministic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(qbank, "OUT_DIR", tmp_path / "output")
     first = qbank.demo()
     second = qbank.demo()
     assert first.figures == second.figures

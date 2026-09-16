@@ -22,6 +22,9 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest -m "core and not network" --cov=projects --cov=shared --cov-report=term-missing -q
       - run: uv run python -m shared.blocklist --all
+      - name: release check (offline; exits 1 on any failing check)
+        if: runner.os == 'Linux'
+        run: uv run python -m scripts.release_check --offline
   gitleaks:
     runs-on: ubuntu-latest
     steps:

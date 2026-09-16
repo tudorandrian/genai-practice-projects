@@ -34,30 +34,40 @@ TEXT_SUFFIXES = {
     ".html",
     ".cfg",
     ".ini",
+    ".example",  # .env.example: the one place a real key is most likely pasted by mistake
     "",
 }
 _COMPILED = [(p, re.compile(p)) for p in PATTERNS]
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def tracked_text_files(staged_only: bool = False) -> list[Path]:
+def tracked_text_files(staged_only: bool = False, root: Path | None = None) -> list[Path]:
+    root = root or ROOT
     cmd = (
         ["git", "diff", "--cached", "--name-only", "-z"]
         if staged_only
         else ["git", "ls-files", "-z"]
     )
-    out = subprocess.run(cmd, cwd=ROOT, capture_output=True, check=True).stdout.decode()
+    out = subprocess.run(cmd, cwd=root, capture_output=True, check=True).stdout.decode()
     return [
-        ROOT / f
+        root / f
         for f in out.split("\0")
-        if f and Path(f).suffix in TEXT_SUFFIXES and (ROOT / f).is_file()
+        if f and Path(f).suffix in TEXT_SUFFIXES and (root / f).is_file()
     ]
 
 
-def scan(paths: Iterable[Path], allowed: set[str] | None = None) -> list[tuple[Path, int, str]]:
+def scan(
+    paths: Iterable[Path], allowed: set[str] | None = None, root: Path | None = None
+) -> list[tuple[Path, int, str]]:
+    """Return (path, line number, pattern) for every blocked match.
+
+    `allowed` holds paths relative to `root` (default: the repository), so only the root
+    README.md is exempt, not every file named README.md.
+    """
+    root = root or ROOT
     hits: list[tuple[Path, int, str]] = []
     for path in paths:
-        rel = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else path.name
+        rel = path.relative_to(root).as_posix() if path.is_relative_to(root) else path.name
         if allowed and rel in allowed:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")

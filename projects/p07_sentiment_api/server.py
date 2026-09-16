@@ -160,6 +160,11 @@ def analyze_sentiment(text: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 app = Flask(__name__)
+# Reject bodies above 64 KiB before Flask/Werkzeug buffers them for parsing —
+# without this, a request can grow the process's memory (or, for a
+# pathologically nested JSON body, blow the interpreter's recursion limit
+# inside json.loads) before validation ever runs.
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 
 
 @app.route("/sentiment", methods=["POST"])
@@ -194,6 +199,21 @@ def _handle_404(_err: Exception) -> tuple[Response, int]:
 def _handle_405(_err: Exception) -> tuple[Response, int]:
     """Return JSON (not the default HTML page) for a wrong HTTP method."""
     return jsonify({"error": "HTTP method not allowed for this route."}), 405
+
+
+@app.errorhandler(413)
+def _handle_413(_err: Exception) -> tuple[Response, int]:
+    """Return JSON for a body over MAX_CONTENT_LENGTH."""
+    return jsonify({"error": "Request body too large."}), 413
+
+
+@app.errorhandler(500)
+def _handle_500(err: Exception) -> tuple[Response, int]:
+    """Return JSON for anything unexpected below (e.g. a RecursionError from
+    parsing a deeply nested — but under the size cap — JSON body), instead of
+    Flask's default HTML error page. The exception is still logged."""
+    log.error("unhandled error: %s", err, exc_info=err)
+    return jsonify({"error": "Internal server error."}), 500
 
 
 # ---------------------------------------------------------------------------

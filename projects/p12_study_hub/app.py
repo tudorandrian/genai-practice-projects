@@ -48,7 +48,7 @@ def _module_choices() -> list[str]:
         return ["(all)"] + sorted(
             {q["module"] for q in quiz_engine.load_bank(quiz_engine.BANK_PATH)}
         )
-    except Exception:  # noqa: BLE001 — the UI must still render if the bank isn't ready yet
+    except Exception:  # the UI must still render if the bank isn't ready yet
         return ["(all)"]
 
 
@@ -158,10 +158,19 @@ def _tab_progress(gr: Any) -> None:
     refresh.click(scan, None, [table, chart, rate_md])
 
 
+def _ensure_lesson_index() -> None:
+    """Build the lesson index if it has never been built. Without this, a fresh clone's
+    first question runs against an empty store, finds nothing, and is refused as if
+    the lessons did not cover it."""
+    if not tutor.MANIFEST_PATH.exists():
+        tutor.index_lessons()
+
+
 def _tab_tutor(gr: Any) -> None:
     gr.Markdown("### Tutor — ask the course lessons (answers ONLY from them, with sources)")
 
     def respond(message: str, _history: Any) -> str:
+        _ensure_lesson_index()
         result = tutor.ask(message)
         sources = f"\n\n_Sources: {', '.join(result['sources'])}_" if result["sources"] else ""
         return str(result["answer"]) + sources
@@ -171,7 +180,7 @@ def _tab_tutor(gr: Any) -> None:
 
 def build_ui() -> Any:
     """Assemble the three-tab Gradio app."""
-    import gradio as gr  # noqa: PLC0415 — lazy import, see module docstring
+    import gradio as gr  # lazy import, see module docstring
 
     with gr.Blocks(title="Study Hub Assistant") as demo_app:
         gr.Markdown("# Study Hub Assistant — capstone (Quiz - Progress - Tutor)")
@@ -201,7 +210,7 @@ def demo() -> DemoResult:
 
     The LLM provider is force-pinned to ``stub`` (not "whichever provider is
     configured") so the committed proof does not depend on whether Ollama
-    happens to be running on this machine (T14-a) — see the README for running
+    happens to be running on this machine — see the README for running
     against a real provider. Every quiz answer is the question's own correct
     id, so the session score is deterministic (5/5) and independent of any
     random guessing.
@@ -295,11 +304,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nChart saved to {OUT_DIR / 'progress.png'}")
         return 0
     if args.ask:
+        _ensure_lesson_index()
         tutor_result = tutor.ask(args.ask)
         sources = ", ".join(tutor_result["sources"])
         print(f"\nQ: {args.ask}\nA: {tutor_result['answer']}\nSources: {sources}")
         return 0
-    if args.reindex:
+    if args.reindex:  # a bare --reindex already ran above; don't also launch the UI
         return 0
 
     build_ui().launch(server_name=args.host, server_port=args.port)

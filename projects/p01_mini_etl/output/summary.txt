@@ -3,4 +3,3 @@ p01-mini-etl: ok
   missing_before: 5
   missing_after: 0
   wrote: output/
-  seconds: 0.47

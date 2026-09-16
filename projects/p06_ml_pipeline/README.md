@@ -45,9 +45,10 @@ prints. Every run writes `metrics<tag>.txt`, `model_card<tag>.md`,
 `02_rf_importances<tag>.png`, `03_confusion_lr<tag>.png`,
 `04_lr_coefficients<tag>.png`) into `output/` for the dataset(s) it ran,
 where `<tag>` defaults to `_<name>`; `--dataset all` additionally writes
-`output/summary.txt` (a cross-dataset comparison table); `--demo` writes
-`output/metrics.txt` (compact figures) and `output/summary.txt` (the
-one-row `weather` transcript) directly from code, without shell
+`output/summary_all.txt` (a six-dataset comparison table, gitignored — it is
+not the committed proof); `--demo` writes `output/metrics.txt` (compact
+figures) and `output/summary.txt` (the one-row `weather` transcript)
+directly from code, without shell
 redirection, so both files are reproducible byte-for-byte.
 
 ### CLI flags
@@ -101,10 +102,10 @@ produces (`# Model card`, `## Data`, `## Candidates and grid`, `## Winner`,
 - **The pipeline is the anti-leakage guarantee, not a convenience.** Fitting
   a scaler on all of `X` before the split would leak test statistics into
   training; putting the `ColumnTransformer` inside the `Pipeline` makes
-  every CV fold fit its own preprocessing — structurally impossible to
-  leak. For `weather` the target is additionally reframed so only
-  information available *before* the prediction is used as a feature:
-  `rain_yesterday` is a legal input, today's rain is the target only.
+  every CV fold fit its own preprocessing — preprocessing cannot leak
+  across folds. For `weather`, only information available *before* the
+  prediction is used as a feature: `rain_yesterday` is a legal input,
+  today's rain is the target only.
 - **`set_params(clf=...)` keeps the comparison honest.** Two separate
   pipelines would let the preprocessing drift apart between the two
   candidates; swapping only the estimator guarantees Random Forest and
@@ -138,7 +139,10 @@ produces (`# Model card`, `## Data`, `## Candidates and grid`, `## Winner`,
   and sets the logging level (`WARNING`, or `INFO` with `--verbose`).
 - **Determinism.** `RANDOM_STATE = 42` seeds the split, both classifiers and
   `CV = StratifiedKFold(5, shuffle=True, random_state=42)`; two runs over
-  the same dataset produce byte-identical metrics (see `test_two_runs_identical`).
+  the same dataset produce identical Random Forest metrics (see
+  `test_two_runs_identical`, which compares `best_params`, accuracy and
+  recall of two fits). The committed proof files are the byte-level
+  evidence: `--demo` regenerates them and leaves `git status` clean.
 
 ## Limits
 
@@ -154,6 +158,12 @@ produces (`# Model card`, `## Data`, `## Candidates and grid`, `## Winner`,
   file, but they do not currently drive the winner decision — on a set
   where the two disagree, the reported winner may not be the model with
   the best minority recall.
+- **The winner is chosen on the same split its scores are reported on.**
+  `run_one` compares `rf["accuracy"] >= lr["accuracy"]` on the held-out test
+  set and then reports that same model's test-set numbers, so the reported
+  scores are the better of two noisy estimates on one split and are
+  optimistically biased. Selecting on each model's CV `best_score_` instead
+  would avoid picking the winner and grading it on the same data.
 - **`adult`, `credit_g`, `churn`, `online_shoppers` and `bank_marketing`
   need a network connection the first time.** `online_shoppers`' checksum
   is pinned to one specific upstream CSV; if it is ever edited in place,
@@ -181,9 +191,10 @@ deterministic); five are public real datasets.
 | `online_shoppers` | e-commerce | purchase = `True` | [UCI Online Shoppers Purchasing Intention](https://archive.ics.uci.edu/dataset/468) (Sakar 2018), CC-BY 4.0. Fetched once via `shared.datasets.fetch` and checksum-verified; not committed |
 | `bank_marketing` | bank marketing | subscribe = `2` | [OpenML 1461](https://www.openml.org/d/1461) — UCI Bank Marketing (columns anonymised `V1`..`V16`), public. Fetched via `fetch_openml`; not committed |
 
-**Anti-leakage per dataset:** `weather` reframes `RainToday -> RainYesterday`
-(a legal feature) and keeps today's rain as the target only; the synthetic
-generator follows the same rule. `adult` drops `fnlwgt` (a census sampling
+**Anti-leakage per dataset:** `weather`'s synthetic generator emits
+`rain_yesterday` directly as a feature and keeps `rain_today` only as the
+target, so no prediction-time information reaches training. `adult` drops
+`fnlwgt` (a census sampling
 weight, not a real predictor). `credit_g` uses application attributes only.
 `churn` drops the unique `phone_number` id (it would explode the one-hot
 and leak identity). `online_shoppers` and `bank_marketing` use

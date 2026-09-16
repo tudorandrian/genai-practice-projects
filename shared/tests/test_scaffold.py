@@ -26,3 +26,34 @@ def test_no_tracked_file_over_100kb() -> None:
     names = [f for f in files.decode().split("\0") if f and f != "uv.lock"]
     big = [f for f in names if (ROOT / f).stat().st_size > 100 * 1024]
     assert big == []
+
+
+def test_no_tracked_binary_artifact() -> None:
+    import subprocess
+
+    from scripts.release_check import BINARY_SUFFIXES
+
+    files = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True
+    ).stdout
+    # .gitignore alone does not stop `git add -f model.pkl`; this test runs on every PR.
+    bad = [f for f in files.decode().split("\0") if f and Path(f).suffix in BINARY_SUFFIXES]
+    assert bad == []
+
+
+def test_every_registry_entry_matches_its_console_script() -> None:
+    import importlib.util
+
+    from shared.registry import ENTRIES
+
+    scripts = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "scripts"
+    ]
+    assert set(scripts) - {"demo"} == {entry.slug for entry in ENTRIES}
+    for entry in ENTRIES:
+        target_module = entry.target.split(":")[0]
+        script_module = scripts[entry.slug].split(":")[0]
+        assert script_module == target_module, entry.slug
+        # find_spec locates the module without importing it, so models/rag projects stay
+        # cheap to check in the core environment.
+        assert importlib.util.find_spec(target_module) is not None, entry.slug

@@ -1,10 +1,10 @@
 """Tests for the P12 study hub capstone (quiz_engine / progress / tutor / app).
 
 Heavy paths (embeddings, Chroma, the LLM) are only touched by ``rag``-marked
-tests, per the ported source's own convention — ``tutor.py`` imports
-LangChain/Chroma even in its simplest paths, so every test that touches it,
-pure helpers included, stays ``rag`` rather than ``core``. ``quiz_engine`` and
-``progress`` run on the real shipped corpus and stay ``core`` (fast, offline).
+tests. ``tutor.py``'s top-level imports are stdlib only (every LangChain/Chroma
+import is inside the function that needs it), so its pure helpers are tested
+under ``core``. ``quiz_engine``, ``progress`` and ``app``'s CLI dispatch run
+offline on the real shipped corpus and are ``core`` too.
 
 Run
     uv run pytest projects/p12_study_hub -q            # core only
@@ -19,39 +19,34 @@ from pathlib import Path
 import pytest
 
 from projects.p02_question_bank import qbank
-from projects.p12_study_hub import progress, quiz_engine, tutor
+from projects.p12_study_hub import app, progress, quiz_engine, tutor
 from shared import blocklist
 
 # No blanket module-level ``pytestmark`` here: every test is marked
-# individually, since this file mixes ``core`` tests (quiz_engine, progress —
-# pure Python and pandas) with ``rag`` tests (tutor.py imports LangChain even
-# in its simplest paths) — see p10_meeting_assistant's test file for the same
-# convention and the reason it matters: a blanket module-level `core` marker
-# would leave every `rag` test *also* matching `-m "core and not network"`,
-# which is exactly the CI filter that must not import langchain/chromadb.
+# individually, since this file mixes ``core`` tests (quiz_engine, progress,
+# tutor's pure helpers) with ``rag`` tests (real embeddings and Chroma) — see
+# p10_meeting_assistant's test_assistant.py for the same convention and the
+# reason it matters: a blanket module-level `core` marker would leave every
+# `rag` test *also* matching `-m "core and not network"`, which is exactly the
+# CI filter that must not import langchain/chromadb.
 
 HERE = Path(__file__).resolve().parents[1]
 CORPUS = HERE / "corpus"
 COURSES = sorted(p for p in CORPUS.iterdir() if p.is_dir())
 
-# Adjudicated 2026-09-16 (heavy.yml run
-# https://github.com/tudorandrian/genai-practice-projects/actions/runs/35076304269):
-# the relevance gate's margin heuristic assumes an on-topic question's best-retrieved
-# chunk stands out from the rest; that assumption is empirically false on macOS, where
-# a genuinely on-topic question was measured to produce a flat score field and a
-# genuinely off-topic one a peaked field — the opposite of what the heuristic needs,
-# and not something a threshold, a ratio, or computing the similarity a different way
-# can fix (`_diagnostic_snapshot` on that run showed the store's own score and this
-# module's own cosine similarity agreeing with each other; the geometry itself is what
-# differs there). See projects/p12_study_hub/README.md "Limits" for the measured
-# numbers and how to re-measure if this ever needs revisiting. Not `skip`: skipping
-# would hide that the assertions below are known to fail on this one platform, not that
-# they don't apply. Not `strict`: if a future runner or model revision makes them pass,
-# that must not break CI.
+# The relevance gate's margin heuristic assumes an on-topic question's best-retrieved
+# chunk stands out from the rest. Measured on a macOS runner, that is false: a genuinely
+# on-topic question produced a flat score field and a genuinely off-topic one a peaked
+# field, the opposite of what the heuristic needs. `_diagnostic_snapshot` there showed
+# the store's own score and this module's own cosine similarity agreeing, and the
+# collection correctly in cosine space, so the scores themselves differ, not how they
+# are computed. See projects/p12_study_hub/README.md "Limits" for the numbers and how
+# to re-measure. Not `skip`: skipping would hide that the assertions below are known to
+# fail on this one platform, not that they don't apply. Not `strict`: if a future
+# runner or model revision makes them pass, that must not break CI.
 _MACOS_RELEVANCE_GATE_XFAIL_REASON = (
     "relevance gate margin heuristic doesn't hold on macOS - see "
-    "projects/p12_study_hub/README.md 'Limits' and heavy.yml run "
-    "https://github.com/tudorandrian/genai-practice-projects/actions/runs/35076304269"
+    "projects/p12_study_hub/README.md 'Limits'"
 )
 
 
@@ -195,12 +190,12 @@ def test_success_rate_with_no_history_file(tmp_path: Path) -> None:
 
 
 # =============================================================================
-# tutor — imports LangChain even in its simplest paths, so every test here
-# stays `rag` (per the rename map's note that module C keeps @pytest.mark.rag).
+# tutor — pure helpers are `core` (tutor.py imports nothing heavy at module
+# level); anything that embeds or touches Chroma is `rag`.
 # =============================================================================
 
 
-@pytest.mark.rag
+@pytest.mark.core
 def test_grounding_prompt_demands_context_and_refusal() -> None:
     assert "ONLY" in tutor.PROMPT_TEMPLATE
     assert tutor.REFUSAL in tutor.PROMPT_TEMPLATE
@@ -208,7 +203,7 @@ def test_grounding_prompt_demands_context_and_refusal() -> None:
     assert "{question}" in tutor.PROMPT_TEMPLATE
 
 
-@pytest.mark.rag
+@pytest.mark.core
 def test_sources_dedupe() -> None:
     class FakeDoc:
         def __init__(self, source: str) -> None:
@@ -225,9 +220,9 @@ def test_sources_dedupe() -> None:
     ]
 
 
-@pytest.mark.rag
+@pytest.mark.core
 def test_stub_llm_provider_needs_no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stub is deterministic and derived from its own input (T14-b) — never
+    """The stub is deterministic and derived from its own input — never
     a fixed string regardless of the prompt, and never the exact ``REFUSAL``
     string (that's reserved for ``ask()``'s relevance gate and a real
     provider's grounding behaviour)."""
@@ -244,7 +239,7 @@ def test_stub_llm_provider_needs_no_network(monkeypatch: pytest.MonkeyPatch) -> 
     assert tutor.ask_llm("Context:\nSomething else entirely.\n\nQuestion: X?\n\nAnswer:") != first
 
 
-@pytest.mark.rag
+@pytest.mark.core
 def test_stub_provider_argument_overrides_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TUTOR_LLM_PROVIDER", "ollama")  # would need a running service
     prompt = "Context:\nFoo bar baz qux.\n\nQuestion: Q?\n\nAnswer:"
@@ -253,9 +248,89 @@ def test_stub_provider_argument_overrides_env(monkeypatch: pytest.MonkeyPatch) -
     assert result != tutor.REFUSAL
 
 
-@pytest.mark.rag
+@pytest.mark.core
 def test_finds_lesson_notes() -> None:
     assert len(tutor.find_lessons(CORPUS)) == 30
+
+
+@pytest.mark.core
+def test_ollama_settings_are_read_when_called(monkeypatch: pytest.MonkeyPatch) -> None:
+    """TUTOR_OLLAMA_MODEL / TUTOR_OLLAMA_URL set after import must still take effect."""
+    import json
+    import urllib.request
+
+    seen: dict[str, object] = {}
+
+    class FakeResponse:
+        def __enter__(self) -> FakeResponse:
+            return self
+
+        def __exit__(self, *_exc: object) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return b'{"response": " ok "}'
+
+    def fake_urlopen(req: urllib.request.Request, timeout: float) -> FakeResponse:
+        seen["url"] = req.full_url
+        seen["model"] = json.loads(req.data)["model"]  # type: ignore[arg-type]
+        return FakeResponse()
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setenv("TUTOR_OLLAMA_URL", "http://ollama.test:1234")
+    monkeypatch.setenv("TUTOR_OLLAMA_MODEL", "tiny-test-model")
+
+    assert tutor.ask_llm("prompt", provider="ollama") == "ok"
+    assert seen == {"url": "http://ollama.test:1234/api/generate", "model": "tiny-test-model"}
+
+
+@pytest.mark.core
+def test_ask_builds_the_index_first_on_a_fresh_clone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """With no index manifest, `--ask` must index the lessons before asking;
+    otherwise the question runs against an empty store and is refused."""
+    calls: list[str] = []
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", tmp_path / "index" / "manifest.json")
+
+    def fake_index_lessons(**_kwargs: object) -> dict[str, int]:
+        calls.append("index")
+        return {}
+
+    def fake_ask(question: str) -> dict[str, object]:
+        calls.append("ask")
+        return {"answer": "A", "sources": ["s.md"]}
+
+    monkeypatch.setattr(tutor, "index_lessons", fake_index_lessons)
+    monkeypatch.setattr(tutor, "ask", fake_ask)
+
+    assert app.main(["--ask", "what is a sentinel value?"]) == 0
+    assert calls == ["index", "ask"]
+    assert "Sources: s.md" in capsys.readouterr().out
+
+
+@pytest.mark.core
+def test_ask_does_not_reindex_when_an_index_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+    calls: list[str] = []
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
+
+    def fake_index_lessons(**_kwargs: object) -> dict[str, int]:
+        calls.append("index")
+        return {}
+
+    def fake_ask(question: str) -> dict[str, object]:
+        calls.append("ask")
+        return {"answer": "", "sources": []}
+
+    monkeypatch.setattr(tutor, "index_lessons", fake_index_lessons)
+    monkeypatch.setattr(tutor, "ask", fake_ask)
+
+    assert app.main(["--ask", "q"]) == 0
+    assert calls == ["ask"]
 
 
 @pytest.mark.rag
@@ -265,20 +340,14 @@ def test_finds_lesson_notes() -> None:
 def test_index_and_ask_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Real embeddings + a real Chroma index over the shipped corpus, with the
     stub LLM provider — proves retrieval genuinely finds a relevant lesson, and
-    (T14-b/T14-c) that the stub's answer is derived from that retrieved
-    *lesson prose*, not merely from the bracketed source label ask() used to
-    assemble into the context.
+    that the stub's answer is derived from that retrieved *lesson prose*, not
+    from a source label.
 
-    Fix round 2 (A2): this used to assert one exact, hard-coded phrase from
-    the sentinel-values lesson appeared in the answer. That pins the
-    embedding model's ranking to one specific platform's output, which is not
-    guaranteed bit-identical everywhere (it failed on macOS, where a
-    different — still on-topic — chunk ranked first). The invariant that
-    actually matters, and is checked below instead, is platform-independent
-    by construction: whatever chunk `ask()` itself reports as the top
-    retrieved source, the stub's answer must be a genuine excerpt of *that*
-    lesson's real text — not a fixed phrase, not the bracketed source label,
-    not a hallucination.
+    It does not assert one exact phrase from the sentinel-values lesson: which
+    on-topic chunk ranks first is not guaranteed identical on every platform.
+    Instead, whatever chunk `ask()` itself reports as the top retrieved source,
+    the stub's answer must be a genuine excerpt of *that* lesson's real text —
+    not a fixed phrase, not a source label, not a hallucination.
 
     Adjudicated xfail on macOS only (see `_MACOS_RELEVANCE_GATE_XFAIL_REASON`
     above): on that platform this exact question was measured to produce a
@@ -296,9 +365,9 @@ def test_index_and_ask_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     question = "What is a sentinel value in a messy dataset?"
     result = tutor.ask(question, provider="stub")
-    # Fix round 5 (T15-g point 2): on assertion failure, dump collection metadata,
-    # the query embedding's norm, and each candidate's own-cosine + store-relevance
-    # score side by side — `_diagnostic_snapshot` is only ever called here (an assert
+    # On assertion failure, dump collection metadata, the query embedding's norm, and
+    # each candidate's own-cosine + store-relevance score side by side —
+    # `_diagnostic_snapshot` is only ever called here (an assert
     # message expression is evaluated by Python only when the condition is false), so
     # this costs nothing when the assertion passes.
     assert result["sources"], (
@@ -338,39 +407,13 @@ def test_trap_question_refuses_via_relevance_gate(
     """A genuinely off-topic question must refuse via the relevance gate, never
     reach the LLM.
 
-    Fix round 2 (A2) traced an earlier macOS failure here to Chroma having no
-    explicit distance metric (fixed: COLLECTION_METADATA, EMBED_NORMALIZE) and
-    re-measured RELEVANCE_MIN as an absolute floor under the corrected
-    configuration. heavy.yml still failed on macOS after that — the actual
-    retrieval pulled chunks from three unrelated courses and answered from
-    one, meaning nothing stood out on that platform even though the absolute
-    floor was cleared. Fix round 3's diagnosis (tune the absolute number
-    again) would only move the problem to the next platform; fix round 4
-    (ruling T15-e) replaced the absolute floor as the primary discriminator
-    with a margin: refuse unless the best chunk clearly stands out from a
-    wider "background" sample (`RELEVANCE_MARGIN`, see its comment in
-    tutor.py for the measured evidence this formulation was chosen over a
-    narrower one that didn't separate reliably). That is scale-free by
-    construction, not by calibration — it does not depend on what absolute
-    numbers a given platform's embedding/HNSW build happens to produce.
-    Verified the corrected configuration (cosine space, normalized
-    embeddings) is genuinely in effect, not just requested, in
-    `test_embeddings_are_actually_normalized_and_cosine_configured` below —
-    yet `heavy.yml` still disagreed on macOS after fix round 4, with *opposite*
-    verdicts (a genuinely grounded question refused, this trap answered) that
-    a mis-scaled margin cannot produce; the retrieved documents for this exact
-    question were also identical, same order, to a pre-cosine-config run —
-    evidence the configuration was silently not taking effect on that
-    platform's Chroma/HNSW build specifically, not merely mis-scaled. Fix
-    round 5 (ruling T15-g) stopped trusting the store's own relevance score
-    for the gate's decision at all: `ask()` now computes cosine similarity
-    itself, as a plain dot product of embedding vectors read back directly
-    from the store (`_retrieve_with_own_similarities`) — the same arithmetic
-    on every platform, up to float noise, regardless of what distance space
-    the store itself is configured (or silently defaults) to use. Not
-    verified on macOS directly (no macOS environment available here); a
-    residual platform-dependence risk is recorded in this project's README
-    "Limits".
+    The gate refuses unless the best chunk clearly stands out from a wider
+    "background" sample (`RELEVANCE_MARGIN`; see its comment in tutor.py for
+    the measured evidence), using cosine similarity this module computes
+    itself from the stored vectors. Adjudicated xfail on macOS only (see
+    `_MACOS_RELEVANCE_GATE_XFAIL_REASON` above): there this question was
+    measured to produce a peaked score field that clears the margin, so the
+    gate answers it. See the README's "Limits".
     """
     monkeypatch.setattr(tutor, "INDEX_DIR", tmp_path / "index")
     monkeypatch.setattr(tutor, "MANIFEST_PATH", tmp_path / "index" / "manifest.json")
@@ -383,22 +426,18 @@ def test_trap_question_refuses_via_relevance_gate(
     assert result == {"answer": tutor.REFUSAL, "sources": []}, tutor._diagnostic_snapshot(question)
 
 
-# _clears_relevance_gate is pure Python (no LangChain/Chroma import) — see tutor.py's
-# module docstring: "Every LangChain/Chroma import stays inside the function that needs
-# it, so this module ... import[s] cleanly without the rag group installed." Testing it
-# directly with synthetic scores needs no embeddings, no store, and no platform's
-# particular numbers — exactly what fix round 4 (ruling T15-e, point 3) asked for: a test
-# that pins "refuse when nothing stands out" without needing a platform to reproduce it.
+# _clears_relevance_gate is pure Python (no LangChain/Chroma import). Testing it directly
+# with synthetic scores needs no embeddings, no store, and no platform's particular
+# numbers, so "refuse when nothing stands out" is pinned on every platform.
 @pytest.mark.core
 def test_relevance_gate_refuses_when_no_chunk_stands_out() -> None:
     # A flat score profile — every candidate similarly (here, similarly *high*)
     # relevant — must refuse: nothing distinguishes a genuine top match from generic
-    # background, which is exactly the shape heavy.yml's macOS failure showed for a
-    # real off-topic question (three unrelated courses, nothing standing out). This
-    # also proves the gate is not merely re-implementing the old absolute floor: every
-    # score here clears the old RELEVANCE_MIN=0.35 by a wide margin, and it still
-    # refuses, because "high" was never itself the point once the margin criterion
-    # replaced it — see RELEVANCE_MARGIN's comment in tutor.py.
+    # background. (On macOS, a real *on-topic* question produced this flat shape, which
+    # is why the gate refuses it there; see the README's "Limits".) This also proves the
+    # gate is not merely an absolute floor: every score here clears an earlier floor of
+    # 0.35 by a wide margin, and it still refuses — see RELEVANCE_MARGIN's comment in
+    # tutor.py.
     flat_high = [(f"doc{i}", 0.55) for i in range(tutor.RELEVANCE_POOL_K)]
     assert tutor._clears_relevance_gate(flat_high) is False
 
@@ -423,6 +462,34 @@ def test_relevance_gate_still_enforces_the_absolute_sanity_floor() -> None:
 
 
 @pytest.mark.core
+def test_relevance_gate_background_starts_below_the_k_answer_chunks() -> None:
+    # Top chunk 0.9, then seven at 0.85, then four at 0.1. With k=4 the background
+    # (ranks 5..12) has median 0.475, so the top chunk stands out; with k=2 the
+    # background (ranks 3..12) has median 0.85, so it does not.
+    scores = [("top", 0.9)] + [(f"mid{i}", 0.85) for i in range(7)]
+    scores += [(f"low{i}", 0.1) for i in range(4)]
+    assert tutor._clears_relevance_gate(scores, k=4) is True
+    assert tutor._clears_relevance_gate(scores, k=2) is False
+
+
+@pytest.mark.core
+def test_ask_passes_its_k_to_the_relevance_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeDoc:
+        def __init__(self, name: str) -> None:
+            self.page_content = f"text of {name}"
+            self.metadata = {"source": f"{name}.md"}
+
+    scores = [(FakeDoc("top"), 0.9)] + [(FakeDoc(f"mid{i}"), 0.85) for i in range(7)]
+    scores += [(FakeDoc(f"low{i}"), 0.1) for i in range(4)]
+    monkeypatch.setattr(tutor, "_retrieve_with_own_similarities", lambda _q, _pool_k: scores)
+
+    assert tutor.ask("q", k=2, provider="stub") == {"answer": tutor.REFUSAL, "sources": []}
+    answered = tutor.ask("q", k=4, provider="stub")
+    assert answered["answer"].startswith("STUB: text of top")
+    assert answered["sources"] == ["top.md", "mid0.md", "mid1.md", "mid2.md"]
+
+
+@pytest.mark.core
 def test_relevance_gate_passes_with_too_few_candidates_to_estimate_a_background() -> None:
     # A corpus smaller than TOP_K + 1 chunks can't supply a background sample; the
     # gate falls back to the absolute floor alone rather than refusing everything.
@@ -434,11 +501,9 @@ def test_relevance_gate_passes_with_too_few_candidates_to_estimate_a_background(
 def test_embeddings_are_actually_normalized_and_cosine_configured(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Fix round 4 (ruling T15-e, point 1): verify the corrected configuration is
-    genuinely in effect at runtime, not merely requested — the whole premise of fix
-    round 2's fix depends on it actually reaching the collection and the encoder on
-    every platform, and this is the one thing this repository's test suite can check
-    for itself (macOS's own configuration is not something this machine can inspect).
+    """Verify the cosine-space collection and normalized embeddings are genuinely in
+    effect at runtime, not merely requested: the gate's own cosine similarity is only
+    correct if every embedding is a unit vector.
     """
     monkeypatch.setattr(tutor, "INDEX_DIR", tmp_path / "index")
     monkeypatch.setattr(tutor, "MANIFEST_PATH", tmp_path / "index" / "manifest.json")

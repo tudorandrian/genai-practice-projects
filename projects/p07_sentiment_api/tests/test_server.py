@@ -7,6 +7,7 @@ Run:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 
 import pytest
@@ -51,6 +52,15 @@ def test_negation_flip() -> None:
     # "nu ... bun" must flip a positive word to negative.
     assert server.analyze_sentiment("Nu este bun")["sentiment"] == "negative"
     assert server.analyze_sentiment("Nu este prost")["sentiment"] == "positive"
+
+
+def test_negation_carries_across_sentence_punctuation() -> None:
+    # Pins the documented Limit: a negation stays active until the next
+    # scored word, even across a full stop and an intervening filler
+    # sentence — it is not reset at punctuation.
+    result = server.analyze_sentiment("Nu stiu. Dar produsul este excelent!")
+    assert result["sentiment"] == "negative"
+    assert result["score"] < 0
 
 
 def test_type_error_on_non_string() -> None:
@@ -144,6 +154,27 @@ def test_contract_keys_are_english() -> None:
     result = server.analyze_sentiment("Un produs excelent")
     assert set(result) == {"text", "score", "sentiment"}
     assert result["sentiment"] == "positive"
+
+
+def test_deeply_nested_json_returns_json_error(client: FlaskClient) -> None:
+    # Small in bytes (well under MAX_CONTENT_LENGTH) but deep enough to blow
+    # Python's recursion limit inside json.loads — request.get_json(silent=True)
+    # only swallows ValueError/BadRequest, so the RecursionError used to
+    # escape as Flask's default HTML 500 page.
+    n = 3000
+    body = "[" * n + "]" * n
+    resp = client.post("/sentiment", data=body, content_type="application/json")
+    assert resp.status_code != 200
+    assert resp.content_type == "application/json"
+    assert "error" in resp.get_json()
+
+
+def test_oversized_body_returns_413_json(client: FlaskClient) -> None:
+    body = json.dumps({"text": "a" * (server.app.config["MAX_CONTENT_LENGTH"] + 1)})
+    resp = client.post("/sentiment", data=body, content_type="application/json")
+    assert resp.status_code == 413
+    assert resp.content_type == "application/json"
+    assert "error" in resp.get_json()
 
 
 def test_production_flag_uses_waitress(monkeypatch: pytest.MonkeyPatch) -> None:

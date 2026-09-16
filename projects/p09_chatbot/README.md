@@ -58,9 +58,10 @@ curl -s -X POST http://127.0.0.1:5000/reset
 `--verbose` logs at `INFO`; by default only the four-line demo summary
 prints. `--demo` posts three fixed messages through `app.test_client()` (no
 live server — see "Never start the server" below) and writes
-`output/conversation_transcript.txt` (the three user/bot turns) and
-`output/metrics.txt` (turn count and model name) — both deterministic and
-committed.
+`output/conversation_transcript.txt` (the three user/bot turns),
+`output/curl_demo.txt` (curl-style requests and responses for `/chatbot`,
+`/reset` and `/`, also through the test client) and `output/metrics.txt`
+(turn count and model name) — all deterministic and committed.
 
 ### Endpoints
 

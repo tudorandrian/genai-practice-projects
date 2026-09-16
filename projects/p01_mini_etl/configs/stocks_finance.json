@@ -1,7 +1,7 @@
 {
-  "input": "datasets/stocks_finance.txt",
+  "input": "../datasets/stocks_finance.txt",
   "sep": "|",
   "strategies": {},
-  "out_dir": "output",
+  "out_dir": "../output",
   "stem": "stocks_clean"
 }

@@ -37,6 +37,7 @@ import json
 import logging
 import sys
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,9 @@ import pandas as pd
 from shared.demo import DemoResult
 
 log = logging.getLogger(__name__)
+
+HERE = Path(__file__).resolve().parent
+OUT_DIR = HERE / "output"
 
 
 # =============================================================================
@@ -86,12 +90,21 @@ def load_data(
         df = pd.read_excel(path_or_url)
     else:  # csv / tsv / txt
         delimiter = sep if sep is not None else ("\t" if kind == "tsv" else ",")
-        df = pd.read_csv(
-            path_or_url,
-            header=None if headers else "infer",
-            sep=delimiter,
-            encoding="utf-8",
-        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", pd.errors.ParserWarning)
+            df = pd.read_csv(
+                path_or_url,
+                header=None if headers else "infer",
+                sep=delimiter,
+                encoding="utf-8",
+                index_col=False,  # never promote an extra delimiter-split field to an index
+            )
+        if any(issubclass(w.category, pd.errors.ParserWarning) for w in caught):
+            raise ValueError(
+                f"'{path_or_url}': rows have a different number of fields than the "
+                f"header when split on delimiter {delimiter!r}. The delimiter may be "
+                f"wrong for this file (e.g. pass --sep ';')."
+            )
 
     if headers:
         if df.shape[1] != len(headers):
@@ -267,6 +280,21 @@ def _write_metrics(report: dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _write_demo_summary(report: dict[str, Any], path: Path) -> None:
+    """Deterministic demo transcript: the same figures printed on success, minus
+    the elapsed-seconds line (which is never the same twice) — no timestamps,
+    no absolute paths."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "p01-mini-etl: ok",
+        f"  rows: {report['rows']}",
+        f"  missing_before: {report['missing_before']}",
+        f"  missing_after: {report['missing_after']}",
+        "  wrote: output/",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 # =============================================================================
 # Config / CLI
 # =============================================================================
@@ -276,15 +304,32 @@ def _split(value: str | None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()] if value else []
 
 
+def _resolve_relative(value: str | None, base: Path | None) -> str | None:
+    """Resolve a path *from a config file* against that config file's own
+    directory, so `input`/`out_dir` work the same regardless of the caller's
+    current directory. Absolute paths and URLs pass through unchanged."""
+    if not value or base is None:
+        return value
+    if "://" in value or Path(value).is_absolute():
+        return value
+    return str((base / value).resolve())
+
+
 def build_config(args: argparse.Namespace) -> dict[str, Any]:
     """Merge a JSON config file (if any) with command-line flags.
 
-    CLI flags override config-file keys. Returns a normalised dict with keys:
-    input, sentinel, headers, numeric_cols, strategies, out_dir, stem.
+    CLI flags override config-file keys. A relative `input`/`out_dir` coming
+    from the config file is resolved against the config file's own directory
+    (not the caller's cwd), so `--config path/to/some.json` works the same
+    from any working directory. Returns a normalised dict with keys: input,
+    sentinel, headers, numeric_cols, strategies, out_dir, stem.
     """
     cfg: dict[str, Any] = {}
+    config_dir: Path | None = None
     if args.config:
-        cfg = json.loads(Path(args.config).read_text(encoding="utf-8"))
+        config_path = Path(args.config)
+        config_dir = config_path.parent
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
 
     # Headers: inline list from config, or a one-line CSV file via --headers-file
     headers = cfg.get("headers")
@@ -305,14 +350,14 @@ def build_config(args: argparse.Namespace) -> dict[str, Any]:
         numeric = _split(args.numeric_cols)
 
     return {
-        "input": args.input or cfg.get("input"),
+        "input": args.input or _resolve_relative(cfg.get("input"), config_dir),
         "format": args.format or cfg.get("format"),
         "sep": args.sep if args.sep is not None else cfg.get("sep"),
         "sentinel": args.sentinel if args.sentinel is not None else cfg.get("sentinel", "?"),
         "headers": headers,
         "numeric_cols": numeric,
         "strategies": strategies,
-        "out_dir": args.out_dir or cfg.get("out_dir", "output"),
+        "out_dir": args.out_dir or _resolve_relative(cfg.get("out_dir", "output"), config_dir),
         "stem": args.stem or cfg.get("stem", "clean"),
     }
 
@@ -366,12 +411,12 @@ def run(cfg: dict[str, Any]) -> dict[str, Any]:
 def demo() -> DemoResult:
     """Clean the shipped synthetic fixture into output/; offline and deterministic."""
     start = time.perf_counter()
-    here = Path(__file__).resolve().parent
-    cfg = json.loads((here / "config.example.json").read_text(encoding="utf-8"))
-    cfg["input"] = str(here / cfg["input"])
-    cfg["out_dir"] = str(here / "output")
+    cfg = json.loads((HERE / "config.example.json").read_text(encoding="utf-8"))
+    cfg["input"] = str(HERE / cfg["input"])
+    cfg["out_dir"] = str(OUT_DIR)
     report = run(cfg)
-    _write_metrics(report, Path(cfg["out_dir"]) / "metrics.txt")
+    _write_metrics(report, OUT_DIR / "metrics.txt")
+    _write_demo_summary(report, OUT_DIR / "summary.txt")
     return DemoResult(
         "p01-mini-etl",
         "ok",

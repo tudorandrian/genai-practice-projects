@@ -63,7 +63,11 @@ p02-question-bank: ok
   lessons: 2
   questions: 4
   wrote: output/
+  seconds: 0.01
 ```
+
+(the `seconds:` line varies run to run; it is not part of any committed
+proof.)
 
 `output/summary.txt` (the committed proof, deterministic, no absolute
 paths or timestamps):

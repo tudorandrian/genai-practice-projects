@@ -67,15 +67,11 @@ TARGET_SR = 16000  # Whisper expects 16 kHz mono
 CHUNK_LENGTH_S = 30  # segment long audio
 LLM_MAX_NEW_TOKENS = 160  # per focused section call
 
-# Fix round 1: heavy.yml's macOS run stopped crashing (the AIFF/WAV bug is
-# fixed) but silently transcribed only 4 of the synthesized script's 73
-# words — `demo()` still reported "ok". If the transcript's word count falls
-# below this fraction of the synthesized script's own word count, `demo()`
-# treats it as an implausibly short transcription (a truncated/broken audio
-# file that happened not to raise, not a genuine "nothing to transcribe")
-# and reports `failed`, not `skipped` — the cause may be our own code (see
-# synthetic_audio.AudioFacts), so it must not be waved through as an
-# environment limitation.
+# Audio that parses and transcribes without raising can still be broken (a
+# truncated file, or Whisper emitting noise). If the transcript's word count
+# falls below this fraction of the synthesized script's own word count,
+# `demo()` reports `failed`, not `skipped`: the cause may be this project's
+# own code, so it must not be waved through as an environment limitation.
 MIN_TRANSCRIPT_WORD_RATIO = 0.5
 
 # The three sections the summary must always contain. Assembling them under
@@ -98,9 +94,9 @@ SECTIONS: list[tuple[str, str]] = [
     ),
 ]
 
-# Fix round 4: Whisper runs on CPU in float32, pinned explicitly (see
-# load_asr_model). ASR_DTYPE is passed as a string so this module (and its
-# core-tier tests) never needs torch just to name the dtype.
+# Whisper runs on CPU in float32, pinned explicitly (see load_asr_model).
+# ASR_DTYPE is passed as a string so this module (and its core-tier tests)
+# never needs torch just to name the dtype.
 ASR_DEVICE = "cpu"
 ASR_DTYPE = "float32"
 
@@ -125,7 +121,8 @@ def load_audio(path: str | Path) -> np.ndarray:
     """Decode a WAV file into a float32 mono waveform resampled to 16 kHz.
 
     Uses scipy only (no ffmpeg). Raises ``ValueError`` on a non-WAV / unreadable
-    file so the caller can show a friendly error.
+    file so the caller can show a friendly error. Integer PCM is scaled to
+    [-1, 1]; 8-bit WAV is unsigned (silence is 128), so it is centred first.
     """
     path = Path(path)
     try:
@@ -137,7 +134,9 @@ def load_audio(path: str | Path) -> np.ndarray:
     if data.ndim > 1:  # stereo -> mono
         data = data.mean(axis=1)
     # normalise integer PCM to float32 in [-1, 1]
-    if np.issubdtype(data.dtype, np.integer):
+    if data.dtype == np.uint8:
+        data = (data.astype(np.float32) - 128.0) / 128.0
+    elif np.issubdtype(data.dtype, np.integer):
         data = data.astype(np.float32) / np.iinfo(data.dtype).max
     else:
         data = data.astype(np.float32)
@@ -156,30 +155,23 @@ def load_asr_model() -> Any:
     runs. Imports transformers lazily so this module stays importable without
     it (only the ``models`` dependency group needs it).
 
-    Fix round 4: the device and dtype are pinned (``ASR_DEVICE``/``ASR_DTYPE``)
-    and, once loaded, the device/dtype the model *actually* landed on plus
-    the torch/transformers versions are logged as one INFO line (see
+    The device and dtype are pinned (``ASR_DEVICE``/``ASR_DTYPE``). Once
+    loaded, the device/dtype the model *actually* landed on plus the
+    torch/transformers versions are logged as one INFO line (see
     ``asr_runtime_facts``) and kept for ``demo()``'s failure note.
     """
     global _ASR, _ASR_FACTS
     if _ASR is None:
-        from transformers import pipeline  # noqa: PLC0415 — lazy heavy import, see module docstring
+        from transformers import pipeline  # lazy heavy import, see module docstring
 
         from projects.p10_meeting_assistant import synthetic_audio
 
         # Pinned to CPU/float32 rather than left to transformers' device and
-        # dtype auto-selection, for three reasons: (1) reproducibility — the
-        # committed output/transcript.txt must be byte-identical across runs
-        # and platforms, and different backends/dtypes produce different
-        # floating-point results; (2) the committed proofs were produced on
-        # CPU, so that is the configuration they prove; (3) heavy.yml run
-        # 35086969752 on macos-latest (Apple Silicon) transcribed repeated-
-        # token noise ('il Tottenham ca cagggg...', 4/73 words) from audio
-        # proven healthy upstream (complete file, correct byte order, RMS
-        # 0.10, no clipping, correct 16 kHz float32 decode) — consistent with
-        # the pipeline having been placed on Apple's MPS backend, where that
-        # failure mode is known. That last point is a hypothesis; the facts
-        # line logged below exists to confirm or refute it on the next run.
+        # dtype auto-selection: (1) the committed proofs were produced on CPU,
+        # and different backends/dtypes give different floating-point results;
+        # (2) on Apple Silicon, auto-selection placed Whisper on the MPS
+        # backend, where it transcribed healthy audio as repeated-token noise,
+        # and pinning CPU fixed it.
         _ASR = pipeline(
             "automatic-speech-recognition",
             model=WHISPER_MODEL,
@@ -195,7 +187,7 @@ def load_asr_model() -> Any:
 
 
 def _package_version(name: str) -> str:
-    from importlib.metadata import PackageNotFoundError, version  # noqa: PLC0415
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         return version(name)
@@ -269,7 +261,14 @@ def build_prompt(transcript: str, section: str | None = None) -> str:
 
 
 def stub(prompt: str) -> str:
-    """The ``stub`` provider: a fixed, canned reply that needs no model at all."""
+    """The ``stub`` provider: needs no model at all. Echoes the first 60
+    characters of the transcript embedded in a section prompt (whitespace
+    collapsed), so the summary shows the transcript really reached the
+    summarizer; a prompt without a transcript is echoed from its start."""
+    marker = "Meeting transcript:\n"
+    if marker in prompt:
+        transcript = prompt.split(marker, 1)[1].split("\n\nAnswer with only", 1)[0]
+        return "- (stub) " + " ".join(transcript.split())[:60]
     return "- (stub) " + prompt[:60]
 
 
@@ -282,8 +281,8 @@ def _summarize_ollama(prompt: str) -> str:
     ``MEETING_OLLAMA_URL``), not cached, so callers (and tests) can point at a
     different endpoint without reloading the module.
     """
-    import json  # noqa: PLC0415 — lazy import, see module docstring
-    import urllib.request  # noqa: PLC0415 — lazy import, see module docstring
+    import json  # lazy import, see module docstring
+    import urllib.request  # lazy import, see module docstring
 
     model = os.environ.get("MEETING_OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
     url = os.environ.get("MEETING_OLLAMA_URL", DEFAULT_OLLAMA_URL)
@@ -316,7 +315,7 @@ def summarize_with_llm(prompt: str) -> str:
                            cached by Hugging Face, model from
                            MEETING_LLM_MODEL); use only if Ollama is
                            unavailable and no key is at hand
-        stub             — a fixed canned reply (used by tests, no model)
+        stub             — echoes the start of the transcript (tests, no model)
 
     Swapping providers touches only this function's body (keys stay in the
     environment, never in code).
@@ -327,7 +326,7 @@ def summarize_with_llm(prompt: str) -> str:
         return stub(prompt)
 
     if provider == "openai":
-        from openai import OpenAI  # noqa: PLC0415 — lazy import, see module docstring
+        from openai import OpenAI  # lazy import, see module docstring
 
         client = OpenAI()  # reads OPENAI_API_KEY from the environment
         model = os.environ.get("MEETING_OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
@@ -343,7 +342,7 @@ def summarize_with_llm(prompt: str) -> str:
         # off the system disk.
         global _LOCAL_LLM
         if _LOCAL_LLM is None:
-            from transformers import (  # noqa: PLC0415 — lazy heavy import, see module docstring
+            from transformers import (  # lazy heavy import, see module docstring
                 AutoModelForCausalLM,
                 AutoTokenizer,
             )
@@ -403,14 +402,18 @@ def summarize_structured(transcript: str) -> str:
 # =============================================================================
 
 
+def _write_outputs(transcript: str, summary: str) -> None:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "transcript.txt").write_text(transcript.rstrip("\n") + "\n", encoding="utf-8")
+    (OUT_DIR / "summary.txt").write_text(summary.rstrip("\n") + "\n", encoding="utf-8")
+    log.info("wrote transcript.txt and summary.txt to %s", OUT_DIR)
+
+
 def process_meeting(audio_path: str | Path) -> dict[str, str]:
     """Full chain: audio -> transcript -> structured summary; saves both."""
     transcript = transcribe(audio_path)
     summary = summarize_structured(transcript)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "transcript.txt").write_text(transcript.rstrip("\n") + "\n", encoding="utf-8")
-    (OUT_DIR / "summary.txt").write_text(summary.rstrip("\n") + "\n", encoding="utf-8")
-    log.info("process_meeting: wrote transcript.txt and summary.txt to %s", OUT_DIR)
+    _write_outputs(transcript, summary)
     return {"transcript": transcript, "summary": summary}
 
 
@@ -432,7 +435,7 @@ def _ui_handler(audio_path: str | None) -> tuple[str, str]:
 
 def build_ui() -> Any:
     """Construct the Gradio interface (no import side effects)."""
-    import gradio as gr  # noqa: PLC0415 — lazy heavy import, see module docstring
+    import gradio as gr  # lazy heavy import, see module docstring
 
     return gr.Interface(
         fn=_ui_handler,
@@ -469,17 +472,16 @@ def demo() -> DemoResult:
     carrying an actionable note, never a raised exception or ``failed``
     status — a missing optional system package should not fail the gate.
 
-    Fix round 1: a missing/broken engine is not the only way this can go
-    wrong silently. ``synthesis`` succeeding and ``load_audio``/Whisper
-    raising nothing is not proof the audio was any good — macOS's driver
-    wrote a file Whisper accepted but transcribed almost nothing from. If
-    the transcript's word count falls below ``MIN_TRANSCRIPT_WORD_RATIO`` of
-    the synthesized script's own word count, this returns ``failed`` (never
-    ``skipped`` — an implausibly short transcript from audio that parsed
-    fine is treated as our own bug until proven otherwise), with a note
-    carrying both word counts, the audio facts logged during synthesis, the
-    ASR runtime facts (device/dtype/versions, fix round 4) and a truncated
-    transcript excerpt.
+    Synthesis succeeding and ``load_audio``/Whisper raising nothing is not
+    proof the audio was any good. If the transcript's word count falls below
+    ``MIN_TRANSCRIPT_WORD_RATIO`` of the synthesized script's own word count,
+    this returns ``failed`` (never ``skipped`` — an implausibly short
+    transcript from audio that parsed fine is treated as this project's own
+    bug until proven otherwise), with a note carrying both word counts, the
+    audio facts logged during synthesis, the ASR runtime facts
+    (device/dtype/versions) and a truncated transcript excerpt. The three
+    committed output files are written only after that check passes, so a
+    failed run never overwrites them.
     """
     start = time.perf_counter()
 
@@ -503,14 +505,15 @@ def demo() -> DemoResult:
     previous_provider = os.environ.get("MEETING_LLM_PROVIDER")
     os.environ["MEETING_LLM_PROVIDER"] = "stub"
     try:
-        result = process_meeting(audio_path)
+        transcript = transcribe(audio_path)
+        summary = summarize_structured(transcript)
     finally:
         if previous_provider is None:
             os.environ.pop("MEETING_LLM_PROVIDER", None)
         else:
             os.environ["MEETING_LLM_PROVIDER"] = previous_provider
 
-    words = len(result["transcript"].split())
+    words = len(transcript.split())
     script_words = len(synthetic_audio.SCRIPTS["standup.wav"].split())
     if words < MIN_TRANSCRIPT_WORD_RATIO * script_words:
         seconds = time.perf_counter() - start
@@ -521,7 +524,7 @@ def demo() -> DemoResult:
             else "standup.wav: (no audio facts captured — reused from a previous run)"
         )
         asr_facts_line = _ASR_FACTS or "whisper: (no ASR runtime facts captured)"
-        excerpt = result["transcript"][:200].replace("\n", " ")
+        excerpt = transcript[:200].replace("\n", " ")
         note = (
             f"transcript has {words} word(s) but the synthesized script has {script_words}; "
             f"ratio {words / script_words:.2f} is below MIN_TRANSCRIPT_WORD_RATIO="
@@ -532,7 +535,8 @@ def demo() -> DemoResult:
         log.warning("demo: %s", note)
         return DemoResult("p10-meeting-assistant", "failed", seconds=round(seconds, 2), note=note)
 
-    sections = result["summary"].count("## ")
+    _write_outputs(transcript, summary)
+    sections = summary.count("## ")
     metrics_lines = ["provider=stub", f"words={words}", f"sections={sections}"]
     (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
 

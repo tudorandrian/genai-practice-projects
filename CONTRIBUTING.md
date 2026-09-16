@@ -6,7 +6,10 @@ This is a personal portfolio repository; the rules below are the ones I hold mys
 
 1. **Every commit is publishable.** No secrets, no file that originates from a course
    provider, no local machine paths, no file over 100 KB, no notebooks or model files.
-   The pre-commit hooks enforce this; `--no-verify` is not used.
+   Pre-commit checks size (`check-added-large-files`), secrets (`gitleaks`) and blocked
+   words and local paths (`shared.blocklist`). File types are checked by the core test
+   `test_no_tracked_binary_artifact` and by the offline `release_check` step in CI;
+   `.gitignore` alone does not stop `git add -f`. `--no-verify` is not used.
 2. **Public only through the gate.** The repository stays private until every item in
    [`docs/release-gate.md`](docs/release-gate.md) is ticked.
 

@@ -66,7 +66,7 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
     global _TOKENIZER, _MODEL
     if _TOKENIZER is None or _MODEL is None:
         # Lazy heavy import so the module is importable/testable without transformers.
-        from transformers import (  # noqa: PLC0415 — lazy heavy import, see module docstring
+        from transformers import (  # lazy heavy import, see module docstring
             AutoModelForSeq2SeqLM,
             AutoTokenizer,
         )
@@ -183,7 +183,7 @@ def _write_curl_demo(client: Any, app_module: Any) -> None:
     lines.append("")
 
     lines.append("$ curl -s -o /dev/null -w 'GET / -> HTTP %{http_code}\\n' http://127.0.0.1:5000/")
-    lines.append("GET / -> HTTP 200")
+    lines.append(f"GET / -> HTTP {client.get('/').status_code}")
 
     (OUT_DIR / "curl_demo.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     app_module.history.clear()

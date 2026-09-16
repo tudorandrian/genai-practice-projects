@@ -1,6 +1,8 @@
 {
-  "input": "datasets/gdp_economics.xlsx",
-  "strategies": {"Value": "drop"},
-  "out_dir": "output",
+  "input": "../datasets/gdp_economics.xlsx",
+  "strategies": {
+    "Value": "drop"
+  },
+  "out_dir": "../output",
   "stem": "gdp_clean"
 }

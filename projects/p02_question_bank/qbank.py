@@ -39,7 +39,10 @@ from shared.demo import DemoResult
 
 log = logging.getLogger(__name__)
 
-SCHEMA_PATH = Path(__file__).resolve().parent / "schema" / "question-bank.schema.json"
+HERE = Path(__file__).resolve().parent
+REPO_ROOT = HERE.parents[1]
+OUT_DIR = HERE / "output"
+SCHEMA_PATH = HERE / "schema" / "question-bank.schema.json"
 
 Question = dict[str, Any]
 Bank = dict[str, Any]
@@ -306,6 +309,17 @@ def course_id_from_dir(course_dir: Path) -> str:
     return course_dir.name
 
 
+def _safe_source_dir(course_dir: Path) -> str:
+    """A non-leaking representation of the course directory for the bank's
+    `source_dir` field: relative to the repository root when `course_dir` is
+    inside the repo, otherwise just the directory's own name — never an
+    absolute local filesystem path."""
+    try:
+        return str(course_dir.resolve().relative_to(REPO_ROOT)).replace("\\", "/")
+    except ValueError:
+        return course_dir.name
+
+
 def unit_id_from_filename(course_id: str, path: Path) -> str:
     """`<course_id>/<file stem>`, independent of any file naming scheme."""
     return f"{course_id}/{path.stem}"
@@ -423,7 +437,7 @@ def build_bank(course_dir: Path, course_id: str | None = None) -> tuple[Bank, li
             c["open_ended"],
         )
 
-    bank = assemble(cid, str(course_dir), parsed)
+    bank = assemble(cid, _safe_source_dir(course_dir), parsed)
     return bank, errors
 
 
@@ -457,9 +471,8 @@ def demo() -> DemoResult:
     deterministic. Writes output/question-bank.json, output/summary.txt (via
     `run`) and output/metrics.txt."""
     start = time.perf_counter()
-    here = Path(__file__).resolve().parent
-    fixtures = here / "fixtures"
-    output_dir = here / "output"
+    fixtures = HERE / "fixtures"
+    output_dir = OUT_DIR
     demo_dir = output_dir / "demo-lessons"
     demo_dir.mkdir(parents=True, exist_ok=True)
 

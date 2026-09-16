@@ -43,7 +43,10 @@ uv run pytest projects/p11_rag_chatbot -q                  # core tests, no rag 
 uv run pytest projects/p11_rag_chatbot -m rag -q           # full pipeline, needs the rag group
 ```
 
-`--verbose` logs at `INFO`; by default only the summary lines print. `--demo`
+`--verbose` logs at `INFO`; by default only the summary lines print. On a fresh
+clone `data/` is empty: run `--demo` (or `uv run python -m
+projects.p11_rag_chatbot.synthetic_docs`) once before `--reindex`, `-q`, the loop
+or `--ui`, which otherwise stop with a message saying so. `--demo`
 generates the synthetic corpus into `data/` (never tracked — see "Datasets and
 licences"), rebuilds the index, asks three questions with the `stub` provider
 (force-pinned — see "Design notes"), and writes `output/session.txt` and
@@ -59,8 +62,9 @@ uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
 ```
 
 `RAG_LLM_PROVIDER=openai` (with `OPENAI_API_KEY`, `RAG_OPENAI_MODEL`) works the
-same way. `.env.example` lists every key P11 reads (copy to `.env`, gitignored);
-no key is required for the default `ollama` provider or for `stub` itself.
+same way. `.env.example` lists every key P11 reads. Nothing loads `.env` automatically:
+export the variables, or copy the file to `.env` (gitignored) and run with
+`uv run --env-file .env p11-rag-chatbot …`. No key is required for the default `ollama` provider or for `stub` itself.
 
 ## Example output
 
@@ -94,7 +98,7 @@ Sources: acme_handbook.pdf (p.1), support_faq.txt, engineering_notes.md
 ```
 
 The `stub` answer is a truncated echo of the top-ranked retrieved chunk
-(`"STUB: " + context[:60]`, in the spirit of `shared.testing.stub_llm`) —
+(`"STUB: " + context[:60]`) —
 deterministic and visibly derived from what was retrieved, not a real generated
 answer; see "Design notes" for why `demo()` pins `stub`.
 
@@ -103,11 +107,9 @@ answer; see "Design notes" for why `demo()` pins `stub`.
 - **One provider seam.** `create_llm(provider=None)` is the only place an LLM is
   constructed; `provider` falls back to `RAG_LLM_PROVIDER` (default `ollama`).
   `stub` returns a small `LLM` subclass that echoes the retrieved context, used
-  by the tests and `demo()`. An earlier stub answered the same fixed string
-  regardless of its input — found when both the source-rank test and the trap
-  test kept passing with retrieval effectively disabled, which meant neither
-  was exercising retrieval at all, only the stub's constant output; deriving
-  the answer from the prompt closes that gap and reserves the exact
+  by the tests and `demo()`. An earlier stub returned a canned response
+  whatever the input, which made the refusal assertion true by construction;
+  deriving the answer from the prompt closes that gap and reserves the exact
   `REFUSAL` string for a real provider's own grounding behaviour. No API key
   ever lives in code, and every model/URL name is read
   from the environment at call time, not cached, so tests can override them
@@ -126,11 +128,8 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   retrieval hit to assert). `test_evaluation_questions_retrieve_the_expected_source`
   asserts the expected file is the *top-ranked* source (`result["sources"][0]`),
   with `test_wrong_document_is_not_ranked_first` as a negative control. An
-  earlier version asserted only *somewhere in the result* — with `TOP_K=3`
-  retrieving the whole tiny corpus regardless of the query, that could not fail
-  even for a deliberately wrong source, found because a negative control
-  (`test_wrong_document_is_not_ranked_first`) needs to be able to fail on a
-  wrong answer, and this one could not (see `CHUNK_SIZE` below). The trap
+  earlier presence-only assertion could not fail, because `TOP_K` covered the
+  whole corpus (see `CHUNK_SIZE` below). The trap
   question is asserted at the retrieval layer directly
   (`test_trap_question_retrieves_no_revenue_related_chunk`: no retrieved
   chunk mentions revenue), not through the stub's answer text, which is true

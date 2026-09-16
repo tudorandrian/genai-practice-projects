@@ -442,9 +442,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dataset == "all":
         results = [run_one(name) for name in DATASETS]
-        write_summary(results, OUT_DIR / "summary.txt")
+        write_summary(results, OUT_DIR / "summary_all.txt")
         print(f"p03-regression: all ({len(results)} datasets)")
-        print("  wrote: output/summary.txt")
+        print("  wrote: output/summary_all.txt")
         return 0
 
     dataset_result = run_one(args.dataset)

@@ -117,8 +117,10 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
 - **Every error path returns JSON, never Flask's default HTML page.**
   A missing/absent `text` field, a non-string or blank `text`, an unparsable
   body, and the wrong HTTP method on `/sentiment` all return
-  `{"error": "..."}` with an appropriate status code (400/405), and the
-  generic 404/400 handlers do the same for any other bad request.
+  `{"error": "..."}` with an appropriate status code (400/405); an
+  oversized body gets a JSON `413`, and the `500` handler covers anything
+  else unexpected (e.g. a `RecursionError` from a deeply nested body) so it
+  never falls through to Flask's default HTML error page either.
 - **`--production` uses `waitress`, imported lazily.** The `core` dependency
   group (needed to just run the app) does not need `waitress`; the import
   happens only inside the `--production` branch of `main()`, so the plain
@@ -142,10 +144,16 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
   positive/negative words and a handful of inflected forms; anything outside
   the list contributes zero weight, so subtler or misspelled sentiment is
   scored as neutral rather than approximated.
-- **Negation handling is a single-token lookahead.** A negation flips only
-  the very next scored word (`"nu este bun"` -> negative), so multi-word
-  negation phrases or negation spanning intervening filler words are not
-  specially handled.
+- **A negation stays active until the next scored word, however far away.**
+  `"nu"`/`"fara"`/`"nici"`/`"niciun"`/`"nicio"` flip the sign of the next
+  lexicon word regardless of how many unscored filler words — or sentence
+  punctuation — sit in between (`"Nu stiu. Dar produsul este excelent!"`
+  scores negative); nothing resets it at a full stop. A second negation
+  before any scored word does not cancel the first (`"nu nu bun"` stays
+  negative).
+- **Request bodies over 64 KiB are rejected.** `MAX_CONTENT_LENGTH` caps the
+  body Flask will buffer before parsing; a larger request gets a JSON `413`
+  without ever reaching `analyze_sentiment`.
 - **No authentication, rate limiting or CORS.** This is a demo service; it
   has no auth layer and is not hardened for public exposure.
 - **`--production` still runs a single-process `waitress` server.** It is a

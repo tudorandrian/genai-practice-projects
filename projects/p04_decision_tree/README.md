@@ -39,10 +39,11 @@ prints. Every run writes `metrics<tag>.txt`, `rules<tag>.txt`,
 `decision_tree<tag>.png`, `class_distribution<tag>.png` and
 `feature_importance<tag>.png` into `output/` for the dataset(s) it ran, where
 `<tag>` defaults to `_<name>`; `--dataset all` additionally writes
-`output/summary.txt` (a cross-dataset comparison table); `--demo` writes
-`output/metrics.txt` (compact figures) and `output/summary.txt` (the drug +
-iris comparison table) directly, without shell redirection, so both files are
-reproducible byte-for-byte.
+`output/summary_all.txt` (a six-dataset comparison table, gitignored — it is
+not the committed proof); `--demo` writes `output/metrics.txt` (compact
+figures) and `output/summary.txt` (the drug + iris comparison table)
+directly, without shell redirection, so both files are reproducible
+byte-for-byte.
 
 ### CLI flags
 
@@ -69,7 +70,8 @@ licences" below), and its rules are constructed to be exactly recoverable by
 a tree of depth 4 — `test_synthetic_drug_is_perfectly_separable_at_depth4`
 asserts this directly. Perfect accuracy here means the tree found the exact
 rule the generator used, which is the point: `iris`, a real dataset with no
-such guarantee, tops out at `0.889` a few lines below.
+such guarantee, reaches `0.889` at depth 4 (and `0.933` at depth 3 — see the
+figures a few lines below).
 
 `output/metrics.txt` (figures only, committed, deterministic):
 
@@ -119,15 +121,18 @@ reproduced by hand):
   demonstrates this directly: it takes a raw profile dict, one-hot encodes and
   column-aligns it the same way training did, and returns the tree's
   recommendation.
-- **The synthetic `drug` generator is class-balanced by construction.**
-  `Na_to_K` is drawn from two bands split around the 15 threshold (25%
-  above, 75% below) rather than one wide uniform range, and `BP` uses
-  `p=[0.3, 0.3, 0.4]` instead of equal thirds — both tuned so all five drug
-  classes stay comfortably represented (the smallest, `DrugB`, still gets
-  roughly 100 of 600 rows) instead of the majority branch (`Na_to_K > 15`)
-  swamping the other four. The underlying rule thresholds are untouched, so
-  `Na_to_K` remains the tree's dominant (root) split and highest-importance
-  feature, exactly as intended.
+- **The synthetic `drug` generator is retuned to be more class-balanced than
+  a naive version.** An earlier version drew `Na_to_K` from one wide uniform
+  range and split `BP` into equal thirds; that left `DrugB` (the rarest
+  class, reached only through `BP == HIGH` and `Age > 50`) with about 14 of
+  600 rows — too few for a stable test-set estimate. The shipped generator
+  instead draws `Na_to_K` from two bands split around the 15 threshold (25%
+  above, 75% below) and uses `BP` with `p=[0.3, 0.3, 0.4]`, which raises the
+  actual class counts to `DrugY` 157, `DrugX` 131, `DrugC` 131, `DrugA` 114,
+  `DrugB` 67 (`test_synthetic_drug_is_stable_and_balanced` floors every class
+  at 60) — still the smallest, but no longer vanishingly so. The underlying
+  rule thresholds are untouched, so `Na_to_K` remains the tree's dominant
+  (root) split and highest-importance feature, exactly as intended.
 - **One-hot alignment at predict time.** `pd.get_dummies` on a single new
   profile can produce a different (smaller) column set than training did — a
   profile with `BP="HIGH"` never produces a `BP_LOW` column. `_align_profile`
@@ -149,9 +154,10 @@ reproduced by hand):
   `logging.getLogger(__name__)`. `main()` prints at most six summary lines
   and sets the logging level (`WARNING`, or `INFO` with `--verbose`).
 - **Determinism.** `RANDOM_STATE = 42` seeds both the synthetic generator and
-  every split/model fit; two runs over the same dataset produce byte-identical
-  metrics and rules files (see `test_two_runs_identical_accuracy` and
-  `test_synthetic_drug_is_stable_and_balanced`).
+  every split/model fit; two runs over the same dataset produce identical
+  results — `test_two_runs_identical_accuracy` compares the in-memory accuracy
+  of two fits, and `test_synthetic_drug_is_stable_and_balanced` pins the
+  synthetic generator's own determinism.
 
 ## Limits
 
@@ -187,18 +193,20 @@ fetched once through `shared.datasets.fetch`.
 | `wine` | chemistry | `cultivar` (3 classes) | 178 | 13 | 0.907 | `sklearn.datasets.load_wine` (UCI); ships with scikit-learn (BSD-3) |
 | `breast_cancer` | oncology | `diagnosis` (2 classes) | 569 | 30 | 0.930 | `sklearn.datasets.load_breast_cancer` (WDBC, UCI); ships with scikit-learn (BSD-3) |
 | `penguins` | biology | `species` (3 classes) | 333 | 9 | 0.950 | seaborn *palmerpenguins* (Gorman et al. 2014) — CC0. Fetched once via `shared.datasets.fetch` and checksum-verified on every load; not committed |
-| `titanic` | history/survival | `survived` (2 classes) | 712 | 10 | 0.794 | seaborn *titanic* — public domain. Fetched once via `shared.datasets.fetch` and checksum-verified on every load; not committed |
+| `titanic` | history/survival | `survived` (2 classes) | 712 | 10 | 0.794 | seaborn *titanic* — no explicit licence upstream (redistributed via seaborn-data for teaching). Fetched once via `shared.datasets.fetch` and checksum-verified on every load; not committed |
 
 **Feature selection per dataset:** `drug` uses `Age`, `Sex`, `BP`,
 `Cholesterol`, `Na_to_K` (`Sex`/`BP`/`Cholesterol` one-hot encoded); `iris`,
 `wine`, `breast_cancer` use every provided numeric feature as-is; `penguins`
 uses `bill_length_mm`, `bill_depth_mm`, `flipper_length_mm`, `body_mass_g`
-plus one-hot `island`/`sex` (2 rows with missing measurements dropped:
-344->342 before the train/test split, 333 after further row-level `NaN`
-filtering across the full feature set); `titanic` uses `pclass`, `age`,
+plus one-hot `island`/`sex` (rows missing any of those measurements or `sex`
+dropped in one pass: 344->333); `titanic` uses `pclass`, `age`,
 `sibsp`, `parch`, `fare` plus one-hot `sex`/`embarked` (rows with a missing
 `age`, `embarked` or `survived` value dropped: 891->712). Each dataset
-remains under its own licence as listed above.
+remains under its own licence as listed above. seaborn-data ships no licence
+file of its own and disclaims being a general-purpose data archive; "no
+explicit licence upstream" above means exactly that — not that the data is
+dedicated to the public domain.
 
 ## Courses drawn on
 

@@ -239,7 +239,10 @@ def load_data(name: str) -> Dataset:
             categorical=cat,
             target_name="survived",
             domain="history/survival",
-            source="seaborn titanic (public domain)",
+            source=(
+                "seaborn titanic — no explicit licence upstream "
+                "(redistributed via seaborn-data for teaching)"
+            ),
         )
 
     raise ValueError(f"unknown dataset '{name}' (expected {', '.join(DATASETS)})")
@@ -601,9 +604,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dataset == "all":
         results = [run_one(name, suffix=f"_{name}") for name in DATASETS]
-        write_summary(results, OUT_DIR / "summary.txt")
+        write_summary(results, OUT_DIR / "summary_all.txt")
         print(f"p04-decision-tree: all ({len(results)} datasets)")
-        print("  wrote: output/summary.txt")
+        print("  wrote: output/summary_all.txt")
         return 0
 
     dataset_result = run_one(args.dataset)

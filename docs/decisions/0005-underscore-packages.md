@@ -18,4 +18,7 @@ keeps the hyphenated, conventional CLI form, e.g. `p01-mini-etl`.
 - The CLI name a user types (`p01-mini-etl`) stays conventional and readable,
   decoupled from the import path.
 - Every project PR must register its script under the hyphenated name pointing at
-  the underscored module path; this is checked by the per-project README and test.
+  the underscored module path. The core test
+  `shared/tests/test_scaffold.py::test_every_registry_entry_matches_its_console_script`
+  checks that every `shared/registry.py` entry has a `[project.scripts]` entry under its
+  slug, pointing at the same module, and that the module exists.

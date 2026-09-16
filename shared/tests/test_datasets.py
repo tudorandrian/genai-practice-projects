@@ -43,7 +43,21 @@ def test_fetch_rejects_wrong_checksum(tmp_path: Path, monkeypatch: pytest.Monkey
     monkeypatch.setattr(datasets, "_download", lambda url, dest: dest.write_bytes(b"x"))
     with pytest.raises(datasets.ChecksumError):
         datasets.fetch("bad", "https://example.invalid/bad.csv", "0" * 64, cache_dir=tmp_path)
-    assert not (tmp_path / "bad.csv").exists()  # partial file removed
+    assert not (tmp_path / "bad.csv").exists()  # a mismatched download never lands at dest
+    assert not (tmp_path / "bad.csv.part").exists()
+
+
+def test_fetch_leaves_no_file_when_the_download_fails_midway(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken_download(url: str, dest: Path) -> None:
+        dest.write_bytes(b"a,b,1,")  # some bytes arrive, then the connection drops
+        raise OSError("connection reset")
+
+    monkeypatch.setattr(datasets, "_download", broken_download)
+    with pytest.raises(OSError, match="connection reset"):
+        datasets.fetch("cut", "https://example.invalid/cut.csv", "0" * 64, cache_dir=tmp_path)
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_cache_dir_comes_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

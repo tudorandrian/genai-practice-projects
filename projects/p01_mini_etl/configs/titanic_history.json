@@ -1,10 +1,10 @@
 {
-  "input": "datasets/titanic_history.csv",
+  "input": "../datasets/titanic_history.csv",
   "strategies": {
     "age": "mean",
     "embarked": "mode",
     "embark_town": "mode"
   },
-  "out_dir": "output",
+  "out_dir": "../output",
   "stem": "titanic_clean"
 }

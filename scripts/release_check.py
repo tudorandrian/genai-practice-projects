@@ -1,11 +1,14 @@
 """Mechanical half of docs/release-gate.md. Exit 1 on any failing check.
 
-Covers spec §8 A3-A5 and A7 (A1/A2/A6 are recorded from CI/heavy.yml runs, not run
-here — see docs/release-gate.md).
+Covers gate items A3-A5 and A7 (A1/A2/A6 are recorded from CI/heavy.yml runs, not run
+here — see docs/release-gate.md). `ci.yml` runs `python -m scripts.release_check --offline`
+on every push and pull request (Ubuntu job); the link check needs a run without
+`--offline`.
 """
 
 from __future__ import annotations
 
+import argparse
 import re
 import subprocess
 import sys
@@ -19,10 +22,11 @@ from shared import blocklist
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY_SUFFIXES = {".ipynb", ".pkl", ".joblib", ".sqlite3", ".bin", ".pt", ".pth", ".h5", ".keras"}
-# uv.lock is a mechanically generated lockfile the spec requires to be committed
-# (design decision D3), not course material, a secret, or a model file: it is exempt
-# from the 100 KB rule by name, mirroring shared/tests/test_scaffold.py and the
-# check-added-large-files pre-commit hook (.pre-commit-config.yaml).
+# The root uv.lock is a generated lockfile that must be committed for reproducible
+# installs; it is not course material, a secret or a model file, so it is exempt from
+# the 100 KB rule. The exemption is by path relative to the repository root, mirroring
+# shared/tests/test_scaffold.py and the check-added-large-files pre-commit hook
+# (.pre-commit-config.yaml): a uv.lock in any other directory is not exempt.
 LARGE_FILE_EXEMPT = {"uv.lock"}
 
 
@@ -44,7 +48,7 @@ def check_large_files(root: Path) -> Check:
     big = [
         p
         for p in tracked(root)
-        if p.name not in LARGE_FILE_EXEMPT and p.stat().st_size > 100 * 1024
+        if p.relative_to(root).as_posix() not in LARGE_FILE_EXEMPT and p.stat().st_size > 100 * 1024
     ]
     return Check("no-large-files", "fail" if big else "pass", ", ".join(str(p) for p in big))
 
@@ -55,7 +59,9 @@ def check_binary_artifacts(root: Path) -> Check:
 
 
 def check_blocklist(root: Path) -> Check:
-    hits = blocklist.scan(blocklist.tracked_text_files(), allowed=blocklist.ALLOWED)
+    hits = blocklist.scan(
+        blocklist.tracked_text_files(root=root), allowed=blocklist.ALLOWED, root=root
+    )
     return Check(
         "blocklist", "fail" if hits else "pass", "; ".join(f"{p.name}:{n}" for p, n, _ in hits[:10])
     )
@@ -63,11 +69,11 @@ def check_blocklist(root: Path) -> Check:
 
 # Licence identifiers, and the prose a project uses instead of a table row when its data
 # needs no third-party licence because nothing was sourced from anywhere else ("no
-# external dataset", "hand-written", ...). Either form is acceptable evidence — spec §8
+# external dataset", "hand-written", ...). Either form is acceptable evidence — gate item
 # A5 requires a source and a licence be stated, not any particular Markdown formatting.
 #
 # The short identifiers (MIT, BSD, ODC, Apache, CC/CC0/CC-BY) are wrapped in \b word
-# boundaries (fix round 2, B1): without them, "MIT" matches inside an ordinary word
+# boundaries: without them, "MIT" matches inside an ordinary word
 # like "committed" ("com-MIT-ted"), which would make a section pass with no licence
 # stated at all. "licen[cs]e" and the multi-word prose phrases below don't need this —
 # they aren't short enough to collide with unrelated English words.
@@ -79,7 +85,7 @@ DATASET_LICENCE_EVIDENCE = re.compile(
 
 
 def check_dataset_licences(root: Path) -> Check:
-    """Every project README must name its data's source and licence (spec §8 A5).
+    """Every project README must name its data's source and licence (gate item A5).
 
     This is a smoke test, not an audit. It proves that each project's
     "## Datasets and licences" section exists and says *something* recognisable as
@@ -119,7 +125,7 @@ def _last_commit_epoch(root: Path, paths: list[Path]) -> int:
 def check_metrics_fresh(root: Path) -> Check:
     """Every project must have a committed `output/metrics.txt` (fail if missing); a
     proof whose last commit predates the project's last code commit is reported as a
-    `skip` naming the required action, never a `fail` (fix round 3, ruling T15-d).
+    `skip` naming the required action, never a `fail`.
 
     Git commit history, not `Path.stat().st_mtime`, is what "predates" means here: a
     fresh clone (or CI checkout) writes every tracked file to disk in whatever order
@@ -127,12 +133,10 @@ def check_metrics_fresh(root: Path) -> Check:
     file was *authored* more recently — the last commit touching each path does.
 
     That recency comparison is a useful signal but cannot be a pass/fail gate: a code
-    change can leave a project's output byte-identical (verified — see
-    docs/release-gate.md's A5/A6 rows and the fix-round-3 report for a real instance),
-    and git records no new commit for an unchanged file. The proof's commit timestamp
-    then stays behind the code's permanently, with no honest action able to advance it
-    — "touching" the file without a real content change would be exactly the kind of
-    gaming this project has refused throughout. So a stale timestamp is real evidence
+    change can leave a project's output byte-identical, and git records no new commit
+    for an unchanged file. The proof's commit timestamp then stays behind the code's
+    permanently, with no honest action able to advance it — "touching" the file without
+    a real content change would only game the check. So a stale timestamp is real evidence
     worth surfacing (as `skip`, with the action to take), but a missing proof is the
     only state this check can call an unambiguous defect.
     """
@@ -161,12 +165,12 @@ def check_metrics_fresh(root: Path) -> Check:
 
 # RFC 2606 reserved example domains, plus loopback: these appear in READMEs only as
 # "run this locally" illustrations, never as references a reader would follow, so they
-# are not links in the sense spec §8 A7 means and are skipped rather than checked.
+# are not links in the sense gate item A7 means and are skipped rather than checked.
 EXAMPLE_HOSTS = {"example.com", "example.net", "example.org", "example.invalid"}
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1"}
 # The repository's own URL — and anything under it (Actions runs, the CI badge, the
 # commit history, the pull-request list) — cannot resolve for a logged-out client while
-# the repository is private: spec §8 A7's own wording ("resolves for a logged-out
+# the repository is private: gate item A7's own wording ("resolves for a logged-out
 # client") makes that a post-publication check by definition, not a broken link.
 REPO_URL = "https://github.com/tudorandrian/genai-practice-projects"
 
@@ -178,13 +182,13 @@ def _is_example_host(url: str) -> bool:
 
 def check_links(root: Path, *, network: bool = True) -> Check:
     """Every link in the root and per-project READMEs must resolve for a logged-out
-    client (spec §8 A7).
+    client (gate item A7).
 
     Two categories of URL are deliberately not treated as failures: documentation
     example hosts (`_is_example_host`) are skipped outright, and any URL under the
     repository's own GitHub path (the bare repo URL, an Actions run, the CI badge, the
     commit history, the pull-request list, ...), which all 404 for a logged-out client
-    until Step 8's flip makes the repository public, are reported as a distinct "skip"
+    until the repository is made public, are reported as a distinct "skip"
     rather than lumped in with genuine breakage. Any other URL that fails to resolve
     still fails this check.
     """
@@ -240,8 +244,13 @@ def run_all(root: Path = ROOT, *, network: bool = True) -> list[Check]:
     ]
 
 
-def main() -> int:
-    results = run_all()
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="release_check")
+    parser.add_argument(
+        "--offline", action="store_true", help="skip the link check (no network requests)"
+    )
+    args = parser.parse_args(argv)
+    results = run_all(network=not args.offline)
     for r in results:
         print(f"{r.status.upper():5} {r.name:24} {r.detail}")
     return 0 if all(r.status != "fail" for r in results) else 1
