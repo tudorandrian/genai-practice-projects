@@ -1,0 +1,14 @@
+# P07 sentiment API — demo curl transcript
+# Generated via app.test_client() against POST /sentiment (no live server)
+
+$ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Un produs excelent si foarte util!"}'
+{"score": 3, "sentiment": "positive", "text": "Un produs excelent si foarte util!"}
+
+$ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Serviciu groaznic si lent"}'
+{"score": -3, "sentiment": "negative", "text": "Serviciu groaznic si lent"}
+
+$ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Nu este bun"}'
+{"score": -1, "sentiment": "negative", "text": "Nu este bun"}
+
+$ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Cartea este pe raft"}'
+{"score": 0, "sentiment": "neutral", "text": "Cartea este pe raft"}

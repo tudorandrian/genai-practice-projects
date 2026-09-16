@@ -1,0 +1,2 @@
+lexicon_size=58
+requests=4
