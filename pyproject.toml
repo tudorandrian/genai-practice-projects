@@ -14,6 +14,7 @@ p01-mini-etl = "projects.p01_mini_etl.mini_etl:main"
 p02-question-bank = "projects.p02_question_bank.qbank:main"
 p03-regression = "projects.p03_regression.regression:main"
 p04-decision-tree = "projects.p04_decision_tree.decision_tree:main"
+p05-segmentation = "projects.p05_segmentation.segmentation:main"
 
 [dependency-groups]
 core = [
