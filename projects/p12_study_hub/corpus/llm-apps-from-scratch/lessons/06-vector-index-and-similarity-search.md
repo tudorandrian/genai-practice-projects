@@ -43,10 +43,10 @@ itself signalling that anything is out of date.
 ### Q1. (Multiple Choice)
 Why can a question and a relevant chunk match well through embeddings even when they share almost no exact words?
 
-- A) Embeddings ignore the question entirely and return chunks at random. — **Incorrect.** Embeddings are specifically computed from the question's own content, not chosen randomly.
-- B) Embeddings represent meaning as vectors, placing texts with similar meaning close together in that numeric space regardless of exact wording overlap. — **Correct answer.** This meaning-based closeness, independent of exact word overlap, is exactly what embeddings capture.
-- C) Keyword matching is always used instead of embeddings for the final ranking. — **Incorrect.** The lesson contrasts embeddings with keyword matching precisely because embeddings replace it here.
-- D) Every chunk is guaranteed to be equally relevant to every question. — **Incorrect.** Retrieval specifically aims to distinguish more relevant chunks from less relevant ones, not treat them as equal.
+- A) Embeddings ignore the question entirely and return chunks at random. - **Incorrect.** Embeddings are specifically computed from the question's own content, not chosen randomly.
+- B) Embeddings represent meaning as vectors, placing texts with similar meaning close together in that numeric space regardless of exact wording overlap. - **Correct answer.** This meaning-based closeness, independent of exact word overlap, is exactly what embeddings capture.
+- C) Keyword matching is always used instead of embeddings for the final ranking. - **Incorrect.** The lesson contrasts embeddings with keyword matching precisely because embeddings replace it here.
+- D) Every chunk is guaranteed to be equally relevant to every question. - **Incorrect.** Retrieval specifically aims to distinguish more relevant chunks from less relevant ones, not treat them as equal.
 
 - **Answer:** B
 

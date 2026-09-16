@@ -11,7 +11,7 @@ this is the first web API in the port, so its wire contract is external.
 
 `POST /sentiment` now returns `{"text", "score", "sentiment"}` with labels
 `positive`/`negative`/`neutral`; error bodies use `{"error": "..."}` in
-English. `LEXICON`'s words stay Romanian — they are scoring *data* for a
+English. `LEXICON`'s words stay Romanian - they are scoring *data* for a
 Romanian-text domain, not repository identifiers, so ADR 0002 does not apply
 to them (documented in the project README).
 

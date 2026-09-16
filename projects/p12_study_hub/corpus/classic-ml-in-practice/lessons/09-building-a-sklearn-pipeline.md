@@ -46,10 +46,10 @@ with.
 ### Q1. (Multiple Choice)
 What is the main benefit of wrapping preprocessing and a model inside a single `Pipeline` object?
 
-- A) It makes it much harder to accidentally leak test-set information into fitted transformers, since `.fit()`/`.predict()` apply the steps consistently and in the correct order. — **Correct answer.** Preventing this specific leakage failure mode by construction is exactly the pipeline's central benefit.
-- B) It guarantees the model will have a lower test MAE than any unpipelined model. — **Incorrect.** A pipeline changes how steps are organized, not the fundamental accuracy ceiling of the underlying model.
-- C) It removes the need for a train/test split entirely. — **Incorrect.** A pipeline still requires the same train/test discipline; it does not eliminate the need for a split.
-- D) It only works with linear models, not trees or ensembles. — **Incorrect.** Pipelines work with any scikit-learn-compatible estimator, including trees and ensembles.
+- A) It makes it much harder to accidentally leak test-set information into fitted transformers, since `.fit()`/`.predict()` apply the steps consistently and in the correct order. - **Correct answer.** Preventing this specific leakage failure mode by construction is exactly the pipeline's central benefit.
+- B) It guarantees the model will have a lower test MAE than any unpipelined model. - **Incorrect.** A pipeline changes how steps are organized, not the fundamental accuracy ceiling of the underlying model.
+- C) It removes the need for a train/test split entirely. - **Incorrect.** A pipeline still requires the same train/test discipline; it does not eliminate the need for a split.
+- D) It only works with linear models, not trees or ensembles. - **Incorrect.** Pipelines work with any scikit-learn-compatible estimator, including trees and ensembles.
 
 - **Answer:** A
 

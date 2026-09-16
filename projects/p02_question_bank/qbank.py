@@ -1,4 +1,4 @@
-"""qbank.py — build a queryable JSON question bank from lesson Markdown notes.
+"""qbank.py - build a queryable JSON question bank from lesson Markdown notes.
 
 A didactic question-bank builder covering three question types written in a
 "Practice Questions" section of a lesson: Multiple Choice, True/False and
@@ -21,7 +21,7 @@ HOW TO RUN
     python qbank.py <course_dir> [--output PATH] [--check-only] [--course-id ID]
     python qbank.py <course_dir> --check-only
 
-DEPENDENCIES  none — standard library only (re, json, pathlib, argparse).
+DEPENDENCIES  none - standard library only (re, json, pathlib, argparse).
 """
 
 from __future__ import annotations
@@ -48,20 +48,22 @@ Question = dict[str, Any]
 Bank = dict[str, Any]
 
 # ---------------------------------------------------------------------------
-# Regex contract — the "Practice Questions" format this parser understands.
+# Regex contract - the "Practice Questions" format this parser understands.
 # ---------------------------------------------------------------------------
 
 # `## 3. Practice Questions`
 RE_PQ_SECTION = re.compile(r"^## (\d+)\.\s+Practice Questions\s*$", re.MULTILINE)
 
-# `### Q12. (Any Type Label)` — matched GENERICALLY on the label, so an
+# `### Q12. (Any Type Label)` - matched GENERICALLY on the label, so an
 # unsupported type is still a block boundary (it cannot pollute its neighbour)
 # and can be reported with a precise "unsupported type" error.
 RE_Q_HEADER = re.compile(r"^###\s+Q(\d+)\.\s+\(([^)]+)\)\s*$", re.MULTILINE)
 
-# `- A) Option text — **Correct answer.** Rationale.`  (note the em-dash `—`)
+# `- A) Option text - **Correct answer.** Rationale.`  The separator is a hyphen with
+# whitespace on both sides; an en dash (\u2013) or em dash (\u2014) is accepted too, so
+# notes written in an editor that substitutes typographic dashes still parse.
 RE_MC_OPTION = re.compile(
-    r"^- ([A-Z])\)\s+(.+?)\s+—\s+\*\*(Correct answer|Incorrect)[^*]*\*\*\s*(.*)$"
+    r"^- ([A-Z])\)\s+(.+?)\s+[-\u2013\u2014]\s+\*\*(Correct answer|Incorrect)[^*]*\*\*\s*(.*)$"
 )
 # `- **Answer:** B` or `- **Answer:** A, C` (Multi-Select: comma-separated letters)
 RE_MC_ANSWER = re.compile(r"^- \*\*Answer:\*\*\s+([A-Z](?:\s*,\s*[A-Z])*)\s*$")
@@ -97,7 +99,7 @@ def is_question_file(md_text: str) -> bool:
 def parse_questions(md_text: str) -> tuple[list[Question], list[str], int | None]:
     """Parse one lesson's Markdown into (questions, errors, section_number).
 
-    Errors are *collected*, never raised — one run reports every problem. A
+    Errors are *collected*, never raised - one run reports every problem. A
     broken question is still recovered into `questions` (so counts are honest
     about what was seen) but the presence of any error must block output
     upstream (see `run`).
@@ -230,7 +232,8 @@ def _parse_mc_bullets(
     if not options:
         errors.append(
             "no MC options found "
-            "(expected `- A) ... — **Correct answer/Incorrect.** ...`; needs an em-dash `—`)"
+            "(expected `- A) ... - **Correct answer/Incorrect.** ...`; "
+            "needs a spaced hyphen before the marker)"
         )
     elif len(options) < 2:
         errors.append(f"only {len(options)} option(s) found; expected at least 2")
@@ -312,7 +315,7 @@ def course_id_from_dir(course_dir: Path) -> str:
 def _safe_source_dir(course_dir: Path) -> str:
     """A non-leaking representation of the course directory for the bank's
     `source_dir` field: relative to the repository root when `course_dir` is
-    inside the repo, otherwise just the directory's own name — never an
+    inside the repo, otherwise just the directory's own name - never an
     absolute local filesystem path."""
     try:
         return str(course_dir.resolve().relative_to(REPO_ROOT)).replace("\\", "/")
@@ -412,7 +415,7 @@ def _write_summary(bank: Bank, path: Path) -> None:
 
 def build_bank(course_dir: Path, course_id: str | None = None) -> tuple[Bank, list[str]]:
     """Discover, parse and assemble the bank for `course_dir`. Pure: the only
-    I/O is reading the lesson files themselves — no output is written.
+    I/O is reading the lesson files themselves - no output is written.
 
     Returns (bank, errors). `errors` collects every validation problem found
     across every lesson; the caller decides whether to write the bank.

@@ -1,4 +1,4 @@
-"""`uv run demo [--models] [--all]` — run every registered project's demo() and summarise."""
+"""`uv run demo [--models] [--all]` - run every registered project's demo() and summarise."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def _cell(text: str) -> str:
 def _write_summary(results: list[DemoResult], out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
-        f"# Demo summary — {datetime.now(UTC):%Y-%m-%d %H:%M} UTC",
+        f"# Demo summary - {datetime.now(UTC):%Y-%m-%d %H:%M} UTC",
         "",
         "| project | status | seconds | figures | note |",
         "|---|---|---|---|---|",

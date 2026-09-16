@@ -1,4 +1,4 @@
-# Release gate — private → public
+# Release gate - private → public
 
 The checklist the repository has to clear before it is made public. A box is ticked only where
 the evidence is recorded next to it; an item that cannot be fully checked yet stays unticked with

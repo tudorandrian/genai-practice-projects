@@ -1,4 +1,4 @@
-# P01 — Mini-ETL
+# P01 - Mini-ETL
 
 ## What it does
 
@@ -45,19 +45,19 @@ shorter `--config configs/penguins_biology.json` also works).
 
 | Flag | Meaning | Default |
 |------|---------|---------|
-| `--config PATH` | JSON config file; CLI flags override its keys | — |
+| `--config PATH` | JSON config file; CLI flags override its keys | - |
 | `--input PATH\|URL` | Input file (csv/tsv/txt/json/xlsx) | required¹ |
 | `--format FMT` | Force format instead of by extension | by extension |
 | `--sep CHAR` | Field delimiter (e.g. `";"`) | `,` (tab for `.tsv`) |
 | `--sentinel STR` | Missing-value marker to turn into `NaN` | `?` |
-| `--headers-file PATH` | One-line CSV of column names for headerless input | — |
+| `--headers-file PATH` | One-line CSV of column names for headerless input | - |
 | `--numeric-cols A,B` | Columns to cast to `float` | none |
 | `--mean-cols A,B` | Impute with the column mean | none |
 | `--mode-cols A,B` | Impute with the mode | none |
 | `--drop-cols A,B` | Drop rows where these are `NaN` | none |
 | `--out-dir PATH` | Output directory | `output` |
 | `--stem NAME` | Base name for output files | `clean` |
-| `--demo` | Run the offline demo on the shipped fixture | — |
+| `--demo` | Run the offline demo on the shipped fixture | - |
 | `--verbose` | Log pipeline steps at `INFO` | off |
 
 ¹ `--input` may instead come from the `input` key of a `--config` file.
@@ -106,7 +106,7 @@ synthetic fixture.
 ## Design notes
 
 - **Functional transforms.** `replace_sentinel` returns a new frame
-  (`df.replace(...)`, no `inplace=True`) — forward-compatible with pandas 3.x,
+  (`df.replace(...)`, no `inplace=True`) - forward-compatible with pandas 3.x,
   where several in-place paths on copies are deprecated or removed.
 - **Config + CLI merge.** `build_config` starts from a JSON file (if any) and
   layers CLI flags on top, so a config gives the defaults and a flag on the
@@ -128,9 +128,9 @@ files, grouped by how loudly the tool fails:
 
 | Class | What you see | Severity |
 |-------|--------------|----------|
-| A — clear, controlled | `error: ...` on stderr, exit 1 | low — you know exactly what and where |
-| B — raw traceback | Python stack trace, exit 1 | medium — cryptic, but still stops |
-| C — silent | nothing; exit 0; "successful" files | high — corrupted data, no warning |
+| A - clear, controlled | `error: ...` on stderr, exit 1 | low - you know exactly what and where |
+| B - raw traceback | Python stack trace, exit 1 | medium - cryptic, but still stops |
+| C - silent | nothing; exit 0; "successful" files | high - corrupted data, no warning |
 
 | File | Demonstrates | Class |
 |------|---------------|:-:|
@@ -149,7 +149,7 @@ tool does today): `impute` raises a raw `KeyError` for `mode` on an
 all-missing column and a raw `TypeError` for `mean` on text instead of a
 named `error:`; and there is no `--string-cols` escape hatch, so an
 identifier that "looks numeric" (postal code, leading-zero ID) is corrupted
-silently at `read_csv` time — `a9` is the only remaining silent (class C)
+silently at `read_csv` time - `a9` is the only remaining silent (class C)
 failure in the table above.
 
 ## Datasets and licences
@@ -159,18 +159,18 @@ six input forms (JSON, CSV, `;`-CSV, TSV, Excel, `|`-TXT), each under 100 KB:
 
 | Dataset | Domain | Form | Source & licence |
 |---------|--------|------|-------------------|
-| `penguins_biology.json` | biology | JSON | Palmer Penguins via vega-datasets — CC0 |
-| `cars_automotive.json` | automotive | JSON | UCI *Auto MPG* via vega-datasets — no explicit licence upstream (redistributed via vega-datasets for teaching); whitespace-minified to stay under 100 KB |
-| `gdp_economics.xlsx` | economics | Excel | World Bank GDP via datahub.io/core/gdp — CC-BY-4.0, filtered 7 countries 2010-2020 |
-| `population_demographics.tsv` | demographics | TSV | World Bank population via datahub.io/core/population — ODC-PDDL-1.0, filtered 7 countries 2010-2020 |
-| `weather_climate.csv` | climate | CSV | Seattle weather via vega-datasets — public domain (NOAA), filtered to 2012 |
-| `movies_entertainment.json` | film/media | JSON | vega-datasets *movies* (first 250 rows, 9 of 16 upstream columns) — BSD-3-Clause; rich real missing values |
-| `titanic_history.csv` | history | CSV | Titanic passenger list via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching); `deck` dropped (77% missing) |
-| `restaurant_tips.csv` | food/hospitality | CSV (`;`) | Tips (Bryant & Smith, 1995) via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching); semicolon-delimited |
-| `airline_passengers.tsv` | aviation | TSV | AirPassengers (Box & Jenkins) via seaborn-data — no explicit licence upstream (redistributed via seaborn-data for teaching) |
-| `iris_botany.xlsx` | botany | Excel | Fisher's *Iris* (1936) via seaborn-data / UCI — no explicit licence upstream (redistributed via seaborn-data for teaching) |
-| `stocks_finance.txt` | finance | TXT (`\|`) | Tech-stock monthly prices via vega-datasets — BSD-3-Clause; filtered to four tickers (MSFT, AMZN, GOOG, AAPL) |
-| `health_spending.json` | health | JSON | Health spending vs. life expectancy — Our World in Data (from OECD data), CC BY 4.0, via seaborn-data |
+| `penguins_biology.json` | biology | JSON | Palmer Penguins via vega-datasets - CC0 |
+| `cars_automotive.json` | automotive | JSON | UCI *Auto MPG* via vega-datasets - no explicit licence upstream (redistributed via vega-datasets for teaching); whitespace-minified to stay under 100 KB |
+| `gdp_economics.xlsx` | economics | Excel | World Bank GDP via datahub.io/core/gdp - CC-BY-4.0, filtered 7 countries 2010-2020 |
+| `population_demographics.tsv` | demographics | TSV | World Bank population via datahub.io/core/population - ODC-PDDL-1.0, filtered 7 countries 2010-2020 |
+| `weather_climate.csv` | climate | CSV | Seattle weather via vega-datasets - public domain (NOAA), filtered to 2012 |
+| `movies_entertainment.json` | film/media | JSON | vega-datasets *movies* (first 250 rows, 9 of 16 upstream columns) - BSD-3-Clause; rich real missing values |
+| `titanic_history.csv` | history | CSV | Titanic passenger list via seaborn-data - no explicit licence upstream (redistributed via seaborn-data for teaching); `deck` dropped (77% missing) |
+| `restaurant_tips.csv` | food/hospitality | CSV (`;`) | Tips (Bryant & Smith, 1995) via seaborn-data - no explicit licence upstream (redistributed via seaborn-data for teaching); semicolon-delimited |
+| `airline_passengers.tsv` | aviation | TSV | AirPassengers (Box & Jenkins) via seaborn-data - no explicit licence upstream (redistributed via seaborn-data for teaching) |
+| `iris_botany.xlsx` | botany | Excel | Fisher's *Iris* (1936) via seaborn-data / UCI - no explicit licence upstream (redistributed via seaborn-data for teaching) |
+| `stocks_finance.txt` | finance | TXT (`\|`) | Tech-stock monthly prices via vega-datasets - BSD-3-Clause; filtered to four tickers (MSFT, AMZN, GOOG, AAPL) |
+| `health_spending.json` | health | JSON | Health spending vs. life expectancy - Our World in Data (from OECD data), CC BY 4.0, via seaborn-data |
 | `data/sample_raw.csv` | retail/tech | CSV (`?`-sentinel) | synthetic, written for this repository |
 
 Datasets 6-12 were fetched from vega-datasets / seaborn-data and
@@ -178,7 +178,7 @@ re-serialised into the form listed above to exercise every input type the
 tool supports; the underlying values are unchanged from the upstream source.
 seaborn-data ships no licence file of its own and disclaims being a
 general-purpose data archive; "no explicit licence upstream" above means
-exactly that — not that the data is dedicated to the public domain.
+exactly that - not that the data is dedicated to the public domain.
 
 ## Courses drawn on
 

@@ -44,10 +44,10 @@ your checks are doing real work rather than passing by default.
 ### Q1. (Multiple Choice)
 Why is a validation step that raises a loud, visible failure on bad data preferable to one that silently lets bad rows through?
 
-- A) A loud failure forces someone to investigate immediately, whereas a silent pass lets a data quality problem reach downstream reports unnoticed. — **Correct answer.** Forcing visible investigation is precisely the value of a strict, loud validation step.
-- B) Loud failures always run faster than silent checks. — **Incorrect.** Execution speed is unrelated to whether a check fails loudly or silently.
-- C) Silent validation is not technically possible in Python. — **Incorrect.** Silent validation is entirely possible; it simply fails to alert anyone to a problem.
-- D) A loud failure guarantees the underlying data problem is fixed automatically. — **Incorrect.** A loud failure only signals a problem; fixing it still requires a deliberate follow-up step.
+- A) A loud failure forces someone to investigate immediately, whereas a silent pass lets a data quality problem reach downstream reports unnoticed. - **Correct answer.** Forcing visible investigation is precisely the value of a strict, loud validation step.
+- B) Loud failures always run faster than silent checks. - **Incorrect.** Execution speed is unrelated to whether a check fails loudly or silently.
+- C) Silent validation is not technically possible in Python. - **Incorrect.** Silent validation is entirely possible; it simply fails to alert anyone to a problem.
+- D) A loud failure guarantees the underlying data problem is fixed automatically. - **Incorrect.** A loud failure only signals a problem; fixing it still requires a deliberate follow-up step.
 
 - **Answer:** A
 

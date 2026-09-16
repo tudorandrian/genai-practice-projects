@@ -1,4 +1,4 @@
-# P09 — Flask Chatbot over a Hugging Face Model
+# P09 - Flask Chatbot over a Hugging Face Model
 
 ## What it does
 
@@ -6,7 +6,7 @@ A local, browser-based chatbot: a Flask JSON API in front of
 [Blenderbot](https://huggingface.co/facebook/blenderbot-400M-distill)
 (`facebook/blenderbot-400M-distill`), plus a small HTML/JS chat page served
 by the same app. This is the second `models`-tier project in the
-repository — like P08, it loads real Hugging Face weights — but the shape
+repository - like P08, it loads real Hugging Face weights - but the shape
 here is a conversational, stateful web service rather than a stateless
 single-shot inference call.
 
@@ -29,7 +29,7 @@ reply(history, message) -> str                               # wrapper: load_mod
 `history: list[str]`, exposes `/chatbot` and `/reset`, and serves
 `templates/index.html` at `/`. It never touches `transformers` or `torch`
 directly and imports the `engine` *module* (not individual names from it),
-so tests that monkeypatch `engine.reply` are honoured here too — a
+so tests that monkeypatch `engine.reply` are honoured here too - a
 `from engine import reply` would have bound a private copy of the function
 that a later patch could not reach.
 
@@ -57,19 +57,19 @@ curl -s -X POST http://127.0.0.1:5000/reset
 
 `--verbose` logs at `INFO`; by default only the four-line demo summary
 prints. `--demo` posts three fixed messages through `app.test_client()` (no
-live server — see "Never start the server" below) and writes
+live server - see "Never start the server" below) and writes
 `output/conversation_transcript.txt` (the three user/bot turns),
 `output/curl_demo.txt` (curl-style requests and responses for `/chatbot`,
 `/reset` and `/`, also through the test client) and `output/metrics.txt`
-(turn count and model name) — all deterministic and committed.
+(turn count and model name) - all deterministic and committed.
 
 ### Endpoints
 
 | Route | Method | Body | Success | Error |
 |---|---|---|---|---|
-| `/` | GET | — | chat page (HTML) | — |
+| `/` | GET | - | chat page (HTML) | - |
 | `/chatbot` | POST | `{"message": "..."}` | 200 `{"reply": "..."}` | 400 `{"error": "..."}` |
-| `/reset` | POST | — | 200 `{"status": "reset"}` | — |
+| `/reset` | POST | - | 200 `{"status": "reset"}` | - |
 
 ## Example output
 
@@ -84,7 +84,7 @@ p09-chatbot: ok
 ```
 
 `avg_s`/`seconds` (generation time) vary run to run and are reported only on
-the console and in the returned `DemoResult`, never in a committed file —
+the console and in the returned `DemoResult`, never in a committed file -
 running `--demo` twice in a row leaves `git status` clean, because
 generation is greedy and deterministic (`num_beams=1, do_sample=False`, set
 explicitly rather than relying on Blenderbot's beam-search default).
@@ -96,10 +96,10 @@ turns=3
 model=facebook/blenderbot-400M-distill
 ```
 
-`output/conversation_transcript.txt` (committed, deterministic — excerpt):
+`output/conversation_transcript.txt` (committed, deterministic - excerpt):
 
 ```
-# P09 chatbot — demo conversation transcript
+# P09 chatbot - demo conversation transcript
 
 user: Hello, how are you?
 bot: ...
@@ -110,12 +110,12 @@ bot: ...
 - **Engine/web separation.** `engine.py` never imports `flask`;
   `generate_reply` is a pure `(history, message, tokenizer, model) -> str`
   function that never touches Flask's request/response objects. `app.py`
-  validates the JSON body, calls `engine.reply`, and updates `history` —
+  validates the JSON body, calls `engine.reply`, and updates `history` -
   the same split used by P07 (analysis function vs. route handler) and P08
   (inference function vs. UI).
 - **Lazy heavy imports.** `transformers` is imported inside `load_model()`,
-  not at module level, so `engine.py` is importable — and its pure logic
-  testable — without the `models` dependency group installed; `core` tests
+  not at module level, so `engine.py` is importable - and its pure logic
+  testable - without the `models` dependency group installed; `core` tests
   monkeypatch a fake tokenizer/model or `engine.reply` instead of loading
   real weights, per the fixed-window and endpoint-contract tests.
 - **Fixed-window context.** `build_context` keeps only the last
@@ -130,7 +130,7 @@ bot: ...
   `output/conversation_transcript.txt` byte-identical across repeated
   `--demo` runs.
 - **Never start the server for tests or the demo.** Both the test suite and
-  `demo()` drive the app through `app.test_client()`, never `app.run()` — a
+  `demo()` drive the app through `app.test_client()`, never `app.run()` - a
   blocking dev server has no place in an automated run. `app.py`'s own
   `main()` (used for interactive local use only) still starts the real dev
   server, bound to `127.0.0.1` by default; pass `--host 0.0.0.0` to opt into
@@ -152,7 +152,7 @@ bot: ...
   reproducible, offline-friendly demo. A closer-to-current alternative is
   `Qwen/Qwen2.5-0.5B-Instruct`, a small 2026-era instruction-tuned model;
   swapping it in only requires overriding `MODEL_NAME` (`engine.load_model`
-  takes the model name as a parameter) — no other code changes, though
+  takes the model name as a parameter) - no other code changes, though
   prompt formatting and generation quality would differ from Blenderbot's.
 - **`CORS(app)` is applied app-wide.** That is fine for a local, single-user
   demo reached only from `http://127.0.0.1`, but it would not be an

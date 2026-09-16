@@ -44,10 +44,10 @@ was trained on?
 ### Q1. (Multiple Choice)
 Why does this course choose to predict the raw daily ride count rather than rides per active station?
 
-- A) Because the raw count is the number Wheel & Way's operations team actually plans around when deciding how many bikes to move. — **Correct answer.** Matching the target to what the business actually uses is exactly the stated reason.
-- B) Because rides per active station cannot be computed from the available data. — **Incorrect.** It could be computed; the lesson simply chooses not to use it as the target.
-- C) Because regression models cannot predict integer counts. — **Incorrect.** Regression models routinely predict count-like targets; nothing about the model forbids it.
-- D) Because temperature and rainfall are not available as features. — **Incorrect.** Those features are explicitly listed as candidates for the model.
+- A) Because the raw count is the number Wheel & Way's operations team actually plans around when deciding how many bikes to move. - **Correct answer.** Matching the target to what the business actually uses is exactly the stated reason.
+- B) Because rides per active station cannot be computed from the available data. - **Incorrect.** It could be computed; the lesson simply chooses not to use it as the target.
+- C) Because regression models cannot predict integer counts. - **Incorrect.** Regression models routinely predict count-like targets; nothing about the model forbids it.
+- D) Because temperature and rainfall are not available as features. - **Incorrect.** Those features are explicitly listed as candidates for the model.
 
 - **Answer:** A
 

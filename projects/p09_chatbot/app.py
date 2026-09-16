@@ -1,4 +1,4 @@
-"""app.py — Flask chatbot web app over Blenderbot (Project P09).
+"""app.py - Flask chatbot web app over Blenderbot (Project P09).
 
 Three layers in one app: a Hugging Face conversational model (``engine``), a
 Flask JSON API that keeps conversation history, and an HTML/JS chat page.
@@ -12,7 +12,7 @@ Endpoints
     POST /chatbot   {"message": "..."}  -> 200 {"reply": "..."} ; 400 {"error": ...}
     POST /reset     -> 200 {"status": "reset"} ; clears the conversation history
 
-The generation call goes straight through ``engine.reply`` — tests
+The generation call goes straight through ``engine.reply`` - tests
 monkeypatch ``engine.reply`` so they never load the real model. This module
 imports the ``engine`` *module*, not individual names from it, so a
 monkeypatch of ``engine.reply`` (as opposed to a private copy bound by
@@ -38,7 +38,7 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5000
 
 app = Flask(__name__)
-# Reject bodies above 64 KiB before Flask/Werkzeug buffers them for parsing —
+# Reject bodies above 64 KiB before Flask/Werkzeug buffers them for parsing -
 # without this, a request can grow the process's memory (or, for a
 # pathologically nested JSON body, blow the interpreter's recursion limit
 # inside json.loads) before validation ever runs. Matches P07's cap so the
@@ -107,7 +107,7 @@ def _handle_413(_err: Exception) -> tuple[Response, int]:
 @app.errorhandler(500)
 def _handle_500(err: Exception) -> tuple[Response, int]:
     """Return JSON for anything unexpected below (e.g. a RecursionError from
-    parsing a deeply nested — but under the size cap — JSON body), instead of
+    parsing a deeply nested - but under the size cap - JSON body), instead of
     Flask's default HTML error page. The exception is still logged."""
     log.error("unhandled error: %s", err, exc_info=err)
     return jsonify({"error": "Internal server error."}), 500

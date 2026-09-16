@@ -10,7 +10,7 @@ pytestmark = pytest.mark.core
 
 def test_every_check_has_a_name_and_runs() -> None:
     # network=False: this is a "core" test, and CI runs "core and not network", so it
-    # must not make real HTTP requests — links-resolve reports "skip" instead of
+    # must not make real HTTP requests - links-resolve reports "skip" instead of
     # actually checking URLs (see release_check.check_links).
     results = release_check.run_all(root=release_check.ROOT, network=False)
     assert {r.name for r in results} >= {
@@ -66,8 +66,8 @@ def test_metrics_fresh_compares_commit_history_not_mtime(
     # code (or later) must never be named as missing or stale, however file mtimes
     # on disk read right now (checkout order, not commit history). Synthetic, not
     # a real project's git history: a later commit that legitimately touches a
-    # project's code without changing its byte-identical output — exactly what a
-    # fix wave does — would otherwise make this test flaky against the live repo.
+    # project's code without changing its byte-identical output - exactly what a
+    # fix wave does - would otherwise make this test flaky against the live repo.
     project = tmp_path / "projects" / "p99_fresh"
     (project / "output").mkdir(parents=True)
     (project / "app.py").write_text("x = 1\n", encoding="utf-8")
@@ -84,7 +84,7 @@ def test_metrics_fresh_compares_commit_history_not_mtime(
 
 def test_metrics_fresh_fails_only_when_the_proof_is_missing(tmp_path: Path) -> None:
     # A missing output/metrics.txt is the one unambiguous defect this check can
-    # call a fail — no honest regeneration can be blocked by anything else.
+    # call a fail - no honest regeneration can be blocked by anything else.
     project = tmp_path / "projects" / "p99_missing"
     project.mkdir(parents=True)
     (project / "app.py").write_text("x = 1\n", encoding="utf-8")
@@ -98,7 +98,7 @@ def test_metrics_fresh_reports_a_stale_proof_as_skip_with_the_action_to_take(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # A proof whose last commit predates the project's last code commit is real,
-    # useful signal — but a code change can legitimately leave output byte-identical, so
+    # useful signal - but a code change can legitimately leave output byte-identical, so
     # git records no new commit for it and the proof's timestamp can never honestly
     # catch up. That must not be a fail (unsatisfiable by any honest action); it is a
     # skip naming what to do: re-run `uv run demo --all` and confirm `git status` is
@@ -132,7 +132,7 @@ def _project_tree(tmp_path: Path, readmes: dict[str, str]) -> Path:
 def test_dataset_licence_check_accepts_prose_without_a_table(tmp_path: Path) -> None:
     # A project whose data needs no third-party licence because nothing was
     # sourced externally states that in prose (P07's actual wording, reused here), not
-    # a `|...|...licence` table row — this must be accepted, not just the table form.
+    # a `|...|...licence` table row - this must be accepted, not just the table form.
     root = _project_tree(
         tmp_path,
         {
@@ -175,7 +175,7 @@ def test_links_check_skips_localhost_and_example_hosts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Loopback and RFC 2606 example domains are documentation illustrations, not
-    # links to check — assert no HTTP request is even attempted for them.
+    # links to check - assert no HTTP request is even attempted for them.
     def _unexpected_call(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("check_links should not make a request for an example host")
 
@@ -210,7 +210,7 @@ def test_links_check_treats_any_repo_subpath_404_the_same_way(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # The README also links to Actions/commits/pulls under the repo's own path, not
-    # just the bare repo URL — all of those 404 while private too.
+    # just the bare repo URL - all of those 404 while private too.
     class _Resp:
         status_code = 404
 
@@ -236,7 +236,7 @@ def test_links_check_skips_a_backtick_wrapped_loopback_url(
 ) -> None:
     # Regression: Markdown inline code around a loopback URL (`` `http://127.0.0.1` ``,
     # P09's actual wording) must not let the closing backtick leak into the extracted
-    # URL — that would corrupt the hostname and defeat the loopback skip below.
+    # URL - that would corrupt the hostname and defeat the loopback skip below.
     def _unexpected_call(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("check_links should not make a request for a loopback host")
 

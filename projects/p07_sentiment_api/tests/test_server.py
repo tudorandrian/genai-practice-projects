@@ -67,7 +67,7 @@ def test_text_with_romanian_diacritics_matches_the_lexicon() -> None:
 def test_negation_carries_across_sentence_punctuation() -> None:
     # Pins the documented Limit: a negation stays active until the next
     # scored word, even across a full stop and an intervening filler
-    # sentence — it is not reset at punctuation.
+    # sentence - it is not reset at punctuation.
     result = server.analyze_sentiment("Nu stiu. Dar produsul este excelent!")
     assert result["sentiment"] == "negative"
     assert result["score"] < 0
@@ -168,7 +168,7 @@ def test_contract_keys_are_english() -> None:
 
 def test_deeply_nested_json_returns_json_error(client: FlaskClient) -> None:
     # Small in bytes (well under MAX_CONTENT_LENGTH) but deep enough to blow
-    # Python's recursion limit inside json.loads — request.get_json(silent=True)
+    # Python's recursion limit inside json.loads - request.get_json(silent=True)
     # only swallows ValueError/BadRequest, so the RecursionError used to
     # escape as Flask's default HTML 500 page.
     n = 3000

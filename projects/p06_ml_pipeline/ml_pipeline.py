@@ -1,16 +1,16 @@
-"""ml_pipeline.py — a production-shaped ML pipeline with tuned model comparison,
+"""ml_pipeline.py - a production-shaped ML pipeline with tuned model comparison,
 run across several public tabular datasets.
 
 The point is the *system*, not a single model: preprocessing (scale numerics +
 one-hot categoricals) and the classifier live inside ONE ``Pipeline`` tuned with
-``GridSearchCV`` over a ``StratifiedKFold``. Two models — Random Forest and
-Logistic Regression — are compared on the EXACT same preprocessing stack, the
+``GridSearchCV`` over a ``StratifiedKFold``. Two models - Random Forest and
+Logistic Regression - are compared on the EXACT same preprocessing stack, the
 second swapped in with a single ``set_params(clf=...)`` so the comparison is
 honest (same folds, same features, same metric). The winner is persisted with
 joblib and round-trip-verified.
 
 Two guarantees the architecture buys us:
-  * No data leakage — every CV fold fits its OWN preprocessing (nothing is fit on
+  * No data leakage - every CV fold fits its OWN preprocessing (nothing is fit on
     test). The weather set's generator emits `rain_yesterday` directly as a
     feature and `rain_today` only as the target, so only information
     available *before* the prediction is used as a feature.
@@ -52,7 +52,7 @@ from typing import Any
 
 import matplotlib
 
-matplotlib.use("Agg")  # headless backend — never plt.show()
+matplotlib.use("Agg")  # headless backend - never plt.show()
 
 import joblib  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
@@ -149,7 +149,7 @@ def _openml_frame(data_id: int) -> tuple[pd.DataFrame, pd.Series]:
 
 def _synthetic_weather(n: int = 800) -> tuple[pd.DataFrame, pd.Series]:
     """weatherAUS-style stand-in: same column *types*, deterministic, and framed
-    with NO leakage — yesterday's rain is a legal feature; today's rain is the
+    with NO leakage - yesterday's rain is a legal feature; today's rain is the
     target and is never fed back in as a feature."""
     rng = np.random.default_rng(0)
     df = pd.DataFrame(
@@ -273,7 +273,7 @@ def load_data(name: str) -> Dataset:
 
 def build_pipeline(ds: Dataset, clf: Any) -> Pipeline:
     """One ColumnTransformer (scale num + one-hot cat) + a classifier.
-    Every fit of this object fits its OWN preprocessing — the leakage guarantee."""
+    Every fit of this object fits its OWN preprocessing - the leakage guarantee."""
     preproc = ColumnTransformer(
         [
             ("num", StandardScaler(), ds.num_cols),
@@ -286,7 +286,7 @@ def build_pipeline(ds: Dataset, clf: Any) -> Pipeline:
 def tune_model(
     pipe: Pipeline, grid: dict[str, list[Any]], x_train: pd.DataFrame, y_train: pd.Series
 ) -> GridSearchCV:
-    """GridSearchCV over StratifiedKFold — all preprocessing fit inside CV."""
+    """GridSearchCV over StratifiedKFold - all preprocessing fit inside CV."""
     search = GridSearchCV(pipe, grid, cv=CV, scoring="accuracy", n_jobs=-1)
     search.fit(x_train, y_train)
     return search
@@ -343,7 +343,7 @@ def plot_rf_importances(search: GridSearchCV, path: Path, top: int = 15) -> None
     fig, ax = plt.subplots(figsize=(9, max(4, 0.4 * len(order) + 1)))
     ax.barh([names[i] for i in order], imp[order], color="#55A868")
     ax.set_xlabel("feature importance")
-    ax.set_title("Random Forest — top feature importances")
+    ax.set_title("Random Forest - top feature importances")
     fig.tight_layout()
     fig.savefig(path, dpi=130)
     plt.close(fig)
@@ -358,7 +358,7 @@ def plot_lr_coefficients(search: GridSearchCV, path: Path, top: int = 15) -> Non
     ax.barh([names[i] for i in order], coef[order], color=colors)
     ax.axvline(0, color="grey", lw=0.8)
     ax.set_xlabel("logistic-regression coefficient (log-odds)")
-    ax.set_title("Logistic Regression — top |coefficients|")
+    ax.set_title("Logistic Regression - top |coefficients|")
     fig.tight_layout()
     fig.savefig(path, dpi=130)
     plt.close(fig)
@@ -380,7 +380,7 @@ def write_metrics(
         ]
 
     lines = [
-        "ML PIPELINE — RANDOM FOREST vs LOGISTIC REGRESSION",
+        "ML PIPELINE - RANDOM FOREST vs LOGISTIC REGRESSION",
         "=" * 62,
         f"Dataset      : {ds.name}  ({ds.domain})",
         f"Source       : {ds.source}",
@@ -416,7 +416,7 @@ def write_model_card(
     winner_metrics = rf if winner == "Random Forest" else lr
     dist = ds.y.value_counts(normalize=True).round(3).to_dict()
     lines = [
-        f"# Model card — {ds.name}",
+        f"# Model card - {ds.name}",
         "",
         "## Data",
         f"- Dataset: {ds.name} ({ds.domain})",
@@ -435,7 +435,7 @@ def write_model_card(
         "random_state=42), scoring='accuracy')",
         "",
         "## Winner",
-        f"{winner} — chosen by test-set accuracy "
+        f"{winner} - chosen by test-set accuracy "
         f"(Random Forest={rf['accuracy']:.4f}, Logistic Regression={lr['accuracy']:.4f})",
         "",
         "## Test-set scores",
@@ -456,7 +456,7 @@ def write_model_card(
         "- The grid searched is small (2-3 values per hyperparameter); a wider "
         "search could change the winner on some datasets.",
         "- `roc_auc`/precision/recall are reported for the minority class only "
-        "— on heavily imbalanced sets, accuracy alone would be misleading.",
+        "- on heavily imbalanced sets, accuracy alone would be misleading.",
         "- The persisted model is tied to this scikit-learn version "
         f"({sklearn.__version__}); do not load it with a different one.",
         "",
@@ -473,7 +473,7 @@ def run_one(name: str, suffix: str = "") -> dict[str, Any]:
     """Run the full pipeline on one dataset.
 
     Writes ``metrics<tag>.txt``, ``model_card<tag>.md`` and four plots under
-    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` — so
+    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` - so
     every dataset gets its own set of output files by default. Returns a
     compact result dict: ``{"dataset", "winner", "f1", "roc_auc"}``.
     """
@@ -504,7 +504,7 @@ def run_one(name: str, suffix: str = "") -> dict[str, Any]:
     model_path = OUT_DIR / f"model_best{tag}.joblib"
     joblib.dump(winner_search.best_estimator_, model_path)  # persist
     # Safe here: this reloads the file this same run just wrote, not an
-    # untrusted artifact — joblib/pickle deserialization from an external
+    # untrusted artifact - joblib/pickle deserialization from an external
     # source would be an arbitrary-code-execution risk.
     reloaded = joblib.load(model_path)
     roundtrip_ok = bool(
@@ -552,9 +552,9 @@ def run_one(name: str, suffix: str = "") -> dict[str, Any]:
 
 
 def write_summary(results: list[dict[str, Any]], path: Path) -> None:
-    """Deterministic cross-dataset comparison table — no timestamps, no absolute paths."""
+    """Deterministic cross-dataset comparison table - no timestamps, no absolute paths."""
     header = f"{'Dataset':<18}{'Winner':<22}{'F1':>8}{'ROC AUC':>10}"
-    lines = ["ML PIPELINE — CROSS-DATASET SUMMARY (RF vs LR)", "=" * 60, header, "-" * 60]
+    lines = ["ML PIPELINE - CROSS-DATASET SUMMARY (RF vs LR)", "=" * 60, header, "-" * 60]
     for r in results:
         lines.append(f"{r['dataset']:<18}{r['winner']:<22}{r['f1']:>8.4f}{r['roc_auc']:>10.4f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

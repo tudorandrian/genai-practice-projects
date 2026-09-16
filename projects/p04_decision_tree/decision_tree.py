@@ -1,19 +1,19 @@
-"""decision_tree.py — an explainable decision-tree classifier for tabular data.
+"""decision_tree.py - an explainable decision-tree classifier for tabular data.
 
 The point is not accuracy for its own sake but **explainability**: a decision
 tree whose drawn diagram *is* the model's rule ("if Na/K > 15 -> DrugY"). The
-disciplined workflow around it — one-hot encoding of categoricals, a
+disciplined workflow around it - one-hot encoding of categoricals, a
 stratified train/test split, a depth comparison (3 vs 4), and the extracted
-text rules — is shown to be dataset-agnostic by running the exact same
+text rules - is shown to be dataset-agnostic by running the exact same
 pipeline across several public classification datasets, mixing numeric-only
 and mixed numeric+categorical data, binary and multi-class targets:
 
-    drug           (synthetic generator)     5 drug classes — PRIMARY, mixed features
-    iris           (sklearn)                 3 species      — 4 numeric features
-    wine           (sklearn)                 3 cultivars    — 13 numeric features
-    breast_cancer  (sklearn)                 2 classes      — 30 numeric features
-    penguins       (seaborn palmerpenguins)  3 species      — mixed (island/sex + numeric)
-    titanic        (seaborn)                 2 classes      — mixed (sex/embarked + numeric)
+    drug           (synthetic generator)     5 drug classes - PRIMARY, mixed features
+    iris           (sklearn)                 3 species      - 4 numeric features
+    wine           (sklearn)                 3 cultivars    - 13 numeric features
+    breast_cancer  (sklearn)                 2 classes      - 30 numeric features
+    penguins       (seaborn palmerpenguins)  3 species      - mixed (island/sex + numeric)
+    titanic        (seaborn)                 2 classes      - mixed (sex/embarked + numeric)
 
 PIPELINE  (pure functions)
     load_data -> explore_data -> preprocess -> stratified_split
@@ -39,7 +39,7 @@ from typing import Any
 
 import matplotlib
 
-matplotlib.use("Agg")  # headless backend — never plt.show()
+matplotlib.use("Agg")  # headless backend - never plt.show()
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -116,7 +116,7 @@ def _synthetic_drug(n: int = 600) -> pd.DataFrame:
     """A deterministic drug200-style dataset: same columns, clean rules.
 
     The rules are exactly recoverable by a depth-4 tree, so accuracy is
-    ~1.000 — which makes the drawn tree an exact, auditable statement of the
+    ~1.000 - which makes the drawn tree an exact, auditable statement of the
     rule instead of an approximation.
     """
     rng = np.random.default_rng(RANDOM_STATE)  # fixed seed -> deterministic
@@ -149,7 +149,7 @@ def _synthetic_drug(n: int = 600) -> pd.DataFrame:
 
 
 def _load_drug() -> pd.DataFrame:
-    """Load the drug dataset — always the deterministic synthetic generator."""
+    """Load the drug dataset - always the deterministic synthetic generator."""
     return _synthetic_drug()
 
 
@@ -240,7 +240,7 @@ def load_data(name: str) -> Dataset:
             target_name="survived",
             domain="history/survival",
             source=(
-                "seaborn titanic — no explicit licence upstream "
+                "seaborn titanic - no explicit licence upstream "
                 "(redistributed via seaborn-data for teaching)"
             ),
         )
@@ -299,7 +299,7 @@ def evaluate(
 
 
 def extract_rules(model: DecisionTreeClassifier, feature_names: list[str]) -> str:
-    """The tree as human-readable text — reproduce a prediction by hand."""
+    """The tree as human-readable text - reproduce a prediction by hand."""
     return export_text(model, feature_names=list(feature_names))
 
 
@@ -314,7 +314,7 @@ def _align_profile(
     profile: dict[str, Any], ds: Dataset, feature_columns: list[str]
 ) -> pd.DataFrame:
     """Turn a raw patient/example profile into a one-row frame aligned to the
-    trained one-hot columns (missing dummy columns -> 0) — the manual step
+    trained one-hot columns (missing dummy columns -> 0) - the manual step
     pd.get_dummies forces on us at predict time."""
     row = pd.DataFrame([profile])[ds.X_raw.columns]
     row = pd.get_dummies(row, columns=ds.categorical)
@@ -399,7 +399,7 @@ def write_metrics(
     prop_tr = class_proportions(y_train)
     prop_te = class_proportions(y_test)
     lines = [
-        "DECISION TREE CLASSIFIER — METRICS",
+        "DECISION TREE CLASSIFIER - METRICS",
         "=" * 60,
         f"Dataset      : {ds.name}  ({ds.domain})",
         f"Source       : {ds.source}",
@@ -411,7 +411,7 @@ def write_metrics(
         "One-hot feature columns:",
         f"  {list(x.columns)}",
         "",
-        "Stratified split — class proportions:",
+        "Stratified split - class proportions:",
         f"  {'class':<14}{'train':>10}{'test':>10}",
     ]
     for cls in prop_tr.index:
@@ -432,14 +432,14 @@ def write_metrics(
             lines.append(f"  {feat:<30} {imp:>8.4f}")
     lines += [
         "",
-        "Decision rules — export_text (max_depth=4):",
+        "Decision rules - export_text (max_depth=4):",
         rules,
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_rules(rules: str, path: Path) -> None:
-    """Standalone rules-only export — the same text embedded in metrics.txt,
+    """Standalone rules-only export - the same text embedded in metrics.txt,
     written on its own so a rule set can be diffed or read without the rest."""
     text = rules if rules.endswith("\n") else rules + "\n"
     path.write_text(text, encoding="utf-8")
@@ -455,7 +455,7 @@ def run_one(name: str, suffix: str = "") -> dict[str, str | int | float]:
 
     Writes ``metrics<tag>.txt``, ``rules<tag>.txt``, ``decision_tree<tag>.png``,
     ``class_distribution<tag>.png`` and ``feature_importance<tag>.png`` under
-    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` — so
+    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` - so
     every dataset gets its own set of output files by default. Returns a
     compact result dict.
     """
@@ -537,9 +537,9 @@ def run_one(name: str, suffix: str = "") -> dict[str, str | int | float]:
 
 
 def write_summary(results: list[dict[str, str | int | float]], path: Path) -> None:
-    """Deterministic cross-dataset comparison table — no timestamps, no absolute paths."""
+    """Deterministic cross-dataset comparison table - no timestamps, no absolute paths."""
     header = f"{'Dataset':<15}{'n':>7}{'classes':>9}{'feats':>7}{'acc(d4)':>10}{'acc(d3)':>10}"
-    lines = ["DECISION TREE — CROSS-DATASET SUMMARY", "=" * 58, header, "-" * 58]
+    lines = ["DECISION TREE - CROSS-DATASET SUMMARY", "=" * 58, header, "-" * 58]
     for r in results:
         lines.append(
             f"{r['name']:<15}{r['n']:>7}{r['classes']:>9}{r['feats']:>7}"

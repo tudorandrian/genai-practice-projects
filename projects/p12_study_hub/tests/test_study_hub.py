@@ -24,7 +24,7 @@ from shared import blocklist
 
 # No blanket module-level ``pytestmark`` here: every test is marked
 # individually, since this file mixes ``core`` tests (quiz_engine, progress,
-# tutor's pure helpers) with ``rag`` tests (real embeddings and Chroma) — see
+# tutor's pure helpers) with ``rag`` tests (real embeddings and Chroma) - see
 # p10_meeting_assistant's test_assistant.py for the same convention and the
 # reason it matters: a blanket module-level `core` marker would leave every
 # `rag` test *also* matching `-m "core and not network"`, which is exactly the
@@ -143,13 +143,13 @@ def test_history_round_trip(tmp_output: Path, monkeypatch: pytest.MonkeyPatch) -
 def test_normalize_status() -> None:
     assert progress._normalize("COMPLETED - 6 lessons") == "COMPLETED"
     assert progress._normalize("in progress now") == "IN PROGRESS"
-    assert progress._normalize("—") is None
+    assert progress._normalize("-") is None
 
 
 @pytest.mark.core
 def test_table_status_column_extraction() -> None:
     text = (
-        "| File | Status |\n|---|---|\n| a.md | COMPLETED |\n| b.md | NOT STARTED |\n| c.md | — |\n"
+        "| File | Status |\n|---|---|\n| a.md | COMPLETED |\n| b.md | NOT STARTED |\n| c.md | - |\n"
     )
     assert progress._statuses_from_table(text) == ["COMPLETED", "NOT STARTED"]
 
@@ -190,7 +190,7 @@ def test_success_rate_with_no_history_file(tmp_path: Path) -> None:
 
 
 # =============================================================================
-# tutor — pure helpers are `core` (tutor.py imports nothing heavy at module
+# tutor - pure helpers are `core` (tutor.py imports nothing heavy at module
 # level); anything that embeds or touches Chroma is `rag`.
 # =============================================================================
 
@@ -222,7 +222,7 @@ def test_sources_dedupe() -> None:
 
 @pytest.mark.core
 def test_stub_llm_provider_needs_no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stub is deterministic and derived from its own input — never
+    """The stub is deterministic and derived from its own input - never
     a fixed string regardless of the prompt, and never the exact ``REFUSAL``
     string (that's reserved for ``ask()``'s relevance gate and a real
     provider's grounding behaviour)."""
@@ -339,20 +339,20 @@ def test_ask_does_not_reindex_when_an_index_exists(
 )
 def test_index_and_ask_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Real embeddings + a real Chroma index over the shipped corpus, with the
-    stub LLM provider — proves retrieval genuinely finds a relevant lesson, and
+    stub LLM provider - proves retrieval genuinely finds a relevant lesson, and
     that the stub's answer is derived from that retrieved *lesson prose*, not
     from a source label.
 
     It does not assert one exact phrase from the sentinel-values lesson: which
     on-topic chunk ranks first is not guaranteed identical on every platform.
     Instead, whatever chunk `ask()` itself reports as the top retrieved source,
-    the stub's answer must be a genuine excerpt of *that* lesson's real text —
+    the stub's answer must be a genuine excerpt of *that* lesson's real text -
     not a fixed phrase, not a source label, not a hallucination.
 
     Adjudicated xfail on macOS only (see `_MACOS_RELEVANCE_GATE_XFAIL_REASON`
     above): on that platform this exact question was measured to produce a
     flat score field with the correct lesson ranking second, not first, so
-    the relevance gate refuses it — a real limitation of the margin
+    the relevance gate refuses it - a real limitation of the margin
     heuristic, not a bug in how the similarity is computed (own-cosine and
     the store's own score agreed with each other on that run). The assertion
     below is unchanged and still correct; it is expected to keep failing on
@@ -366,7 +366,7 @@ def test_index_and_ask_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     question = "What is a sentinel value in a messy dataset?"
     result = tutor.ask(question, provider="stub")
     # On assertion failure, dump collection metadata, the query embedding's norm, and
-    # each candidate's own-cosine + store-relevance score side by side —
+    # each candidate's own-cosine + store-relevance score side by side -
     # `_diagnostic_snapshot` is only ever called here (an assert
     # message expression is evaluated by Python only when the condition is false), so
     # this costs nothing when the assertion passes.
@@ -382,7 +382,7 @@ def test_index_and_ask_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     # lesson ask() itself names as the top source (result["sources"][0]),
     # not a hard-coded phrase and not the bracketed source label (a
     # 61-character label alone would consume the stub's whole 60-char slice
-    # budget — see tutor.py's ask() docstring/comment for why the context
+    # budget - see tutor.py's ask() docstring/comment for why the context
     # fed to the LLM carries no "[source]" label at all).
     echoed = result["answer"].removeprefix("STUB: ")
     top_lesson_text = (CORPUS / result["sources"][0]).read_text(encoding="utf-8")
@@ -431,12 +431,12 @@ def test_trap_question_refuses_via_relevance_gate(
 # numbers, so "refuse when nothing stands out" is pinned on every platform.
 @pytest.mark.core
 def test_relevance_gate_refuses_when_no_chunk_stands_out() -> None:
-    # A flat score profile — every candidate similarly (here, similarly *high*)
-    # relevant — must refuse: nothing distinguishes a genuine top match from generic
+    # A flat score profile - every candidate similarly (here, similarly *high*)
+    # relevant - must refuse: nothing distinguishes a genuine top match from generic
     # background. (On macOS, a real *on-topic* question produced this flat shape, which
     # is why the gate refuses it there; see the README's "Limits".) This also proves the
     # gate is not merely an absolute floor: every score here clears an earlier floor of
-    # 0.35 by a wide margin, and it still refuses — see RELEVANCE_MARGIN's comment in
+    # 0.35 by a wide margin, and it still refuses - see RELEVANCE_MARGIN's comment in
     # tutor.py.
     flat_high = [(f"doc{i}", 0.55) for i in range(tutor.RELEVANCE_POOL_K)]
     assert tutor._clears_relevance_gate(flat_high) is False
@@ -455,7 +455,7 @@ def test_relevance_gate_accepts_when_the_top_chunk_stands_out() -> None:
 
 @pytest.mark.core
 def test_relevance_gate_still_enforces_the_absolute_sanity_floor() -> None:
-    # A huge margin cannot rescue a top score that is not even a real match — the
+    # A huge margin cannot rescue a top score that is not even a real match - the
     # absolute floor (RELEVANCE_MIN) is still checked first, as a sanity bound.
     below_floor = [("top", 0.01)] + [(f"bg{i}", -0.5) for i in range(tutor.RELEVANCE_POOL_K - 1)]
     assert tutor._clears_relevance_gate(below_floor) is False
@@ -521,7 +521,7 @@ def test_embeddings_are_actually_normalized_and_cosine_configured(
 
 
 # =============================================================================
-# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# Real LLM (llm) - Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
 # =============================================================================
 
 

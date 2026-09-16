@@ -29,7 +29,7 @@ def test_runner_times_each_entry_and_catches_failures(
     text = (tmp_path / "demo-summary.md").read_text(encoding="utf-8")
     assert "| p00-ok | ok |" in text and "rows=5" in text
 
-    # Every entry — run or tier-skipped — must print its own console line, not
+    # Every entry - run or tier-skipped - must print its own console line, not
     # just land in the summary file; a tier-skipped entry that never runs is
     # exactly the case that silently regressed before (see shared/demo.py).
     lines = capsys.readouterr().out.splitlines()

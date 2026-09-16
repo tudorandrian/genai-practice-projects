@@ -43,10 +43,10 @@ might expect from experience with a larger, more capable model.
 ### Q1. (Multiple Choice)
 In a chat-style prompt with system, user, and assistant roles, where does a stable, task-wide instruction like 'answer only from the provided excerpt' generally belong?
 
-- A) In the assistant role, written as if the model already said it. — **Incorrect.** The assistant role is for the model's own generated turns, not for instructing it in advance.
-- B) It should be repeated in every user message instead of stated once. — **Incorrect.** Repeating it in every user message is unnecessary once it is fixed in the system role.
-- C) In the system role, since it is a stable, task-wide instruction rather than a specific question. — **Correct answer.** The system role is exactly where a stable, task-wide instruction belongs, as the lesson states.
-- D) Prompts for chat models cannot use role tags at all. — **Incorrect.** Chat models are specifically trained to expect role-tagged messages.
+- A) In the assistant role, written as if the model already said it. - **Incorrect.** The assistant role is for the model's own generated turns, not for instructing it in advance.
+- B) It should be repeated in every user message instead of stated once. - **Incorrect.** Repeating it in every user message is unnecessary once it is fixed in the system role.
+- C) In the system role, since it is a stable, task-wide instruction rather than a specific question. - **Correct answer.** The system role is exactly where a stable, task-wide instruction belongs, as the lesson states.
+- D) Prompts for chat models cannot use role tags at all. - **Incorrect.** Chat models are specifically trained to expect role-tagged messages.
 
 - **Answer:** C
 

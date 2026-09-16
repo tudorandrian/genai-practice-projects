@@ -96,7 +96,7 @@ EDGE_CASE_EXPECTATIONS: dict[str, tuple[bool, int]] = {
     "e08_tf_missing_answer": (False, 1),
     "e09_oe_missing_answer_line": (False, 1),
     "e10_non_consecutive": (False, 2),
-    "e11_hyphen_not_emdash": (False, 1),
+    "e11_missing_separator": (False, 1),
     "e12_multiline_rationale": (False, 1),
     "e13_empty_prompt": (False, 1),
     "e14_mixed_valid_and_broken": (False, 3),
@@ -227,10 +227,16 @@ def test_non_consecutive_numbering() -> None:
     assert "not consecutive" in joined("e10_non_consecutive.md")
 
 
-def test_hyphen_instead_of_emdash_breaks_options() -> None:
-    errs = joined("e11_hyphen_not_emdash.md")
+def test_missing_separator_breaks_options() -> None:
+    errs = joined("e11_missing_separator.md")
     assert "unrecognized bullet line" in errs
     assert "no MC options found" in errs
+
+
+@pytest.mark.parametrize("dash", ["-", "\u2013", "\u2014"], ids=["hyphen", "en-dash", "em-dash"])
+def test_option_separator_accepts_hyphen_en_dash_and_em_dash(dash: str) -> None:
+    text = fixture("e00_valid_baseline.md").replace(" - **", f" {dash} **")
+    assert qbank.parse_questions(text)[:2] == parse("e00_valid_baseline.md")[:2]
 
 
 def test_empty_prompt() -> None:

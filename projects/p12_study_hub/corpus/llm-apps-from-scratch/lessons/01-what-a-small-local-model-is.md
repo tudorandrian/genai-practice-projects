@@ -46,10 +46,10 @@ every one of the following nine lessons will touch in some way.
 ### Q1. (Multiple Choice)
 What is the central argument this course makes about small local language models like Pebble?
 
-- A) Small models are always superior to larger hosted models for every task. — **Incorrect.** The lesson explicitly states small models know less and reason less reliably on complex tasks.
-- B) For a narrow, well-scoped job such as answering questions from a fixed set of documents, a carefully wired-up small local model can perform surprisingly well. — **Correct answer.** This is exactly the course's stated central argument about scoped tasks.
-- C) Local models are only useful for tasks that require no internet connection at all. — **Incorrect.** Offline operation is one benefit mentioned, not the sole justification given.
-- D) A small model's weaknesses can only be fixed by making the model itself larger. — **Incorrect.** The lesson argues the opposite: many weaknesses are better addressed outside the model.
+- A) Small models are always superior to larger hosted models for every task. - **Incorrect.** The lesson explicitly states small models know less and reason less reliably on complex tasks.
+- B) For a narrow, well-scoped job such as answering questions from a fixed set of documents, a carefully wired-up small local model can perform surprisingly well. - **Correct answer.** This is exactly the course's stated central argument about scoped tasks.
+- C) Local models are only useful for tasks that require no internet connection at all. - **Incorrect.** Offline operation is one benefit mentioned, not the sole justification given.
+- D) A small model's weaknesses can only be fixed by making the model itself larger. - **Incorrect.** The lesson argues the opposite: many weaknesses are better addressed outside the model.
 
 - **Answer:** B
 

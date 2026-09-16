@@ -1,20 +1,20 @@
-"""regression.py — a disciplined linear-regression predictor for tabular data.
+"""regression.py - a disciplined linear-regression predictor for tabular data.
 
 The point is not the algorithm (one line: ``LinearRegression().fit(...)``) but
 the discipline around it: a correct train/test split, standardization fitted
 **only on train** (no leakage), metrics reported honestly on unseen data, and
-coefficient interpretation — not just a score.
+coefficient interpretation - not just a score.
 
 The same pipeline runs across seven public regression datasets so the
 workflow is shown to be dataset-agnostic:
 
-    diabetes    (sklearn, offline)       disease progression   — 442 rows, R2=0.453
-    california  (sklearn, downloaded)    median house value    — 20,640 rows
-    co2         (Government of Canada)   CO2 emissions g/km    — 1,067 rows
-    mpg         (seaborn auto-mpg)       fuel efficiency (mpg) — 392 rows
-    tips        (seaborn tips)           tip amount ($)        — 244 rows
-    diamonds    (seaborn, downloaded)    price ($)             — 53,940 rows
-    penguins    (seaborn palmerpenguins) body mass (g)         — 342 rows
+    diabetes    (sklearn, offline)       disease progression   - 442 rows, R2=0.453
+    california  (sklearn, downloaded)    median house value    - 20,640 rows
+    co2         (Government of Canada)   CO2 emissions g/km    - 1,067 rows
+    mpg         (seaborn auto-mpg)       fuel efficiency (mpg) - 392 rows
+    tips        (seaborn tips)           tip amount ($)        - 244 rows
+    diamonds    (seaborn, downloaded)    price ($)             - 53,940 rows
+    penguins    (seaborn palmerpenguins) body mass (g)         - 342 rows
 
 PIPELINE  (pure functions)
     load_data -> explore_data -> preprocess -> train_model -> evaluate -> plot
@@ -39,7 +39,7 @@ from typing import Any
 
 import matplotlib
 
-matplotlib.use("Agg")  # headless backend — never plt.show()
+matplotlib.use("Agg")  # headless backend - never plt.show()
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -142,7 +142,7 @@ def load_data(name: str) -> Dataset:
             "CO2EMISSIONS",
             "g/km",
             "automotive/emissions",
-            "Fuel consumption ratings — Government of Canada open data "
+            "Fuel consumption ratings - Government of Canada open data "
             "(Open Government Licence – Canada)",
         )
 
@@ -226,7 +226,7 @@ def explore_data(ds: Dataset) -> pd.Series:
 def preprocess(
     features: pd.DataFrame, y: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
-    """Split first, THEN fit the scaler on the train split only — the anti-leakage order.
+    """Split first, THEN fit the scaler on the train split only - the anti-leakage order.
 
     Returns (x_train_s, x_test_s, y_train, y_test, scaler). Asserts that the
     scaled train columns have ~zero mean, guarding against a fit that leaked
@@ -239,7 +239,7 @@ def preprocess(
     x_train_s = scaler.transform(x_train)
     x_test_s = scaler.transform(x_test)
 
-    assert np.abs(x_train_s.mean(axis=0)).max() < 1e-9, "train not centred — leakage?"
+    assert np.abs(x_train_s.mean(axis=0)).max() < 1e-9, "train not centred - leakage?"
     return x_train_s, x_test_s, y_train, y_test, scaler
 
 
@@ -259,7 +259,7 @@ def evaluate(model: LinearRegression, x_test_s: np.ndarray, y_test: np.ndarray) 
 
 
 def rank_coefficients(model: LinearRegression, feature_names: list[str]) -> list[tuple[str, float]]:
-    """Standardized coefficients sorted by |value| desc — 'which feature matters most'."""
+    """Standardized coefficients sorted by |value| desc - 'which feature matters most'."""
     pairs = list(zip(feature_names, model.coef_, strict=True))
     return sorted(pairs, key=lambda kv: abs(kv[1]), reverse=True)
 
@@ -279,7 +279,7 @@ def write_metrics(
     path: Path,
 ) -> None:
     lines = [
-        "LINEAR REGRESSION — METRICS",
+        "LINEAR REGRESSION - METRICS",
         "=" * 44,
         f"Dataset      : {ds.name}  ({ds.domain})",
         f"Source       : {ds.source}",
@@ -294,7 +294,7 @@ def write_metrics(
         "",
         f"Intercept    : {model.intercept_:.3f}",
         "",
-        "Standardized coefficients (|value| desc — most influential first):",
+        "Standardized coefficients (|value| desc - most influential first):",
     ]
     for feat, coef in ranking:
         lines.append(f"  {feat:<26} {coef:>10.3f}")
@@ -331,7 +331,7 @@ def run_one(name: str, suffix: str = "") -> dict[str, str | int | float]:
     """Run the full pipeline on one dataset.
 
     Writes ``metrics<tag>.txt`` and ``predicted_vs_actual<tag>.png`` under
-    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` — so
+    ``OUT_DIR``, where ``tag`` is ``suffix`` if given, else ``_<name>`` - so
     every dataset gets its own pair of output files by default. Returns a
     compact result dict.
     """
@@ -375,9 +375,9 @@ def run_one(name: str, suffix: str = "") -> dict[str, str | int | float]:
 
 
 def write_summary(results: list[dict[str, str | int | float]], path: Path) -> None:
-    """Deterministic cross-dataset comparison table — no timestamps, no absolute paths."""
+    """Deterministic cross-dataset comparison table - no timestamps, no absolute paths."""
     header = f"{'Dataset':<12}{'n':>7}{'p':>4}{'MAE':>12}{'RMSE':>12}{'R2':>8}"
-    lines = ["LINEAR REGRESSION — CROSS-DATASET SUMMARY", "=" * 55, header, "-" * 55]
+    lines = ["LINEAR REGRESSION - CROSS-DATASET SUMMARY", "=" * 55, header, "-" * 55]
     for r in results:
         lines.append(
             f"{r['name']:<12}{r['n']:>7}{r['p']:>4}"

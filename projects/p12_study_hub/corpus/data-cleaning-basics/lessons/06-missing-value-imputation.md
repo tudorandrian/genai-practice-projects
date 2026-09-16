@@ -43,10 +43,10 @@ themselves.
 ### Q1. (Multiple Choice)
 For a skewed numeric column such as trip duration, why is the median often preferred over the mean as a fill value for missing entries?
 
-- A) The median is less affected by extreme values than the mean, so it better represents a 'typical' duration in a skewed distribution. — **Correct answer.** This robustness to extreme values is exactly why the median is the safer default here.
-- B) The median is always numerically equal to the mean. — **Incorrect.** The two are only close for roughly symmetric distributions, and diverge under skew.
-- C) Pandas cannot compute a mean on a column containing missing values. — **Incorrect.** Pandas computes the mean over the non-missing values by default; it is not blocked by gaps.
-- D) The median must always be an integer. — **Incorrect.** The median of a numeric column can be a fractional value, just like the mean.
+- A) The median is less affected by extreme values than the mean, so it better represents a 'typical' duration in a skewed distribution. - **Correct answer.** This robustness to extreme values is exactly why the median is the safer default here.
+- B) The median is always numerically equal to the mean. - **Incorrect.** The two are only close for roughly symmetric distributions, and diverge under skew.
+- C) Pandas cannot compute a mean on a column containing missing values. - **Incorrect.** Pandas computes the mean over the non-missing values by default; it is not blocked by gaps.
+- D) The median must always be an integer. - **Incorrect.** The median of a numeric column can be a fractional value, just like the mean.
 
 - **Answer:** A
 

@@ -42,10 +42,10 @@ otherwise be very difficult to notice from the outside.
 ### Q1. (Multiple Choice)
 Why is measuring token counts with the actual tokenizer more reliable than estimating from word counts?
 
-- A) Word counts and token counts are always identical for English text. — **Incorrect.** The lesson explicitly notes uncommon words, part numbers, and punctuation can split into several tokens.
-- B) Tokenizers cannot process text containing numbers or punctuation. — **Incorrect.** Tokenizers routinely process numbers and punctuation, simply sometimes with more tokens than expected.
-- C) The context window is measured in words, not tokens. — **Incorrect.** The lesson defines the context window explicitly in tokens, not words.
-- D) Unusual text such as part numbers or code often uses more tokens than a plain word count would suggest, so only the real tokenizer gives an accurate count. — **Correct answer.** This exact discrepancy between word counts and true token counts is why direct measurement matters.
+- A) Word counts and token counts are always identical for English text. - **Incorrect.** The lesson explicitly notes uncommon words, part numbers, and punctuation can split into several tokens.
+- B) Tokenizers cannot process text containing numbers or punctuation. - **Incorrect.** Tokenizers routinely process numbers and punctuation, simply sometimes with more tokens than expected.
+- C) The context window is measured in words, not tokens. - **Incorrect.** The lesson defines the context window explicitly in tokens, not words.
+- D) Unusual text such as part numbers or code often uses more tokens than a plain word count would suggest, so only the real tokenizer gives an accurate count. - **Correct answer.** This exact discrepancy between word counts and true token counts is why direct measurement matters.
 
 - **Answer:** D
 

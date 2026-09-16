@@ -1,9 +1,9 @@
-"""synthetic_docs.py — generate a small private-document set for the RAG demo.
+"""synthetic_docs.py - generate a small private-document set for the RAG demo.
 
 Writes three documents with known, specific facts, so retrieval and grounding can
 be checked against expected answers (see ``eval_questions.md``):
 
-  - acme_handbook.pdf    (company policy facts)    — exercises PyPDFLoader + page metadata
+  - acme_handbook.pdf    (company policy facts)    - exercises PyPDFLoader + page metadata
   - engineering_notes.md (technical stack facts)
   - support_faq.txt      (support/logistics facts)
 
@@ -87,7 +87,7 @@ def write_all(folder: str | Path) -> dict[str, Path]:
     _write_pdf(HANDBOOK, paths["acme_handbook.pdf"])
     paths["engineering_notes.md"].write_text(ENGINEERING, encoding="utf-8")
     paths["support_faq.txt"].write_text(FAQ, encoding="utf-8")
-    for name in paths:  # log the filename only — the path is a local absolute path
+    for name in paths:  # log the filename only - the path is a local absolute path
         log.info("write_all: wrote %s", name)
     return paths
 

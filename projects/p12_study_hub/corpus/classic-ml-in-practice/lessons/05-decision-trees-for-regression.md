@@ -42,10 +42,10 @@ motivation for the ensemble methods covered next.
 ### Q1. (Multiple Choice)
 Why can a decision tree capture an interaction between rain and temperature more naturally than a plain linear regression model can?
 
-- A) A tree can split on temperature differently within different branches (such as rainy versus dry days), effectively letting one feature's effect depend on another without an explicit interaction term. — **Correct answer.** This branch-dependent splitting is exactly how a tree captures interactions without hand-built features.
-- B) Linear regression cannot use more than one feature at a time. — **Incorrect.** Linear regression readily combines many features in a single weighted sum.
-- C) Decision trees always require fewer training rows than linear regression. — **Incorrect.** Data requirements are not the distinguishing factor being described here.
-- D) Trees cannot be regularized in any way. — **Incorrect.** Trees can be constrained through parameters like `max_depth` and `min_samples_leaf`, which act as a form of regularization.
+- A) A tree can split on temperature differently within different branches (such as rainy versus dry days), effectively letting one feature's effect depend on another without an explicit interaction term. - **Correct answer.** This branch-dependent splitting is exactly how a tree captures interactions without hand-built features.
+- B) Linear regression cannot use more than one feature at a time. - **Incorrect.** Linear regression readily combines many features in a single weighted sum.
+- C) Decision trees always require fewer training rows than linear regression. - **Incorrect.** Data requirements are not the distinguishing factor being described here.
+- D) Trees cannot be regularized in any way. - **Incorrect.** Trees can be constrained through parameters like `max_depth` and `min_samples_leaf`, which act as a form of regularization.
 
 - **Answer:** A
 

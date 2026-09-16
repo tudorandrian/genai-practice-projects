@@ -1,4 +1,4 @@
-K-MEANS + PCA — CROSS-DATASET SUMMARY
+K-MEANS + PCA - CROSS-DATASET SUMMARY
 ================================================================
 Dataset            n  feat  best_k  silhouette   PC1+PC2     ARI
 ----------------------------------------------------------------

@@ -1,6 +1,6 @@
-"""rag_chatbot.py — a Retrieval-Augmented Generation chatbot over your own documents.
+"""rag_chatbot.py - a Retrieval-Augmented Generation chatbot over your own documents.
 
-Project P11 — the repository's first ``rag``-tier project. Answers questions about
+Project P11 - the repository's first ``rag``-tier project. Answers questions about
 *your* private documents (PDF, Markdown, text) rather than from the model's general
 knowledge. The pipeline:
 
@@ -8,13 +8,13 @@ knowledge. The pipeline:
     question -> embed -> top-k similar chunks -> grounded prompt -> LLM -> answer + sources
 
 The answer is generated ONLY from the retrieved context, and every answer cites the
-files/pages it came from — the standard technique for reducing hallucinations and
+files/pages it came from - the standard technique for reducing hallucinations and
 connecting an LLM to private data.
 
 Key seams
   * ``create_llm()`` isolates the LLM provider: ``ollama`` (default, a local model
     served by Ollama, no API key), ``openai`` (key from env), ``stub`` (offline, used
-    by the tests and by ``demo()``). No API key ever lives in the code — every
+    by the tests and by ``demo()``). No API key ever lives in the code - every
     key/URL/model name is read from the environment at call time, not cached at
     import time, so tests and operators can override any of them without reloading
     the module.
@@ -32,7 +32,7 @@ Run
 
 Dependencies  langchain-core, langchain-text-splitters, langchain-huggingface,
 langchain-chroma, langchain-ollama, langchain-openai, chromadb, sentence-transformers,
-pypdf, fpdf2 — the ``rag`` dependency group. Every one of those imports stays inside a
+pypdf, fpdf2 - the ``rag`` dependency group. Every one of those imports stays inside a
 function so this module (and its ``core``-marked tests) stay importable without the group installed.
 """
 
@@ -59,12 +59,12 @@ EVAL_QUESTIONS_PATH = HERE / "eval_questions.md"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 # Small enough that the synthetic corpus splits into several chunks per document
 # (9 total, vs. TOP_K=3) so retrieval must genuinely discriminate between
-# candidates instead of trivially returning the entire corpus for every query —
+# candidates instead of trivially returning the entire corpus for every query -
 # see test_evaluation_questions_retrieve_the_expected_source's rank assertion.
 # 250 chars also yields 9 chunks but occasionally merges two adjacent, unrelated
 # handbook facts (e.g. "vacation days" + "remote work") into one chunk that then
 # out-competes the actually-relevant chunk for a *different* nearby question (e.g.
-# "WiFi password") — verified empirically across all twelve real eval questions
+# "WiFi password") - verified empirically across all twelve real eval questions
 # before picking 200/20 over 250/30.
 CHUNK_SIZE = 200
 CHUNK_OVERLAP = 20
@@ -158,7 +158,7 @@ def _embeddings() -> Any:
 
 
 def _load_and_split(folder: str | Path | None = None) -> list[Any]:
-    """``load_documents`` + ``split_documents`` in one step — shared by
+    """``load_documents`` + ``split_documents`` in one step - shared by
     ``build_index`` and ``demo()`` so the latter doesn't load and split the corpus
     twice just to report the ``chunks`` figure."""
     return split_documents(load_documents(folder))
@@ -172,7 +172,7 @@ def _rebuild_index(chunks: list[Any], persist_dir: str | Path | None = None) -> 
         # Chroma would otherwise fail with an unexplained "Expected Embeddings to be
         # non-empty" error. data/ is empty on a fresh clone until the corpus is written.
         raise EmptyCorpusError(
-            "no documents to index in data/ — run `uv run p11-rag-chatbot --demo` or "
+            "no documents to index in data/ - run `uv run p11-rag-chatbot --demo` or "
             "`uv run python -m projects.p11_rag_chatbot.synthetic_docs` first"
         )
     from langchain_chroma import Chroma  # lazy import, see module docstring
@@ -220,9 +220,9 @@ def create_llm(provider: str | None = None) -> Any:
     """Return a LangChain LLM. Provider chosen by ``provider``, falling back to
     ``RAG_LLM_PROVIDER`` (default ``ollama``):
 
-        ollama (default) — a local model served by Ollama, no API key
-        openai           — ChatOpenAI (reads OPENAI_API_KEY from env)
-        stub             — a deterministic offline LLM, no model at all (used by
+        ollama (default) - a local model served by Ollama, no API key
+        openai           - ChatOpenAI (reads OPENAI_API_KEY from env)
+        stub             - a deterministic offline LLM, no model at all (used by
                            the tests and demo())
 
     Only this function's body changes to swap providers; no API key ever lives in
@@ -247,12 +247,12 @@ def create_llm(provider: str | None = None) -> Any:
             rather than a single fixed string: it echoes a snippet of the
             retrieved context (``"STUB: " + context[:60]``). A grounded question
             therefore visibly gets a grounded-looking answer instead of every
-            question — grounded or not — reading as a refusal; ``REFUSAL`` is reserved for a real
+            question - grounded or not - reading as a refusal; ``REFUSAL`` is reserved for a real
             provider's grounding behaviour (see the retrieval-layer trap test,
             which checks this offline without one)."""
             context = prompt.split("Context:\n", 1)[-1].split("\n\nQuestion:", 1)[0]
             # Collapse whitespace (the retrieved context can span several lines)
-            # so the answer is always a single line — readable in
+            # so the answer is always a single line - readable in
             # output/session.txt and consistent with _show()'s one-line-per-field
             # console output.
             return f"STUB: {' '.join(context.split())[:60]}"
@@ -261,13 +261,13 @@ def create_llm(provider: str | None = None) -> Any:
         # (LLM):` statement: LLM is an optional dependency resolved at call time
         # (only present with the rag group installed), so without the rag group
         # `ignore_missing_imports` makes it resolve to `Any`, and `strict`
-        # refuses to let a *class statement* subclass `Any` — even through an
+        # refuses to let a *class statement* subclass `Any` - even through an
         # explicit `Any`-typed alias, which mypy still treats as subclassing
         # `Any` (verified empirically; a `# type: ignore` here would be a real
         # suppression in one supported environment and an unused one in the
         # other). `type()` is a function call, not a class statement, so that
-        # check doesn't apply to it, and — because `type.__new__` resolves the
-        # most-derived metaclass among its bases before constructing — it
+        # check doesn't apply to it, and - because `type.__new__` resolves the
+        # most-derived metaclass among its bases before constructing - it
         # correctly invokes LLM's Pydantic metaclass at runtime exactly as a
         # `class` statement would, so the resulting object behaves identically.
         namespace = {"_llm_type": property(lambda self: "stub"), "_call": _call}
@@ -363,7 +363,7 @@ def load_eval_questions(path: str | Path | None = None) -> list[tuple[str, str]]
     table into ``(question, expected_source)`` pairs.
 
     Skips the header and separator rows. The table's final row is a **trap**
-    question with no expected source (``Source`` column reads ``(absent)``) — it
+    question with no expected source (``Source`` column reads ``(absent)``) - it
     is deliberately excluded here, since a row with no expected source cannot
     assert a retrieval hit; see ``test_trap_question_retrieves_no_revenue_related_chunk``
     for the assertion the trap row exists to prove.
@@ -380,7 +380,7 @@ def load_eval_questions(path: str | Path | None = None) -> list[tuple[str, str]]
         number, question, _expected_answer, source = cells
         if number.startswith("#") or set(number) <= {"-"}:  # header / separator row
             continue
-        if source == "(absent)":  # the trap row — no source to assert a retrieval hit
+        if source == "(absent)":  # the trap row - no source to assert a retrieval hit
             continue
         pairs.append((question.strip("*"), source.strip("*")))
     return pairs
@@ -426,7 +426,7 @@ def build_ui(qa: Any) -> Any:
 
     return gr.ChatInterface(
         fn=_respond,
-        title="RAG chatbot — ask your documents",
+        title="RAG chatbot - ask your documents",
         description="Answers ONLY from the indexed documents (Chroma + your chosen LLM "
         "provider), with cited sources.",
     )
@@ -442,12 +442,12 @@ def demo() -> DemoResult:
     ``stub`` provider, and write ``output/session.txt`` and ``output/metrics.txt``.
 
     Tier ``rag``: needs LangChain + Chroma + the MiniLM embedding model, so it never
-    runs in CI and is skipped by ``uv run demo``/``uv run demo --models`` — only
+    runs in CI and is skipped by ``uv run demo``/``uv run demo --models`` - only
     ``uv run demo --all`` runs it.
 
     The LLM provider is force-pinned to ``stub`` (not "whichever provider is
     configured") so the committed proof does not depend on whether Ollama happens
-    to be running on this machine — see the README for running the chain against a
+    to be running on this machine - see the README for running the chain against a
     real provider. Retrieval itself is real (the MiniLM embeddings and the Chroma
     index), and the stub's answer echoes the retrieved context rather than a fixed
     string, so both ``sources`` and ``answer`` in ``output/session.txt``
@@ -456,7 +456,7 @@ def demo() -> DemoResult:
     The index is always rebuilt (``reindex=True``) so the reported ``chunks`` figure
     and the retrieved sources never depend on a stale ``chroma_index/`` directory
     left over from a previous manual run. Any existing ``output/session.txt`` is
-    removed first, so the three demo questions are the file's only content — two
+    removed first, so the three demo questions are the file's only content - two
     consecutive ``--demo`` runs are byte-identical.
     """
     start = time.perf_counter()

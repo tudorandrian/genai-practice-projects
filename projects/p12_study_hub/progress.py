@@ -1,10 +1,10 @@
-"""progress.py — a progress dashboard over the P12 synthetic corpus's status tables.
+"""progress.py - a progress dashboard over the P12 synthetic corpus's status tables.
 
 Scans ``corpus/<course>/README.md`` files for the ``| # | Lesson | Status |``
 table, normalizes statuses to four canonical states (NOT STARTED | IN PROGRESS |
 COMPLETED | REVIEW), aggregates with Pandas, and saves a bar chart to
 ``output/progress.png``. Also reads the quiz ``history.json`` (``quiz_engine``'s
-output) to compute per-module success rates — the integration point where this
+output) to compute per-module success rates - the integration point where this
 module consumes ``quiz_engine``'s.
 
 Pure functions: ``scan_statuses`` / ``aggregate`` / ``success_rate``.
@@ -69,8 +69,8 @@ def scan_statuses(corpus_dir: str | Path = CORPUS_DIR) -> pd.DataFrame:
     """Scan ``corpus_dir`` for course ``README.md`` status tables.
 
     Returns a DataFrame ``[course, item, status]``. Every lesson course README
-    uses the same table convention, so — unlike the private course tree this
-    was ported from — there is no separate "lab README" status-line format to
+    uses the same table convention, so - unlike the private course tree this
+    was ported from - there is no separate "lab README" status-line format to
     handle.
     """
     corpus_dir = Path(corpus_dir)

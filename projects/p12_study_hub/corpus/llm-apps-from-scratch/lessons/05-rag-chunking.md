@@ -44,10 +44,10 @@ still cannot recover context that was destroyed by a bad chunk boundary.
 ### Q1. (Multiple Choice)
 Why does Fenwick Labs' pipeline split manuals primarily on section boundaries rather than by a fixed character count alone?
 
-- A) Splitting on section boundaries avoids cutting a chunk off in the middle of a single coherent instruction or idea. — **Correct answer.** This is exactly the reasoning the lesson gives for preferring section boundaries.
-- B) Fixed character counts cannot be computed for manual text. — **Incorrect.** Character counts can be computed for any text; the issue is where the cut falls, not whether it can be measured.
-- C) Section boundaries always produce chunks of identical length. — **Incorrect.** Sections vary in length, so boundary-based chunks are not guaranteed to be uniform in size.
-- D) Pebble cannot process chunks that were split by character count. — **Incorrect.** Pebble can process any text chunk regardless of how it was split; the concern is chunk quality, not compatibility.
+- A) Splitting on section boundaries avoids cutting a chunk off in the middle of a single coherent instruction or idea. - **Correct answer.** This is exactly the reasoning the lesson gives for preferring section boundaries.
+- B) Fixed character counts cannot be computed for manual text. - **Incorrect.** Character counts can be computed for any text; the issue is where the cut falls, not whether it can be measured.
+- C) Section boundaries always produce chunks of identical length. - **Incorrect.** Sections vary in length, so boundary-based chunks are not guaranteed to be uniform in size.
+- D) Pebble cannot process chunks that were split by character count. - **Incorrect.** Pebble can process any text chunk regardless of how it was split; the concern is chunk quality, not compatibility.
 
 - **Answer:** A
 

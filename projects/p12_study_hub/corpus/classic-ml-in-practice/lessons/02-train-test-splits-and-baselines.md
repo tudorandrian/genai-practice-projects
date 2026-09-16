@@ -45,10 +45,10 @@ trustworthy final check in the first place.
 ### Q1. (Multiple Choice)
 Why is a random train/test split generally inappropriate for the daily ride count data in this course?
 
-- A) Random splitting is never valid for any machine learning problem. — **Incorrect.** Random splitting is valid and common for many problems; the issue here is specifically about time order.
-- B) `train_test_split` cannot be used on numeric targets. — **Incorrect.** `train_test_split` works on numeric targets without restriction.
-- C) The rows are ordered in time, so a random split could train on days after some test days, leaking future information the model would not have in real use. — **Correct answer.** This time-ordering leakage is exactly why a chronological split matches real forecasting use.
-- D) A random split always produces exactly a 50/50 division. — **Incorrect.** The split proportion is a separate parameter from whether the split is random or ordered.
+- A) Random splitting is never valid for any machine learning problem. - **Incorrect.** Random splitting is valid and common for many problems; the issue here is specifically about time order.
+- B) `train_test_split` cannot be used on numeric targets. - **Incorrect.** `train_test_split` works on numeric targets without restriction.
+- C) The rows are ordered in time, so a random split could train on days after some test days, leaking future information the model would not have in real use. - **Correct answer.** This time-ordering leakage is exactly why a chronological split matches real forecasting use.
+- D) A random split always produces exactly a 50/50 division. - **Incorrect.** The split proportion is a separate parameter from whether the split is random or ordered.
 
 - **Answer:** C
 

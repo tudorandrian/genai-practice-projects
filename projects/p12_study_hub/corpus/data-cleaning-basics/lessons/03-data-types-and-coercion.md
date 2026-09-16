@@ -42,10 +42,10 @@ once, up front.
 ### Q1. (Multiple Choice)
 A `duration_minutes` column loads as an 'object' (text) dtype instead of a float. What is the most likely explanation?
 
-- A) At least one value in the column cannot be parsed as a number, forcing pandas to store the whole column as text. — **Correct answer.** A single non-numeric value is enough to make pandas fall back to a text dtype for the whole column.
-- B) The column has too many rows for pandas to store as a float. — **Incorrect.** Row count has no bearing on which dtype a column receives.
-- C) Float columns are always loaded as text by default in pandas. — **Incorrect.** Pandas infers numeric dtypes by default when every value parses cleanly.
-- D) The CSV file must be corrupted beyond use. — **Incorrect.** One unparsable value does not mean the file is corrupted; it usually just needs cleaning.
+- A) At least one value in the column cannot be parsed as a number, forcing pandas to store the whole column as text. - **Correct answer.** A single non-numeric value is enough to make pandas fall back to a text dtype for the whole column.
+- B) The column has too many rows for pandas to store as a float. - **Incorrect.** Row count has no bearing on which dtype a column receives.
+- C) Float columns are always loaded as text by default in pandas. - **Incorrect.** Pandas infers numeric dtypes by default when every value parses cleanly.
+- D) The CSV file must be corrupted beyond use. - **Incorrect.** One unparsable value does not mean the file is corrupted; it usually just needs cleaning.
 
 - **Answer:** A
 

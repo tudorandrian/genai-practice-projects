@@ -44,10 +44,10 @@ values once you are confident you have found them all.
 ### Q1. (Multiple Choice)
 Why is applying fuzzy string matching to auto-correct station names risky if done without any human review?
 
-- A) Fuzzy matching cannot run on text data at all. — **Incorrect.** Fuzzy matching is specifically designed to compare text strings.
-- B) It always runs slower than exact string matching. — **Incorrect.** Speed is a real consideration but not the risk the lesson highlights.
-- C) Two genuinely different station names can be close enough to each other that an automatic correction could incorrectly merge them. — **Correct answer.** This risk of merging distinct real values is exactly why review matters.
-- D) It can only compare strings of exactly equal length. — **Incorrect.** Levenshtein-style distance measures work on strings of different lengths.
+- A) Fuzzy matching cannot run on text data at all. - **Incorrect.** Fuzzy matching is specifically designed to compare text strings.
+- B) It always runs slower than exact string matching. - **Incorrect.** Speed is a real consideration but not the risk the lesson highlights.
+- C) Two genuinely different station names can be close enough to each other that an automatic correction could incorrectly merge them. - **Correct answer.** This risk of merging distinct real values is exactly why review matters.
+- D) It can only compare strings of exactly equal length. - **Incorrect.** Levenshtein-style distance measures work on strings of different lengths.
 
 - **Answer:** C
 

@@ -1,7 +1,7 @@
 """Mechanical half of docs/release-gate.md. Exit 1 on any failing check.
 
 Covers gate items A3-A5 and A7 (A1/A2/A6 are recorded from CI/heavy.yml runs, not run
-here — see docs/release-gate.md). `ci.yml` runs `python -m scripts.release_check --offline`
+here - see docs/release-gate.md). `ci.yml` runs `python -m scripts.release_check --offline`
 on every push and pull request (Ubuntu job); the link check needs a run without
 `--offline`.
 """
@@ -69,13 +69,13 @@ def check_blocklist(root: Path) -> Check:
 
 # Licence identifiers, and the prose a project uses instead of a table row when its data
 # needs no third-party licence because nothing was sourced from anywhere else ("no
-# external dataset", "hand-written", ...). Either form is acceptable evidence — gate item
+# external dataset", "hand-written", ...). Either form is acceptable evidence - gate item
 # A5 requires a source and a licence be stated, not any particular Markdown formatting.
 #
 # The short identifiers (MIT, BSD, ODC, Apache, CC/CC0/CC-BY) are wrapped in \b word
 # boundaries: without them, "MIT" matches inside an ordinary word
 # like "committed" ("com-MIT-ted"), which would make a section pass with no licence
-# stated at all. "licen[cs]e" and the multi-word prose phrases below don't need this —
+# stated at all. "licen[cs]e" and the multi-word prose phrases below don't need this -
 # they aren't short enough to collide with unrelated English words.
 DATASET_LICENCE_EVIDENCE = re.compile(
     r"licen[cs]e|public domain|\b(?:CC0|CC-BY|CC|BSD|ODC|MIT|Apache)\b|"
@@ -89,7 +89,7 @@ def check_dataset_licences(root: Path) -> Check:
 
     This is a smoke test, not an audit. It proves that each project's
     "## Datasets and licences" section exists and says *something* recognisable as
-    licence or provenance evidence, in a table row or in prose — it does not prove that
+    licence or provenance evidence, in a table row or in prose - it does not prove that
     a project with several datasets documents every one of them, nor that the licence
     named is the correct one for what actually ships. Per-dataset completeness is what
     the blind review (gate item B) and the owner's own read (docs/release-gate.md C8)
@@ -130,12 +130,12 @@ def check_metrics_fresh(root: Path) -> Check:
     Git commit history, not `Path.stat().st_mtime`, is what "predates" means here: a
     fresh clone (or CI checkout) writes every tracked file to disk in whatever order
     the checkout happens to use, so on-disk mtimes carry no information about which
-    file was *authored* more recently — the last commit touching each path does.
+    file was *authored* more recently - the last commit touching each path does.
 
     That recency comparison is a useful signal but cannot be a pass/fail gate: a code
     change can leave a project's output byte-identical, and git records no new commit
     for an unchanged file. The proof's commit timestamp then stays behind the code's
-    permanently, with no honest action able to advance it — "touching" the file without
+    permanently, with no honest action able to advance it - "touching" the file without
     a real content change would only game the check. So a stale timestamp is real evidence
     worth surfacing (as `skip`, with the action to take), but a missing proof is the
     only state this check can call an unambiguous defect.
@@ -157,7 +157,7 @@ def check_metrics_fresh(root: Path) -> Check:
         return Check(
             "metrics-fresh",
             "skip",
-            f"code changed since these proofs were last committed: {', '.join(stale)} — "
+            f"code changed since these proofs were last committed: {', '.join(stale)} - "
             "re-run `uv run demo --all` and confirm `git status` stays clean",
         )
     return Check("metrics-fresh", "pass")
@@ -168,8 +168,8 @@ def check_metrics_fresh(root: Path) -> Check:
 # are not links in the sense gate item A7 means and are skipped rather than checked.
 EXAMPLE_HOSTS = {"example.com", "example.net", "example.org", "example.invalid"}
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1"}
-# The repository's own URL — and anything under it (Actions runs, the CI badge, the
-# commit history, the pull-request list) — cannot resolve for a logged-out client while
+# The repository's own URL - and anything under it (Actions runs, the CI badge, the
+# commit history, the pull-request list) - cannot resolve for a logged-out client while
 # the repository is private: gate item A7's own wording ("resolves for a logged-out
 # client") makes that a post-publication check by definition, not a broken link.
 REPO_URL = "https://github.com/tudorandrian/genai-practice-projects"
@@ -204,7 +204,7 @@ def check_links(root: Path, *, network: bool = True) -> Check:
         # defeats _is_example_host's exact hostname match below.
         found = re.findall(r"https?://[^\s)>\]`]+", md.read_text(encoding="utf-8"))
         # A URL at the end of a sentence also picks up trailing punctuation that was
-        # never part of the URL (e.g. "See <repo-url>." — the check needs the bare URL
+        # never part of the URL (e.g. "See <repo-url>." - the check needs the bare URL
         # to recognise REPO_URL below, not "<repo-url>.").
         urls |= {u.rstrip(".,;:") for u in found}
     urls = {u for u in urls if not _is_example_host(u)}

@@ -1,9 +1,9 @@
-"""assistant.py — chain OpenAI Whisper (STT) into an LLM summarizer.
+"""assistant.py - chain OpenAI Whisper (STT) into an LLM summarizer.
 
 Project P10. This is the first project in the repository that chains two AI
 models from different domains: speech -> language. Audio is transcribed with
 Whisper, and the transcript is fed to an LLM with a structured prompt that
-extracts three sections — topics, decisions and action items. The output of
+extracts three sections - topics, decisions and action items. The output of
 the first model is the input of the second: the fundamental pattern behind
 composed GenAI applications.
 
@@ -12,14 +12,14 @@ Design notes
     -> str``, dispatched by the ``MEETING_LLM_PROVIDER`` env var (default
     ``ollama`` = a local model served by Ollama; ``openai``, a ``local``
     transformers fallback, and ``stub`` are also available). No API key ever
-    lives in the code — keys are read from the environment. The fully-local
+    lives in the code - keys are read from the environment. The fully-local
     chain (Whisper + Ollama) runs with no key at all, and keeps the LLM
     weights outside this repo's Hugging Face cache. If Ollama is unreachable,
     ``summarize_with_llm`` logs a warning and falls back to the stub with a
     visible ``[ollama unavailable ...]`` marker rather than raising.
   * Audio is decoded with scipy (WAV) and resampled to 16 kHz in-process, so
     the common case needs no ffmpeg. Other containers (mp3) fall back to
-    Whisper's own file loader, which does need ffmpeg — reported as a clean
+    Whisper's own file loader, which does need ffmpeg - reported as a clean
     error if it is absent.
 
 Run
@@ -28,7 +28,7 @@ Run
     uv run p10-meeting-assistant                       # Gradio UI on 127.0.0.1:7860
     uv run pytest projects/p10_meeting_assistant -q    # fast tests, no weights needed
 
-Dependencies  transformers, torch, gradio, scipy, numpy — the ``models`` group.
+Dependencies  transformers, torch, gradio, scipy, numpy - the ``models`` group.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ WHISPER_MODEL = "openai/whisper-tiny.en"
 # LLM: default provider is Ollama, so the model lives outside this repo's
 # Python cache. The transformers "local" provider is kept as an opt-in
 # offline fallback. Every knob is read from the environment at call time
-# (not cached at import time) so tests — and operators — can override any of
+# (not cached at import time) so tests - and operators - can override any of
 # them without reloading the module.
 DEFAULT_OLLAMA_MODEL = "qwen2.5:1.5b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
@@ -113,7 +113,7 @@ asr_log = logging.getLogger(f"{__name__}.asr")
 
 
 # =============================================================================
-# Step 1 — Speech to text (Whisper)
+# Step 1 - Speech to text (Whisper)
 # =============================================================================
 
 
@@ -150,7 +150,7 @@ def load_asr_model() -> Any:
 
     Decoding is set explicitly to greedy (``num_beams=1, do_sample=False``)
     rather than relying on the pipeline's defaults, so a given audio input
-    always transcribes to the same text — required for
+    always transcribes to the same text - required for
     ``output/transcript.txt`` to be byte-identical across repeated ``--demo``
     runs. Imports transformers lazily so this module stays importable without
     it (only the ``models`` dependency group needs it).
@@ -234,7 +234,7 @@ def transcribe(audio_path: str | Path) -> str:
 
 
 # =============================================================================
-# Step 2 — Summarize with an LLM (provider-swappable seam)
+# Step 2 - Summarize with an LLM (provider-swappable seam)
 # =============================================================================
 
 
@@ -242,7 +242,7 @@ def build_prompt(transcript: str, section: str | None = None) -> str:
     """Build the summarization prompt.
 
     With ``section`` (an instruction) it builds a focused single-section
-    prompt — the reliable path for a small local model, which extracts one
+    prompt - the reliable path for a small local model, which extracts one
     focused list far better than three sections at once. Without it, the
     full three-section prompt (used by more capable providers). Role + clear
     instruction + required output format.
@@ -275,7 +275,7 @@ def stub(prompt: str) -> str:
 def _summarize_ollama(prompt: str) -> str:
     """Generate with a model served by Ollama over its HTTP API.
 
-    Uses only the standard library (urllib + json) — no extra dependency and
+    Uses only the standard library (urllib + json) - no extra dependency and
     no model weights in this repo's Python cache. Model and URL are read from
     the environment at call time (``MEETING_OLLAMA_MODEL``,
     ``MEETING_OLLAMA_URL``), not cached, so callers (and tests) can point at a
@@ -305,17 +305,17 @@ def _summarize_ollama(prompt: str) -> str:
 def summarize_with_llm(prompt: str) -> str:
     """THE provider seam. Dispatches on ``MEETING_LLM_PROVIDER``:
 
-        ollama (default) — a local model served by Ollama (no key, no weights
+        ollama (default) - a local model served by Ollama (no key, no weights
                            in this repo's cache). If unreachable, falls back
                            to the stub with a visible ``[ollama unavailable
                            ...]`` marker instead of raising.
-        openai           — OpenAI Chat Completions (reads OPENAI_API_KEY and
+        openai           - OpenAI Chat Completions (reads OPENAI_API_KEY and
                            MEETING_OPENAI_MODEL)
-        local             — offline transformers causal LM fallback (weights
+        local             - offline transformers causal LM fallback (weights
                            cached by Hugging Face, model from
                            MEETING_LLM_MODEL); use only if Ollama is
                            unavailable and no key is at hand
-        stub             — echoes the start of the transcript (tests, no model)
+        stub             - echoes the start of the transcript (tests, no model)
 
     Swapping providers touches only this function's body (keys stay in the
     environment, never in code).
@@ -377,7 +377,7 @@ def summarize_with_llm(prompt: str) -> str:
         return _summarize_ollama(prompt)
     except OSError as exc:  # connection refused/timeout (urllib.error.URLError is an OSError)
         log.warning("ollama unavailable (%s); falling back to the stub", exc)
-        return "[ollama unavailable — stub used] " + stub(prompt)
+        return "[ollama unavailable - stub used] " + stub(prompt)
 
 
 def summarize_structured(transcript: str) -> str:
@@ -454,7 +454,7 @@ def demo() -> DemoResult:
 
     Tier ``models``: downloads/loads the real Whisper model and never runs in
     CI. The LLM provider is force-pinned to ``stub`` here (not "whichever
-    provider is configured") — the default is ``ollama``, most machines have
+    provider is configured") - the default is ``ollama``, most machines have
     none running, and a machine that does would produce a different summary;
     a committed artefact must not depend on which services happen to be
     running. See the README for running the chain against a real provider.
@@ -470,12 +470,12 @@ def demo() -> DemoResult:
     ``synthetic_audio.TTSEngineUnavailableError`` before any Whisper weights are
     touched; this is caught here and turned into a ``skipped`` result
     carrying an actionable note, never a raised exception or ``failed``
-    status — a missing optional system package should not fail the gate.
+    status - a missing optional system package should not fail the gate.
 
     Synthesis succeeding and ``load_audio``/Whisper raising nothing is not
     proof the audio was any good. If the transcript's word count falls below
     ``MIN_TRANSCRIPT_WORD_RATIO`` of the synthesized script's own word count,
-    this returns ``failed`` (never ``skipped`` — an implausibly short
+    this returns ``failed`` (never ``skipped`` - an implausibly short
     transcript from audio that parsed fine is treated as this project's own
     bug until proven otherwise), with a note carrying both word counts, the
     audio facts logged during synthesis, the ASR runtime facts
@@ -490,7 +490,7 @@ def demo() -> DemoResult:
     audio_facts: dict[str, synthetic_audio.AudioFacts] = {}
     try:
         # Only standup.wav: the demo never uses budget.wav, and not requesting it
-        # sidesteps a real pyttsx3/eSpeak bug entirely — see generate()'s docstring.
+        # sidesteps a real pyttsx3/eSpeak bug entirely - see generate()'s docstring.
         audio_paths = synthetic_audio.generate(
             DATA_DIR, only={"standup.wav"}, facts_out=audio_facts
         )
@@ -521,14 +521,14 @@ def demo() -> DemoResult:
         facts_line = (
             facts.format("standup.wav")
             if facts is not None
-            else "standup.wav: (no audio facts captured — reused from a previous run)"
+            else "standup.wav: (no audio facts captured - reused from a previous run)"
         )
         asr_facts_line = _ASR_FACTS or "whisper: (no ASR runtime facts captured)"
         excerpt = transcript[:200].replace("\n", " ")
         note = (
             f"transcript has {words} word(s) but the synthesized script has {script_words}; "
             f"ratio {words / script_words:.2f} is below MIN_TRANSCRIPT_WORD_RATIO="
-            f"{MIN_TRANSCRIPT_WORD_RATIO} — treating this as a broken/truncated audio file, "
+            f"{MIN_TRANSCRIPT_WORD_RATIO} - treating this as a broken/truncated audio file, "
             f"not a genuine transcription. {facts_line} {asr_facts_line} "
             f"transcript={excerpt!r}"
         )

@@ -2,9 +2,9 @@
 
 ## Context
 
-The source capstone reads `courses/` in the private certificate repository —
+The source capstone reads `courses/` in the private certificate repository -
 a real question bank, real `M*-L*.md` lesson notes, and README status
-tables — all belonging to a third-party provider and unpublishable; the
+tables - all belonging to a third-party provider and unpublishable; the
 blocklist's `M[0-9]-[0-9]-L(AB)?[0-9]` pattern flags that naming directly.
 
 ## Decision
@@ -14,7 +14,7 @@ Write three original, fictional courses (`data-cleaning-basics`,
 questions) under `projects/p12_study_hub/corpus/`, in the format the
 already-merged P02 `qbank` parser expects. Every sentence of prose, every
 question, and every README status table is original, written for this
-repository — checked by `test_corpus_contains_no_blocklisted_phrase`.
+repository - checked by `test_corpus_contains_no_blocklisted_phrase`.
 
 ## Consequences
 

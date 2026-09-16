@@ -41,10 +41,10 @@ a single, one-time test-set score.
 ### Q1. (Multiple Choice)
 Why is it important to save training-time metadata, such as test MAE and the training data's date range, alongside the saved model file itself?
 
-- A) `joblib.load` requires this metadata to load the file at all. — **Incorrect.** `joblib.load` restores the pipeline regardless of whether separate metadata is saved alongside it.
-- B) Metadata makes the model file smaller. — **Incorrect.** Saving additional metadata adds information rather than reducing file size.
-- C) Without it, someone reusing the model later has no way to judge whether it is still the best available model or a stale one that has not been revisited. — **Correct answer.** This is exactly the gap the metadata closes for anyone deciding whether to trust the model later.
-- D) Metadata is required for the pipeline's `.predict()` method to function. — **Incorrect.** `.predict()` works from the fitted pipeline alone; metadata serves human judgement, not the prediction call itself.
+- A) `joblib.load` requires this metadata to load the file at all. - **Incorrect.** `joblib.load` restores the pipeline regardless of whether separate metadata is saved alongside it.
+- B) Metadata makes the model file smaller. - **Incorrect.** Saving additional metadata adds information rather than reducing file size.
+- C) Without it, someone reusing the model later has no way to judge whether it is still the best available model or a stale one that has not been revisited. - **Correct answer.** This is exactly the gap the metadata closes for anyone deciding whether to trust the model later.
+- D) Metadata is required for the pipeline's `.predict()` method to function. - **Incorrect.** `.predict()` works from the fitted pipeline alone; metadata serves human judgement, not the prediction call itself.
 
 - **Answer:** C
 

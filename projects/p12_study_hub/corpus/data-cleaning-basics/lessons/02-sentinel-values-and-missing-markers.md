@@ -42,10 +42,10 @@ something a reviewer, or you in six months, can verify and reproduce.
 ### Q1. (Multiple Choice)
 Why does a sentinel value such as duration = -1 often slip past a naive missing-data check?
 
-- A) Because pandas automatically converts -1 to `NaN` on load. — **Incorrect.** Pandas does no such automatic conversion; -1 stays exactly as loaded.
-- B) Because it is stored as an ordinary, valid-looking number, so functions like `isna()` do not recognize it as missing. — **Correct answer.** Sentinels look structurally valid, which is precisely what lets them pass unnoticed.
-- C) Because negative numbers cannot be stored in a dataframe column. — **Incorrect.** Dataframe numeric columns store negative numbers without any restriction.
-- D) Because sentinel values are always documented in a data dictionary before use. — **Incorrect.** Sentinel conventions are typically undocumented, which is why you must detect them by pattern.
+- A) Because pandas automatically converts -1 to `NaN` on load. - **Incorrect.** Pandas does no such automatic conversion; -1 stays exactly as loaded.
+- B) Because it is stored as an ordinary, valid-looking number, so functions like `isna()` do not recognize it as missing. - **Correct answer.** Sentinels look structurally valid, which is precisely what lets them pass unnoticed.
+- C) Because negative numbers cannot be stored in a dataframe column. - **Incorrect.** Dataframe numeric columns store negative numbers without any restriction.
+- D) Because sentinel values are always documented in a data dictionary before use. - **Incorrect.** Sentinel conventions are typically undocumented, which is why you must detect them by pattern.
 
 - **Answer:** B
 

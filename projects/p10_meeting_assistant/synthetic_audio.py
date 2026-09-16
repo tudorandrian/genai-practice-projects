@@ -1,8 +1,8 @@
-"""synthetic_audio.py — synthesize short meeting recordings for testing (offline).
+"""synthetic_audio.py - synthesize short meeting recordings for testing (offline).
 
 Project P10. Uses pyttsx3 (Windows SAPI5 / eSpeak on Linux / NSSpeechSynthesizer
-on macOS) to turn two short meeting scripts — each with clear topics, decisions
-and action items — into WAV files under ``./data``. This keeps the project
+on macOS) to turn two short meeting scripts - each with clear topics, decisions
+and action items - into WAV files under ``./data``. This keeps the project
 self-contained: no copyrighted or expiring demo downloads, and the transcript
 content is known ahead of time so the Whisper -> LLM chain can be checked end
 to end.
@@ -53,7 +53,7 @@ class TTSEngineUnavailableError(RuntimeError):
     ``espeak-ng`` on Linux, ``NSSpeechSynthesizer`` on macOS) rather than
     shipping its own. It is raised when that driver is missing, when it
     reports success without writing a usable file, and when the file it wrote
-    cannot be converted to WAV. Callers — notably ``demo()`` — catch this to
+    cannot be converted to WAV. Callers - notably ``demo()`` - catch this to
     degrade to a ``skipped`` result with an actionable message instead of a
     raw traceback or a ``failed`` status.
     """
@@ -134,7 +134,7 @@ def _byteswap(data: bytes, sample_width: int) -> bytes:
 
 def _decode_pcm_samples(pcm: bytes, sample_width: int, *, big_endian: bool) -> np.ndarray:
     """Decode raw signed PCM bytes as a 1-D array of sample values (one
-    entry per sample per channel — channels are not de-interleaved, which
+    entry per sample per channel - channels are not de-interleaved, which
     the scoring below does not need). Supports the sample widths AIFF/AIFF-C
     can declare: 1 (8-bit, signed, no byte order), 2, 3 (24-bit, assembled by
     hand since neither numpy nor ``struct`` has an int24 type) and 4 bytes."""
@@ -168,7 +168,7 @@ def _smoothness_score(samples: np.ndarray) -> float:
     values = samples.astype(np.float64)
     mean_abs_value = float(np.mean(np.abs(values)))
     if mean_abs_value == 0.0:
-        return float("inf")  # silence — no signal to judge smoothness from
+        return float("inf")  # silence - no signal to judge smoothness from
     mean_abs_diff = float(np.mean(np.abs(np.diff(values))))
     return mean_abs_diff / mean_abs_value
 
@@ -226,8 +226,8 @@ def _check_byte_order(
     """Score ``pcm`` (16/24/32-bit signed PCM) decoded both ways over a
     bounded prefix (``BYTE_ORDER_DETECTION_MAX_SECONDS``). The order whose
     decoding is at least ``BYTE_ORDER_DETECTION_MARGIN`` times smoother is
-    reported as detected; otherwise detection is ``None``. Pure — no I/O,
-    no logging — and it decides nothing: callers always use the label."""
+    reported as detected; otherwise detection is ``None``. Pure - no I/O,
+    no logging - and it decides nothing: callers always use the label."""
     max_bytes = int(sample_rate * channels * sample_width * BYTE_ORDER_DETECTION_MAX_SECONDS)
     prefix = pcm[:max_bytes] if max_bytes > 0 else pcm
     big_score = _smoothness_score(_decode_pcm_samples(prefix, sample_width, big_endian=True))
@@ -272,14 +272,14 @@ def normalize_speech_audio_to_wav(raw: bytes, *, source_name: str) -> bytes:
     """
     if len(raw) < 12:
         raise TTSEngineUnavailableError(
-            f"'{source_name}' is only {len(raw)} bytes — too short to be a WAV or AIFF file "
+            f"'{source_name}' is only {len(raw)} bytes - too short to be a WAV or AIFF file "
             "pyttsx3 could plausibly have written."
         )
 
     riff_id, form_type = raw[0:4], raw[8:12]
 
     if riff_id == b"RIFF" and form_type == b"WAVE":
-        return raw  # already a standard WAV — left untouched, byte-identical
+        return raw  # already a standard WAV - left untouched, byte-identical
 
     if riff_id != b"FORM" or form_type not in (b"AIFF", b"AIFC"):
         raise TTSEngineUnavailableError(
@@ -354,7 +354,7 @@ def normalize_speech_audio_to_wav(raw: bytes, *, source_name: str) -> bytes:
     pcm = pcm[: (len(pcm) // frame_size) * frame_size] if frame_size > 0 else b""
 
     if sample_width == 1:
-        # AIFF 8-bit PCM is signed; WAV 8-bit PCM is unsigned — shift by 128.
+        # AIFF 8-bit PCM is signed; WAV 8-bit PCM is unsigned - shift by 128.
         pcm = bytes((byte + 128) & 0xFF for byte in pcm)
     else:
         check = _check_byte_order(
@@ -408,13 +408,13 @@ class AudioFacts:
     sample_rate: int
     declared_frames: int  # frame count the header claims
     actual_frames: int  # frame count the sample-data bytes actually cover
-    duration_seconds: float  # actual_frames / sample_rate — the *real* length
+    duration_seconds: float  # actual_frames / sample_rate - the *real* length
     file_size_bytes: int
     note: str = ""  # non-empty only when parsing hit something unexpected
     # Byte-order check and amplitude diagnostics: populated only for
     # AIFF/AIFF-C sources with sample_width in (2, 3, 4). RIFF/WAV and 8-bit
     # sources have no byte order to check, so these keep their defaults.
-    byte_order_label: str = "n/a"  # "big"/"little" from the header — the order used
+    byte_order_label: str = "n/a"  # "big"/"little" from the header - the order used
     byte_order_detected: str = "n/a"  # "big", "little" or "inconclusive"
     byte_order_big_score: float | None = None  # lower = smoother
     byte_order_little_score: float | None = None
@@ -423,7 +423,7 @@ class AudioFacts:
     clipped_fraction: float | None = None  # ditto
 
     def format(self, name: str) -> str:
-        """One single-line, human-readable summary — safe to drop straight
+        """One single-line, human-readable summary - safe to drop straight
         into a log line or a ``DemoResult`` note (no embedded newlines)."""
         mismatch = (
             f" FRAME-COUNT-MISMATCH(declared={self.declared_frames}, actual={self.actual_frames})"
@@ -473,7 +473,7 @@ def _iter_chunks_lenient(
         body = data[body_start : min(body_end, end)]
         yield chunk_id, declared_size, body
         if body_end > end:
-            return  # truncated — no reliable position for a next chunk
+            return  # truncated - no reliable position for a next chunk
         pos = body_end + (declared_size & 1)
 
 
@@ -599,7 +599,7 @@ def _aiff_facts(raw: bytes, form_type: bytes, size: int) -> AudioFacts:
 
 def extract_audio_facts(raw: bytes) -> AudioFacts:
     """Best-effort diagnostic facts about raw audio bytes, RIFF/WAVE or
-    AIFF/AIFF-C — pure and total: given any ``bytes``, it always returns an
+    AIFF/AIFF-C - pure and total: given any ``bytes``, it always returns an
     ``AudioFacts`` (container ``"unknown"`` and an explanatory ``note`` for
     anything it cannot parse), never raises. This is deliberately more
     lenient than ``normalize_speech_audio_to_wav``: it exists to describe
@@ -696,7 +696,7 @@ def _wait_for_audio(
     """Poll ``path`` (every ``STABILIZE_POLL_SECONDS``) until it is ready:
     its size unchanged for ``STABILIZE_REQUIRED_STABLE_READS`` consecutive
     reads *and* its measured duration at least ``min_duration_seconds``. A
-    size-stable file below that floor keeps being polled — the engine may
+    size-stable file below that floor keeps being polled - the engine may
     simply not have written its first audio buffer yet. Gives up after
     ``STABILIZE_TIMEOUT_SECONDS`` and returns ``ready=False``; the caller
     raises. The file's bytes are re-read and re-parsed only when its size
@@ -722,7 +722,7 @@ def _wait_for_audio(
         else:
             stable_reads = 1
             last_size = size
-            facts = None  # size changed — parse again when next needed
+            facts = None  # size changed - parse again when next needed
         size_stable = stable_reads >= STABILIZE_REQUIRED_STABLE_READS
         timed_out = monotonic() >= deadline
         if size_stable or timed_out:
@@ -771,7 +771,7 @@ def _init_engine() -> Any:
 
     try:
         return pyttsx3.init()
-    except Exception as exc:  # driver missing/unusable — message names the fix
+    except Exception as exc:  # driver missing/unusable - message names the fix
         if platform.system() == "Linux":
             hint = "install it with `sudo apt-get install espeak-ng` (or your distro's equivalent)"
         else:
@@ -906,7 +906,7 @@ def _finish_synthesized_files(
                 )
             raise TTSEngineUnavailableError(
                 f"'{name}' never finished writing: timed out after "
-                f"{outcome.elapsed_seconds:.1f}s (its size kept changing — the OS speech engine "
+                f"{outcome.elapsed_seconds:.1f}s (its size kept changing - the OS speech engine "
                 "likely writes asynchronously and returned from runAndWait() too early); "
                 f"{wait_line}; last read: {facts.format(name)}"
             )

@@ -46,10 +46,10 @@ model.
 ### Q1. (Multiple Choice)
 What is the key difference in how random forests and gradient boosting combine their individual trees?
 
-- A) Random forests use only one tree, while boosting uses many. — **Incorrect.** Both methods use many trees; the difference is in how those trees are trained and combined.
-- B) Gradient boosting trains all its trees on identical data with no differences. — **Incorrect.** Boosting trees are trained sequentially, each targeting the previous ensemble's errors, not on identical unchanged targets.
-- C) Random forests train many trees independently on random samples and average them, while gradient boosting trains trees sequentially, each correcting the errors of the ones before it. — **Correct answer.** This independent-averaging versus sequential-correction distinction is exactly the key difference.
-- D) Random forests cannot report which features mattered most. — **Incorrect.** `feature_importances_` is available for random forests as well as boosted models.
+- A) Random forests use only one tree, while boosting uses many. - **Incorrect.** Both methods use many trees; the difference is in how those trees are trained and combined.
+- B) Gradient boosting trains all its trees on identical data with no differences. - **Incorrect.** Boosting trees are trained sequentially, each targeting the previous ensemble's errors, not on identical unchanged targets.
+- C) Random forests train many trees independently on random samples and average them, while gradient boosting trains trees sequentially, each correcting the errors of the ones before it. - **Correct answer.** This independent-averaging versus sequential-correction distinction is exactly the key difference.
+- D) Random forests cannot report which features mattered most. - **Incorrect.** `feature_importances_` is available for random forests as well as boosted models.
 
 - **Answer:** C
 

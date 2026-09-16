@@ -1,4 +1,4 @@
-"""batch.py — caption every image in a folder (Project P08).
+"""batch.py - caption every image in a folder (Project P08).
 
 Run:
     uv run python -m projects.p08_image_captioning.batch [folder] [output_file]
@@ -8,7 +8,7 @@ Defaults: folder = ./test-images, output = ./output/captions.txt. Writes one
 logged and skipped, never crashing the run.
 
 Imports the sibling ``captioner`` module (not its individual names) so that
-patching ``captioner.load_model`` — as the "loads the model once" test does —
+patching ``captioner.load_model`` - as the "loads the model once" test does -
 is visible here too: a ``from captioner import load_model`` would bind a
 private copy of the function and never see the patch.
 """

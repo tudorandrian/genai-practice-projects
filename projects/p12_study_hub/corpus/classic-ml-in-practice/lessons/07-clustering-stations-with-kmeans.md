@@ -42,10 +42,10 @@ to all six.
 ### Q1. (Multiple Choice)
 Why must station features be scaled before applying k-means clustering?
 
-- A) K-means cannot process more than three features at once. — **Incorrect.** K-means can handle any number of numeric features; there is no such three-feature limit.
-- B) Scaling is required only for supervised learning, never for clustering. — **Incorrect.** Scaling matters for clustering precisely because it is a distance-based method, as much as for many supervised methods.
-- C) Unscaled features always produce exactly one cluster. — **Incorrect.** Unscaled features can still produce multiple clusters; the issue is which feature dominates the distance calculation.
-- D) K-means groups points by distance, so a feature measured on a much larger scale than the others would dominate that distance regardless of its true importance. — **Correct answer.** This scale-domination of the distance calculation is exactly why scaling matters here.
+- A) K-means cannot process more than three features at once. - **Incorrect.** K-means can handle any number of numeric features; there is no such three-feature limit.
+- B) Scaling is required only for supervised learning, never for clustering. - **Incorrect.** Scaling matters for clustering precisely because it is a distance-based method, as much as for many supervised methods.
+- C) Unscaled features always produce exactly one cluster. - **Incorrect.** Unscaled features can still produce multiple clusters; the issue is which feature dominates the distance calculation.
+- D) K-means groups points by distance, so a feature measured on a much larger scale than the others would dominate that distance regardless of its true importance. - **Correct answer.** This scale-domination of the distance calculation is exactly why scaling matters here.
 
 - **Answer:** D
 

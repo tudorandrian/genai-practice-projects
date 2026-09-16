@@ -44,10 +44,10 @@ specific column you are examining rather than reusing a number computed elsewher
 ### Q1. (Multiple Choice)
 Why might the IQR method be preferred over the z-score method for flagging outliers in a skewed duration column?
 
-- A) The IQR method requires fewer lines of code to implement. — **Incorrect.** Code length is not the reason one statistical method is preferred over another.
-- B) The IQR is based on percentiles, which are less sensitive to extreme values than the mean and standard deviation used by the z-score method. — **Correct answer.** This robustness to skew and extreme values is exactly why IQR often suits skewed data better.
-- C) Z-scores can only be computed on integer columns. — **Incorrect.** Z-scores work on any numeric column, integer or float.
-- D) The IQR method guarantees zero false positives. — **Incorrect.** No statistical thresholding method guarantees zero false positives.
+- A) The IQR method requires fewer lines of code to implement. - **Incorrect.** Code length is not the reason one statistical method is preferred over another.
+- B) The IQR is based on percentiles, which are less sensitive to extreme values than the mean and standard deviation used by the z-score method. - **Correct answer.** This robustness to skew and extreme values is exactly why IQR often suits skewed data better.
+- C) Z-scores can only be computed on integer columns. - **Incorrect.** Z-scores work on any numeric column, integer or float.
+- D) The IQR method guarantees zero false positives. - **Incorrect.** No statistical thresholding method guarantees zero false positives.
 
 - **Answer:** B
 

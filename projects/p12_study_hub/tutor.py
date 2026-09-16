@@ -1,4 +1,4 @@
-"""tutor.py — a RAG tutor over the P12 synthetic corpus's lessons.
+"""tutor.py - a RAG tutor over the P12 synthetic corpus's lessons.
 
 Indexes every lesson note (``corpus/**/lessons/*.md``) into a persistent Chroma
 store and answers questions using ONLY the retrieved passages, citing the
@@ -53,7 +53,7 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 TOP_K = 4
 # How many candidates to pull just to estimate the relevance gate's "background" level
-# below — deliberately wider than TOP_K; see RELEVANCE_MARGIN's comment for why.
+# below - deliberately wider than TOP_K; see RELEVANCE_MARGIN's comment for why.
 RELEVANCE_POOL_K = 12
 # Relevance gate, absolute sanity floor only: the best retrieved chunk must clear this,
 # but it is set far below any realistic on-topic score. The discriminator is
@@ -70,15 +70,15 @@ RELEVANCE_MIN = 0.05
 #
 # Why the background is ranks TOP_K+1..RELEVANCE_POOL_K, not a narrow top-TOP_K margin
 # (e.g. top1 vs the median of just the top 4): measured on this machine, a narrow margin
-# does not separate reliably — a question that strongly matches one lesson often pulls
+# does not separate reliably - a question that strongly matches one lesson often pulls
 # several near-duplicate chunks *from that same lesson* into the top 4 (chunking with
 # overlap does this on purpose), so top1 doesn't stand out much above rank 2-4 even
 # though the question is genuinely on-topic. Measured top1-vs-top4-median margins:
-# on-topic 0.0234-0.2693, off-topic 0.0058-0.0549 — these overlap, so that formulation
+# on-topic 0.0234-0.2693, off-topic 0.0058-0.0549 - these overlap, so that formulation
 # was tried and rejected, not assumed to work. Comparing top1 against the median of
 # ranks 5..12 instead (a wider, and so more representative, sample of "generic corpus
 # content" that excludes the near-duplicate on-topic chunks) separates cleanly: measured
-# on-topic margin 0.2018-0.3783, off-topic margin 0.0160-0.0748 — no overlap, with clear
+# on-topic margin 0.2018-0.3783, off-topic margin 0.0160-0.0748 - no overlap, with clear
 # air on both sides of the value below. 6 on-topic and 10 clearly off-topic questions,
 # on Windows, real embeddings over the real corpus, cosine space + normalized embeddings,
 # scored with this module's own cosine similarity (the store's relevance score gave the
@@ -149,7 +149,7 @@ def _store(embeddings: Any = None) -> Any:
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
-    """Cosine similarity as a plain dot product — exact (up to float noise) for two
+    """Cosine similarity as a plain dot product - exact (up to float noise) for two
     unit-normalized vectors, which EMBED_NORMALIZE guarantees both `a` and `b` are
     here. Deliberately does not go through any vector store's own relevance-score
     formula; see COLLECTION_METADATA's comment above.
@@ -160,10 +160,10 @@ def _cosine(a: list[float], b: list[float]) -> float:
 def _retrieve_with_own_similarities(question: str, pool_k: int) -> list[tuple[Any, float]]:
     """Retrieve `pool_k` candidates from the persisted store and score each one's
     relevance to `question` with cosine similarity computed directly from raw
-    embedding vectors read back from the collection — never from
+    embedding vectors read back from the collection - never from
     `similarity_search_with_relevance_scores`, whose output depends on the collection's
     distance-space configuration and the store's score formula. Returns
-    `(Document, similarity)` pairs sorted by that similarity, descending — the ranking
+    `(Document, similarity)` pairs sorted by that similarity, descending - the ranking
     used for both the relevance gate and, if it passes, the answer's context.
 
     Chroma's own nearest-neighbour *selection* (which `pool_k` candidates come back at
@@ -197,13 +197,13 @@ def _diagnostic_snapshot(question: str, k: int = RELEVANCE_POOL_K) -> str:
     """A human-readable dump of exactly what the relevance gate sees for `question`:
     the collection's own metadata as read back from the live store, the measured norm
     of the query embedding, and for both this module's own cosine similarity (what the
-    gate is based on) and the store's own relevance score (what it is not based on) —
+    gate is based on) and the store's own relevance score (what it is not based on) -
     printed side by side so a disagreement between them is visible directly, not
     inferred.
 
     Built to be called from an assert's message expression (`assert cond,
     _diagnostic_snapshot(question)`), which Python only evaluates when `cond` is
-    false — so this costs nothing when a test passes, and pytest's failure report
+    false - so this costs nothing when a test passes, and pytest's failure report
     shows the returned string in full, so a failure on a platform nobody can inspect
     directly states what that platform computed instead of leaving it to be inferred.
     Returns a string rather than printing directly: this module's own convention is
@@ -216,7 +216,7 @@ def _diagnostic_snapshot(question: str, k: int = RELEVANCE_POOL_K) -> str:
     letting that exception propagate would replace the original assertion failure with
     an unrelated one and destroy exactly the evidence this function exists to capture.
     Every external call is caught separately and reported inline as an "ERROR ..." line
-    instead — this always returns a snapshot, even a partial one, never raises itself.
+    instead - this always returns a snapshot, even a partial one, never raises itself.
     """
     lines = [f"--- relevance diagnostic: {question!r} ---"]
 
@@ -263,7 +263,7 @@ def _diagnostic_snapshot(question: str, k: int = RELEVANCE_POOL_K) -> str:
         for doc, sim in own:
             match = next((s for d, s in store_scored if d.page_content == doc.page_content), None)
             seen.add(doc.page_content)
-            store_col = "—" if match is None else f"{match:.4f}"
+            store_col = "-" if match is None else f"{match:.4f}"
             lines.append(f"{doc.metadata.get('source', '?'):<70} {sim:>10.4f} {store_col:>16}")
         for doc, score in store_scored:
             if doc.page_content in seen:
@@ -366,7 +366,7 @@ def ask_llm(prompt: str, provider: str | None = None) -> str:
     (default ``ollama``): ``ollama`` | ``openai`` | ``stub``.
 
     The stub echoes a snippet of its own prompt's retrieved context (the same
-    shape as P11's ``rag_chatbot.py`` stub) rather than a fixed string — this
+    shape as P11's ``rag_chatbot.py`` stub) rather than a fixed string - this
     keeps a grounded stub answer visibly distinct from a refusal. ``REFUSAL``
     stays reserved for ``ask()``'s relevance gate (fired *before* this function
     is ever called) and for a real provider's own grounding behaviour.
@@ -418,7 +418,7 @@ def format_sources(docs: list[Any]) -> list[str]:
 
 def _clears_relevance_gate(scored: list[tuple[Any, float]], k: int = TOP_K) -> bool:
     """True if the best-retrieved chunk stands out from the rest enough to trust an
-    answer grounded in it — see RELEVANCE_MARGIN's comment above for the measured
+    answer grounded in it - see RELEVANCE_MARGIN's comment above for the measured
     reasoning behind this specific formulation (an absolute floor alone was tried and
     did not transfer between platforms; a narrow top-k margin was also tried and
     measured not to separate reliably). The background is every candidate ranked
@@ -433,7 +433,7 @@ def _clears_relevance_gate(scored: list[tuple[Any, float]], k: int = TOP_K) -> b
     background = scores[k:]
     if not background:
         # Too few candidates to estimate a background (a corpus smaller than
-        # k + 1 chunks) — the absolute floor above is all there is to check.
+        # k + 1 chunks) - the absolute floor above is all there is to check.
         return True
     return top1 - statistics.median(background) >= RELEVANCE_MARGIN
 
@@ -442,7 +442,7 @@ def ask(question: str, k: int = TOP_K, provider: str | None = None) -> dict[str,
     """Retrieve top-k lesson chunks and answer grounded in them, citing sources.
 
     If the best retrieved chunk doesn't clear the relevance gate (`_clears_relevance_gate`),
-    refuse immediately (the lessons don't cover it) — this is what makes an off-topic
+    refuse immediately (the lessons don't cover it) - this is what makes an off-topic
     'trap' question refuse instead of the small model answering from general
     knowledge, except on macOS; see the README's "Limits". Returns
     ``{"answer": str, "sources": list[str]}``.
@@ -450,13 +450,13 @@ def ask(question: str, k: int = TOP_K, provider: str | None = None) -> dict[str,
     # Retrieve a wider pool than `k` purely to give the relevance gate a representative
     # "background" to compare the top chunk against (RELEVANCE_POOL_K); the answer
     # itself still only ever uses the first `k` of those. Own-computed cosine
-    # similarity, not the store's relevance score — see
+    # similarity, not the store's relevance score - see
     # _retrieve_with_own_similarities's docstring.
     scored = _retrieve_with_own_similarities(question, max(k, RELEVANCE_POOL_K))
     if not _clears_relevance_gate(scored, k):
         return {"answer": REFUSAL, "sources": []}
     docs = [d for d, _ in scored[:k]]
-    # Lesson text only — no "[source]\n" label in the context fed to the LLM.
+    # Lesson text only - no "[source]\n" label in the context fed to the LLM.
     # PROMPT_TEMPLATE never asks the model to cite sources inline from such a
     # label; citations are attached out-of-band via format_sources(docs)
     # below, which reads doc.metadata directly and does not depend on this

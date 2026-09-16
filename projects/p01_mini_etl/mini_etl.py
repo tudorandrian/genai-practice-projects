@@ -1,4 +1,4 @@
-"""Mini-ETL — clean a messy CSV and export it to CSV / JSON / Excel.
+"""Mini-ETL - clean a messy CSV and export it to CSV / JSON / Excel.
 
 PIPELINE
     load_data  ->  audit (before)  ->  replace_sentinel  ->  coerce_numeric
@@ -282,7 +282,7 @@ def _write_metrics(report: dict[str, Any], path: Path) -> None:
 
 def _write_demo_summary(report: dict[str, Any], path: Path) -> None:
     """Deterministic demo transcript: the same figures printed on success, minus
-    the elapsed-seconds line (which is never the same twice) — no timestamps,
+    the elapsed-seconds line (which is never the same twice) - no timestamps,
     no absolute paths."""
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [

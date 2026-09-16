@@ -1,4 +1,4 @@
-LINEAR REGRESSION — CROSS-DATASET SUMMARY
+LINEAR REGRESSION - CROSS-DATASET SUMMARY
 =======================================================
 Dataset           n   p         MAE        RMSE      R2
 -------------------------------------------------------

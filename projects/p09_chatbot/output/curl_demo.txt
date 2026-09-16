@@ -1,4 +1,4 @@
-# P09 chatbot — demo curl transcript
+# P09 chatbot - demo curl transcript
 # Generated via app.test_client() against /chatbot, /reset and / (no live server)
 
 $ curl -s -X POST http://127.0.0.1:5000/chatbot -H 'Content-Type: application/json' -d '{"message": "Hello! Who are you?"}'

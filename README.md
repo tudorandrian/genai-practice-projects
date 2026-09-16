@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/tudorandrian/genai-practice-projects/actions/workflows/ci.yml/badge.svg)](https://github.com/tudorandrian/genai-practice-projects/actions/workflows/ci.yml)
 
-Twelve self-directed practice projects I built while completing the IBM Generative AI Engineering Professional Certificate (16 courses, August 2026, [verify](https://coursera.org/verify/professional-cert/L9H5FUFBJVTS)). Each project applies techniques from one or more courses to a problem and dataset of my own; the course material itself — notebooks, lesson text, quizzes, lab datasets — is IBM's and is not in this repository.
+Twelve self-directed practice projects I built while completing the IBM Generative AI Engineering Professional Certificate (16 courses, August 2026, [verify](https://coursera.org/verify/professional-cert/L9H5FUFBJVTS)). Each project applies techniques from one or more courses to a problem and dataset of my own; the course material itself - notebooks, lesson text, quizzes, lab datasets - is IBM's and is not in this repository.
 
 ## Practice work, professional standard
 
@@ -12,7 +12,7 @@ synthetic audio needs a working text-to-speech engine; on the Ubuntu runner it r
 `skipped`), tested in CI on two operating systems ([workflow runs](https://github.com/tudorandrian/genai-practice-projects/actions/workflows/ci.yml)),
 documented in English with its limits stated, and free of any material that belongs to IBM or
 Coursera. The judgement on display is in the boundaries drawn, the tests written, and the
-delivery discipline — one pull request per project, squash-merged, history readable end to end
+delivery discipline - one pull request per project, squash-merged, history readable end to end
 ([commit history](https://github.com/tudorandrian/genai-practice-projects/commits/main),
 [pull requests](https://github.com/tudorandrian/genai-practice-projects/pulls?q=is%3Apr)).
 
@@ -24,7 +24,7 @@ delivery discipline — one pull request per project, squash-merged, history rea
     uv run pytest -m "core and not network"
     uv run demo
 
-`uv sync` installs the `core` group — enough for P01-P07 and the command above. P08-P10 need
+`uv sync` installs the `core` group - enough for P01-P07 and the command above. P08-P10 need
 `uv sync --group models`; P11-P12 need `uv sync --group rag` (a superset of `models`). The
 table below marks each project's tier; `uv run demo --all` needs the `rag` group installed first.
 
@@ -48,10 +48,10 @@ table below marks each project's tier; `uv run demo --all` needs the `rag` group
 Run every project's demo in one command:
 
     uv run demo              # core group, P01-P07, offline, deterministic
-    uv run demo --models     # + models group, P08-P10 — downloads model weights on first
+    uv run demo --models     # + models group, P08-P10 - downloads model weights on first
                               # run, then cached locally: BLIP (P08) ~950 MB, BlenderBot
                               # (P09) ~700 MB, Whisper-tiny.en (P10) ~150 MB
-    uv run demo --all        # + rag group, P11-P12 — + the embedding model (~90 MB);
+    uv run demo --all        # + rag group, P11-P12 - + the embedding model (~90 MB);
                               # LLM steps always use the deterministic stub provider in the demo
 
 P10-P12 also run against a real local model, Qwen2.5 1.5B served by Ollama in Docker:
@@ -62,10 +62,10 @@ P10-P12 also run against a real local model, Qwen2.5 1.5B served by Ollama in Do
 
 ## More
 
-- [docs/certificate.md](docs/certificate.md) — which courses each project draws on, and the technique it demonstrates.
-- [CONTRIBUTING.md](CONTRIBUTING.md) — the two rules this repository holds itself to, and the tooling.
-- [docs/release-gate.md](docs/release-gate.md) — the checklist this repository had to clear before it went public.
-- [SECURITY.md](SECURITY.md) — how to report a vulnerability, and the dependency advisories that do not apply here.
+- [docs/certificate.md](docs/certificate.md) - which courses each project draws on, and the technique it demonstrates.
+- [CONTRIBUTING.md](CONTRIBUTING.md) - the two rules this repository holds itself to, and the tooling.
+- [docs/release-gate.md](docs/release-gate.md) - the checklist this repository had to clear before it went public.
+- [SECURITY.md](SECURITY.md) - how to report a vulnerability, and the dependency advisories that do not apply here.
 
 ## Licence
 

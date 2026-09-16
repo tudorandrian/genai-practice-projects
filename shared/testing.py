@@ -47,6 +47,6 @@ def ollama() -> tuple[str, str]:
     if problem is not None:
         hint = "start it with `docker compose --profile llm up -d`"
         if os.environ.get("REQUIRE_OLLAMA") == "1":
-            pytest.fail(f"{problem}; REQUIRE_OLLAMA=1 — {hint}")
-        pytest.skip(f"{problem} — {hint}")
+            pytest.fail(f"{problem}; REQUIRE_OLLAMA=1 - {hint}")
+        pytest.skip(f"{problem} - {hint}")
     return url, model

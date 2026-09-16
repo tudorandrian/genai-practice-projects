@@ -44,10 +44,10 @@ one.
 ### Q1. (Multiple Choice)
 Why does the evaluation approach measure retrieval accuracy and answer quality as two separate metrics rather than one combined score?
 
-- A) Retrieval and generation can fail independently, so a single combined score would hide which stage is actually responsible when something goes wrong. — **Correct answer.** This exact independence-of-failure reasoning is why the two are measured separately.
-- B) Scikit-learn cannot compute a single combined metric across two stages. — **Incorrect.** This is not a tooling limitation; the reasoning is about diagnosing which stage failed.
-- C) Retrieval accuracy and answer quality always produce identical scores in practice. — **Incorrect.** If they were always identical there would be no reason to measure them separately.
-- D) A combined score is technically impossible to define. — **Incorrect.** A combined score could be defined; the lesson argues it would simply be less diagnostically useful.
+- A) Retrieval and generation can fail independently, so a single combined score would hide which stage is actually responsible when something goes wrong. - **Correct answer.** This exact independence-of-failure reasoning is why the two are measured separately.
+- B) Scikit-learn cannot compute a single combined metric across two stages. - **Incorrect.** This is not a tooling limitation; the reasoning is about diagnosing which stage failed.
+- C) Retrieval accuracy and answer quality always produce identical scores in practice. - **Incorrect.** If they were always identical there would be no reason to measure them separately.
+- D) A combined score is technically impossible to define. - **Incorrect.** A combined score could be defined; the lesson argues it would simply be less diagnostically useful.
 
 - **Answer:** A
 

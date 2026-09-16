@@ -43,10 +43,10 @@ is a much stronger property than an answer that merely sounds trustworthy.
 ### Q1. (Multiple Choice)
 Why does Pebble's grounding prompt specify an exact, fixed refusal sentence rather than letting the model phrase its own uncertainty freely?
 
-- A) A fixed sentence uses fewer tokens than any other possible reply. — **Incorrect.** Token count is not the reason given; some free-form replies could be just as short.
-- B) Pebble is incapable of generating any text other than a fixed sentence. — **Incorrect.** Pebble can generate free-form text; the fixed refusal is a deliberate instruction, not a technical limitation.
-- C) A consistent, exact refusal is trivial for the application to detect programmatically, unlike a model's own varying free-form expressions of uncertainty. — **Correct answer.** This reliable programmatic detection is exactly the reason given for using a fixed refusal string.
-- D) Fixed refusal strings eliminate the possibility of retrieval ever failing. — **Incorrect.** The refusal string addresses generation behaviour, not retrieval failures, which are handled separately by the relevance check.
+- A) A fixed sentence uses fewer tokens than any other possible reply. - **Incorrect.** Token count is not the reason given; some free-form replies could be just as short.
+- B) Pebble is incapable of generating any text other than a fixed sentence. - **Incorrect.** Pebble can generate free-form text; the fixed refusal is a deliberate instruction, not a technical limitation.
+- C) A consistent, exact refusal is trivial for the application to detect programmatically, unlike a model's own varying free-form expressions of uncertainty. - **Correct answer.** This reliable programmatic detection is exactly the reason given for using a fixed refusal string.
+- D) Fixed refusal strings eliminate the possibility of retrieval ever failing. - **Incorrect.** The refusal string addresses generation behaviour, not retrieval failures, which are handled separately by the relevance check.
 
 - **Answer:** C
 

@@ -47,10 +47,10 @@ practice' applied without considering the deployment.
 ### Q1. (Multiple Choice)
 Why is Pebble kept running as a long-lived serving process instead of being reloaded from disk for every single question?
 
-- A) Loading the weights from disk is a measurable one-time cost, and restarting per request would make that cost dominate every response's latency. — **Correct answer.** This is exactly the reasoning the lesson gives for keeping the process long-lived.
-- B) A model can only be loaded from disk successfully one time ever. — **Incorrect.** Weights can be loaded repeatedly; the concern is the wasted time from doing so unnecessarily.
-- C) Restarting the process would delete the model weights permanently. — **Incorrect.** Restarting a serving process does not delete the weight files on disk.
-- D) Long-lived processes are required by every operating system. — **Incorrect.** This is an application design choice, not an operating system requirement.
+- A) Loading the weights from disk is a measurable one-time cost, and restarting per request would make that cost dominate every response's latency. - **Correct answer.** This is exactly the reasoning the lesson gives for keeping the process long-lived.
+- B) A model can only be loaded from disk successfully one time ever. - **Incorrect.** Weights can be loaded repeatedly; the concern is the wasted time from doing so unnecessarily.
+- C) Restarting the process would delete the model weights permanently. - **Incorrect.** Restarting a serving process does not delete the weight files on disk.
+- D) Long-lived processes are required by every operating system. - **Incorrect.** This is an application design choice, not an operating system requirement.
 
 - **Answer:** A
 

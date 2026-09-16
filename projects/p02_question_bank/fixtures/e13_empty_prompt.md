@@ -3,7 +3,7 @@
 ## 3. Practice Questions
 
 ### Q1. (Multiple Choice)
-- A) First — **Correct answer.** Yes.
-- B) Second — **Incorrect.** No.
+- A) First - **Correct answer.** Yes.
+- B) Second - **Incorrect.** No.
 
 - **Answer:** A

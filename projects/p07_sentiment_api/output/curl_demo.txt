@@ -1,4 +1,4 @@
-# P07 sentiment API — demo curl transcript
+# P07 sentiment API - demo curl transcript
 # Generated via app.test_client() against POST /sentiment (no live server)
 
 $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Un produs excelent si foarte util!"}'

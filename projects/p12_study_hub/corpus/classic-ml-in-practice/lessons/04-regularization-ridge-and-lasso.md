@@ -46,10 +46,10 @@ the original model was not overfitting enough for regularization to help.
 ### Q1. (Multiple Choice)
 What distinguishes lasso regression's practical effect from ridge regression's?
 
-- A) Lasso cannot be used with more than ten features. — **Incorrect.** Lasso places no such limit on the number of features it can handle.
-- B) Lasso's penalty can push some coefficients to exactly zero, effectively removing those features, while ridge shrinks coefficients toward zero without typically eliminating them. — **Correct answer.** This exact-zero behaviour is the well-known distinguishing property of the lasso penalty.
-- C) Ridge regression requires labeled data while lasso does not. — **Incorrect.** Both ridge and lasso are supervised methods that require a labeled target.
-- D) Lasso always produces a lower training error than ridge. — **Incorrect.** Neither method guarantees a lower training error than the other; it depends on the data and alpha.
+- A) Lasso cannot be used with more than ten features. - **Incorrect.** Lasso places no such limit on the number of features it can handle.
+- B) Lasso's penalty can push some coefficients to exactly zero, effectively removing those features, while ridge shrinks coefficients toward zero without typically eliminating them. - **Correct answer.** This exact-zero behaviour is the well-known distinguishing property of the lasso penalty.
+- C) Ridge regression requires labeled data while lasso does not. - **Incorrect.** Both ridge and lasso are supervised methods that require a labeled target.
+- D) Lasso always produces a lower training error than ridge. - **Incorrect.** Neither method guarantees a lower training error than the other; it depends on the data and alpha.
 
 - **Answer:** B
 

@@ -44,10 +44,10 @@ learning.
 ### Q1. (Multiple Choice)
 What does a silhouette score near 1 indicate about a clustering result?
 
-- A) Every cluster contains exactly the same number of points. — **Incorrect.** Silhouette score reflects separation quality, not equal cluster sizes.
-- B) Points are, on average, much closer to their own cluster than to the nearest other cluster, indicating well-separated clusters. — **Correct answer.** This closeness-to-own-cluster relative to other clusters is exactly what a high silhouette score reflects.
-- C) The clustering used the maximum possible value of `k`. — **Incorrect.** Silhouette score does not track or require the maximum value of `k`.
-- D) Inertia is guaranteed to be zero. — **Incorrect.** A high silhouette score does not imply zero inertia; the two metrics measure different things.
+- A) Every cluster contains exactly the same number of points. - **Incorrect.** Silhouette score reflects separation quality, not equal cluster sizes.
+- B) Points are, on average, much closer to their own cluster than to the nearest other cluster, indicating well-separated clusters. - **Correct answer.** This closeness-to-own-cluster relative to other clusters is exactly what a high silhouette score reflects.
+- C) The clustering used the maximum possible value of `k`. - **Incorrect.** Silhouette score does not track or require the maximum value of `k`.
+- D) Inertia is guaranteed to be zero. - **Incorrect.** A high silhouette score does not imply zero inertia; the two metrics measure different things.
 
 - **Answer:** B
 

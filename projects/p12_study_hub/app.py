@@ -1,7 +1,7 @@
-"""app.py — Study Hub Assistant (capstone) entry point.
+"""app.py - Study Hub Assistant (capstone) entry point.
 
-Serves the three modules — ``quiz_engine`` (quiz), ``progress`` (dashboard),
-``tutor`` (RAG) — through one Gradio interface with a tab each, started with a
+Serves the three modules - ``quiz_engine`` (quiz), ``progress`` (dashboard),
+``tutor`` (RAG) - through one Gradio interface with a tab each, started with a
 single command. Every module also runs headless in CLI mode. The modules are
 coupled only through files (``history.json``, ``output/``, ``index/``), never
 by calling into each other's UI.
@@ -37,7 +37,7 @@ DEMO_QUESTION = "What does the missing-value lesson recommend for a skewed numer
 
 
 # =============================================================================
-# UI (Gradio, three tabs) — thin layer over the tested module functions
+# UI (Gradio, three tabs) - thin layer over the tested module functions
 # =============================================================================
 
 
@@ -55,7 +55,7 @@ def _module_choices() -> list[str]:
 def _tab_quiz(gr: Any) -> None:
     """One-question-at-a-time quiz flow using gr.State."""
     state = gr.State({})
-    gr.Markdown("### Quiz — closed questions from the corpus question bank")
+    gr.Markdown("### Quiz - closed questions from the corpus question bank")
     with gr.Row():
         n_in = gr.Slider(1, 15, value=5, step=1, label="Number of questions")
         seed_in = gr.Number(value=42, label="Seed (reproducible)", precision=0)
@@ -134,7 +134,7 @@ def _tab_quiz(gr: Any) -> None:
 
 
 def _tab_progress(gr: Any) -> None:
-    gr.Markdown("### Progress — status tables from corpus/ + quiz success rate")
+    gr.Markdown("### Progress - status tables from corpus/ + quiz success rate")
     refresh = gr.Button("Scan & refresh", variant="primary")
     table = gr.Dataframe(label="Status by course")
     chart = gr.Image(label="progress.png", type="filepath")
@@ -167,7 +167,7 @@ def _ensure_lesson_index() -> None:
 
 
 def _tab_tutor(gr: Any) -> None:
-    gr.Markdown("### Tutor — ask the course lessons (answers ONLY from them, with sources)")
+    gr.Markdown("### Tutor - ask the course lessons (answers ONLY from them, with sources)")
 
     def respond(message: str, _history: Any) -> str:
         _ensure_lesson_index()
@@ -183,7 +183,7 @@ def build_ui() -> Any:
     import gradio as gr  # lazy import, see module docstring
 
     with gr.Blocks(title="Study Hub Assistant") as demo_app:
-        gr.Markdown("# Study Hub Assistant — capstone (Quiz - Progress - Tutor)")
+        gr.Markdown("# Study Hub Assistant - capstone (Quiz - Progress - Tutor)")
         with gr.Tab("Quiz"):
             _tab_quiz(gr)
         with gr.Tab("Progress"):
@@ -205,12 +205,12 @@ def demo() -> DemoResult:
     ``output/tutor_session.txt`` and a deterministic ``output/metrics.txt``.
 
     Tier ``rag``: needs LangChain + Chroma + the MiniLM embedding model, so it
-    never runs in CI and is skipped by ``uv run demo``/``uv run demo --models`` —
+    never runs in CI and is skipped by ``uv run demo``/``uv run demo --models`` -
     only ``uv run demo --all`` runs it.
 
     The LLM provider is force-pinned to ``stub`` (not "whichever provider is
     configured") so the committed proof does not depend on whether Ollama
-    happens to be running on this machine — see the README for running
+    happens to be running on this machine - see the README for running
     against a real provider. Every quiz answer is the question's own correct
     id, so the session score is deterministic (5/5) and independent of any
     random guessing.

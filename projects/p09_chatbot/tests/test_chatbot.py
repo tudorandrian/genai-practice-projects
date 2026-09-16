@@ -23,7 +23,7 @@ from projects.p09_chatbot import engine
 # No blanket module-level ``pytestmark`` here: every test is marked
 # individually (``core``) so a future real-weights test added to this file
 # stays opt-in under ``models`` rather than being swept up by a blanket
-# marker — matching how projects/p08_image_captioning/tests/test_captioner.py
+# marker - matching how projects/p08_image_captioning/tests/test_captioner.py
 # handles the same real-weights-vs-fast-test split.
 
 
@@ -68,7 +68,7 @@ def stub_reply(monkeypatch: pytest.MonkeyPatch) -> Callable[[list[str], str], st
 
 
 # =============================================================================
-# engine.build_context — pure
+# engine.build_context - pure
 # =============================================================================
 
 
@@ -88,7 +88,7 @@ def test_context_keeps_only_the_last_six_turns() -> None:
 
 
 # =============================================================================
-# engine.generate_reply — pure, injected tokenizer/model
+# engine.generate_reply - pure, injected tokenizer/model
 # =============================================================================
 
 
@@ -170,7 +170,7 @@ def test_wrong_method_405(client: FlaskClient) -> None:
 @pytest.mark.core
 def test_deeply_nested_json_returns_json_error(client: FlaskClient) -> None:
     # Small in bytes (well under MAX_CONTENT_LENGTH) but deep enough to blow
-    # Python's recursion limit inside json.loads — request.get_json(silent=True)
+    # Python's recursion limit inside json.loads - request.get_json(silent=True)
     # only swallows ValueError/BadRequest, so the RecursionError used to
     # escape as Flask's default HTML 500 page. This never reaches ``engine``,
     # so it needs no model/weights and stays a fast ``core`` test.

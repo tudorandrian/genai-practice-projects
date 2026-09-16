@@ -20,7 +20,7 @@ from projects.p10_meeting_assistant import assistant, synthetic_audio
 
 # No blanket module-level ``pytestmark`` in this file: every test is marked
 # individually (``core``) so a future real-Whisper test added here stays
-# opt-in under ``models`` instead of being swept up by a blanket marker —
+# opt-in under ``models`` instead of being swept up by a blanket marker -
 # matching projects/p08_image_captioning and projects/p09_chatbot. The
 # sibling test_synthetic_audio.py does use a module-level ``core`` marker:
 # nothing in it can ever need model weights.
@@ -101,7 +101,7 @@ def test_focused_prompt_includes_instruction_and_transcript() -> None:
 
 
 # =============================================================================
-# summarize_structured — the provider seam is monkeypatched
+# summarize_structured - the provider seam is monkeypatched
 # =============================================================================
 
 
@@ -134,7 +134,7 @@ def test_empty_content_falls_back_to_placeholder(monkeypatch: pytest.MonkeyPatch
 
 
 # =============================================================================
-# summarize_with_llm — provider dispatch
+# summarize_with_llm - provider dispatch
 # =============================================================================
 
 
@@ -154,7 +154,7 @@ def test_missing_ollama_is_reported_not_raised(monkeypatch: pytest.MonkeyPatch) 
 
 
 # =============================================================================
-# process_meeting — chain + persistence
+# process_meeting - chain + persistence
 # =============================================================================
 
 
@@ -206,7 +206,7 @@ def test_stub_summary_is_derived_from_the_transcript(monkeypatch: pytest.MonkeyP
 
 
 # =============================================================================
-# demo() — must degrade to "skipped", never "failed", without a speech engine
+# demo() - must degrade to "skipped", never "failed", without a speech engine
 # =============================================================================
 
 
@@ -217,7 +217,7 @@ def test_demo_skips_cleanly_when_tts_engine_is_unavailable(
     """On a bare CI runner (no espeak-ng/SAPI5), ``synthetic_audio.generate``
     raises ``TTSEngineUnavailableError`` before any Whisper weights are touched.
     ``demo()`` must turn that into a ``skipped`` DemoResult carrying an
-    actionable note (not a raised exception, and not ``failed`` — which
+    actionable note (not a raised exception, and not ``failed`` - which
     would make ``shared.demo.main()`` exit 1 on a machine that is merely
     missing an optional system package).
     """
@@ -240,7 +240,7 @@ def test_demo_skips_cleanly_when_tts_engine_is_unavailable(
 
 
 # =============================================================================
-# demo() — an implausibly short transcript must fail, not "ok"
+# demo() - an implausibly short transcript must fail, not "ok"
 # =============================================================================
 
 
@@ -309,7 +309,7 @@ def test_demo_still_ok_when_transcript_word_count_is_plausible(
     """The companion to the test above: a transcript at/above
     ``MIN_TRANSCRIPT_WORD_RATIO`` of the script's word count (here, a stand-in
     transcript with plenty of words) must still report "ok" and write
-    metrics.txt — this is the Windows/Linux baseline the guard must not
+    metrics.txt - this is the Windows/Linux baseline the guard must not
     break. A guard that always fires (or a threshold set too high) would
     turn this into "failed" instead."""
     wav_path = tmp_path / "standup.wav"
@@ -344,7 +344,7 @@ def test_demo_still_ok_when_transcript_word_count_is_plausible(
 
 
 # =============================================================================
-# load_asr_model — Whisper pinned to CPU/float32, and the device it actually
+# load_asr_model - Whisper pinned to CPU/float32, and the device it actually
 # landed on is logged and carried into the failure note
 # =============================================================================
 
@@ -366,9 +366,9 @@ class _FakePipeline:
 def _install_fake_transformers(
     monkeypatch: pytest.MonkeyPatch, calls: list[tuple[tuple[object, ...], dict[str, object]]]
 ) -> None:
-    """Replace ``transformers`` (installed or not — the core env has no
+    """Replace ``transformers`` (installed or not - the core env has no
     transformers) with a module whose ``pipeline`` records its arguments and
-    returns ``_FakePipeline`` — no model download, no torch. Also resets the
+    returns ``_FakePipeline`` - no model download, no torch. Also resets the
     cached pipeline/facts and swaps in a throwaway ASR-facts logger so the
     handler ``load_asr_model`` attaches never leaks into other tests."""
     import logging
@@ -456,7 +456,7 @@ def test_demo_failure_note_includes_asr_device_facts(
 
 
 # =============================================================================
-# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# Real LLM (llm) - Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
 # =============================================================================
 
 

@@ -1,4 +1,4 @@
-# P07 — Flask Sentiment API
+# P07 - Flask Sentiment API
 
 ## What it does
 
@@ -6,7 +6,7 @@ A small Flask web service that scores short texts for sentiment and returns
 the result as JSON. It is the first step from *scripts* to *services* in
 this repository: the same kind of pure analysis function used by earlier
 projects, now exposed over HTTP with a documented contract, JSON error
-handling and a production-server option — instead of only being called
+handling and a production-server option - instead of only being called
 in-process.
 
 The analysis engine is a hand-written lexicon (word -> integer weight) with
@@ -54,7 +54,7 @@ curl -s http://127.0.0.1:5000/health
 prints. `--demo` posts four fixed sentences through `app.test_client()`
 (no server process involved) and writes `output/curl_demo.txt` (a
 curl-transcript of the four request/response pairs) and `output/metrics.txt`
-(lexicon size and request count) — both deterministic and committed.
+(lexicon size and request count) - both deterministic and committed.
 
 ### CLI flags
 
@@ -63,10 +63,10 @@ curl-transcript of the four request/response pairs) and `output/metrics.txt`
 | `--host HOST` | Bind address | `127.0.0.1` |
 | `--port PORT` | Bind port | `5000` |
 | `--production` | Serve through `waitress` instead of the Flask dev server | off |
-| `--demo` | Run the offline demo | — |
+| `--demo` | Run the offline demo | - |
 | `--verbose` | Log at `INFO` | off |
 
-The default host is `127.0.0.1`, never `0.0.0.0` — the dev server binds to
+The default host is `127.0.0.1`, never `0.0.0.0` - the dev server binds to
 localhost only unless a caller explicitly opts into a wider bind address.
 
 ## Example output
@@ -82,7 +82,7 @@ p07-sentiment-api: ok
 ```
 
 `avg_ms` (mean request latency) varies run to run and is reported only on
-the console and in the returned `DemoResult`, never in a committed file —
+the console and in the returned `DemoResult`, never in a committed file -
 running `--demo` twice in a row leaves `git status` clean.
 
 `output/metrics.txt` (committed, deterministic):
@@ -92,7 +92,7 @@ lexicon_size=58
 requests=4
 ```
 
-`output/curl_demo.txt` (committed, deterministic — excerpt):
+`output/curl_demo.txt` (committed, deterministic - excerpt):
 
 ```
 $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/json' -d '{"text": "Un produs excelent si foarte util!"}'
@@ -111,7 +111,7 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
   (`text`/`score`/`sentiment`/`error`) and labels
   (`positive`/`negative`/`neutral`) are English, matching every other
   project's identifier rule (see `docs/decisions/0006-p07-english-api-contract.md`).
-  `LEXICON`'s words themselves stay Romanian — they are scoring data for a
+  `LEXICON`'s words themselves stay Romanian - they are scoring data for a
   Romanian-text demo domain, not repository language, and are documented as
   such below.
 - **Every error path returns JSON, never Flask's default HTML page.**
@@ -126,7 +126,7 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
   happens only inside the `--production` branch of `main()`, so the plain
   dev-server path has one fewer dependency to install. `waitress` is listed
   in the `dev` group and is the documented way to run this service outside
-  local development — the Flask dev server is explicitly not meant for
+  local development - the Flask dev server is explicitly not meant for
   production traffic.
 - **Output contract.** Library functions (`analyze_sentiment`, the route
   handlers, `demo()`) never `print`; they log through
@@ -148,8 +148,8 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
   them scores the same.
 - **A negation stays active until the next scored word, however far away.**
   `"nu"`/`"fara"`/`"nici"`/`"niciun"`/`"nicio"` flip the sign of the next
-  lexicon word regardless of how many unscored filler words — or sentence
-  punctuation — sit in between (`"Nu stiu. Dar produsul este excelent!"`
+  lexicon word regardless of how many unscored filler words - or sentence
+  punctuation - sit in between (`"Nu stiu. Dar produsul este excelent!"`
   scores negative); nothing resets it at a full stop. A second negation
   before any scored word does not cancel the first (`"nu nu bun"` stays
   negative).
@@ -161,13 +161,13 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
 - **`--production` still runs a single-process `waitress` server.** It is a
   real production-grade WSGI server (unlike the Flask dev server), but there
   is no process manager, TLS termination or horizontal scaling configured
-  here — those are deployment concerns outside this project's scope.
+  here - those are deployment concerns outside this project's scope.
 
 ## Datasets and licences
 
 There is no external dataset. `LEXICON` is a small hand-written Romanian
 sentiment word list, written for this repository specifically as demo data
-(not derived from any corpus or third-party source) — kept in Romanian on
+(not derived from any corpus or third-party source) - kept in Romanian on
 purpose, since the words themselves are the data being scored, not
 repository identifiers or documentation language (see
 `docs/decisions/0006-p07-english-api-contract.md`). The four demo sentences

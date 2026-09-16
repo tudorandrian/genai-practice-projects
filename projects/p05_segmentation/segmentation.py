@@ -1,23 +1,23 @@
-"""segmentation.py — unsupervised K-Means + PCA customer segmentation.
+"""segmentation.py - unsupervised K-Means + PCA customer segmentation.
 
 The task is *unsupervised*: no labels are fed to the model. The discipline is
-what matters — (1) StandardScaler before any distance-based clustering,
+what matters - (1) StandardScaler before any distance-based clustering,
 (2) k chosen on objective criteria (the elbow of inertia + the silhouette
 score), not guessed, (3) a business profile per segment via groupby, and
 (4) a PCA 2D projection with its explained variance reported so the reader
 knows how much information the picture keeps.
 
-The same pipeline runs across six datasets — one synthetic (with a known
+The same pipeline runs across six datasets - one synthetic (with a known
 ground truth to validate against) and five public real datasets spanning
-retail, wholesale, transport, astronomy, wine chemistry and handwriting — so
+retail, wholesale, transport, astronomy, wine chemistry and handwriting - so
 the workflow is shown to be dataset-agnostic:
 
-    customers    (synthetic, 3 known segments)  retail       — PRIMARY, silhouette peaks at k=3
-    wholesale    (UCI Wholesale customers)       distribution — 440 clients, 6 spend features
-    taxis        (seaborn taxis)                 transport    — 6433 NYC trips
-    planets      (seaborn planets)                astronomy    — 498 exoplanets
-    winequality  (UCI wine-quality-red)           chemistry    — 1599 wines, 11 features
-    digits       (sklearn load_digits)            imaging      — 1797 8x8 digits, 64 features
+    customers    (synthetic, 3 known segments)  retail       - PRIMARY, silhouette peaks at k=3
+    wholesale    (UCI Wholesale customers)       distribution - 440 clients, 6 spend features
+    taxis        (seaborn taxis)                 transport    - 6433 NYC trips
+    planets      (seaborn planets)                astronomy    - 498 exoplanets
+    winequality  (UCI wine-quality-red)           chemistry    - 1599 wines, 11 features
+    digits       (sklearn load_digits)            imaging      - 1797 8x8 digits, 64 features
 
 PIPELINE  (pure functions)
     load_data -> preprocess (scale) -> choose_k (elbow+silhouette)
@@ -43,7 +43,7 @@ from typing import Any, NamedTuple
 
 import matplotlib
 
-matplotlib.use("Agg")  # headless backend — never plt.show()
+matplotlib.use("Agg")  # headless backend - never plt.show()
 
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -69,7 +69,7 @@ _SEABORN = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/"
 
 # Datasets fetched through shared.datasets.fetch (checksum-verified download,
 # cached once under GENAI_DATA_DIR). `customers` is a deterministic synthetic
-# generator and `digits` ships with scikit-learn — both stay fully offline.
+# generator and `digits` ships with scikit-learn - both stay fully offline.
 DATASET_SOURCES: dict[str, tuple[str, str]] = {
     "wholesale": (
         "https://archive.ics.uci.edu/ml/machine-learning-databases/"
@@ -102,7 +102,7 @@ DATASETS = ("customers", "wholesale", "taxis", "planets", "winequality", "digits
 @dataclass
 class Dataset:
     """Numeric feature frame for clustering + metadata. ``y_true`` is used ONLY
-    for post-hoc validation (never fed to the model) — it exists for the
+    for post-hoc validation (never fed to the model) - it exists for the
     synthetic set (known segments) and where a natural reference label exists.
     """
 
@@ -138,7 +138,7 @@ def _synthetic_customers() -> Dataset:
 
     Deterministic via ``default_rng(DATA_SEED)``; the silhouette score peaks
     at k=3. Returns the labelled ground truth as ``y_true`` for validation
-    only — it is never passed to K-Means.
+    only - it is never passed to K-Means.
     """
     rng = np.random.default_rng(DATA_SEED)
     frames = []
@@ -258,7 +258,7 @@ def preprocess(ds: Dataset) -> np.ndarray:
     x_scaled = StandardScaler().fit_transform(ds.X.to_numpy(dtype=float))
     assert np.abs(x_scaled.mean(axis=0)).max() < 1e-9, "not centred"
     # Non-constant features must be unit-variance; constant columns (e.g. always-0
-    # corner pixels in digits) are left at 0 by StandardScaler — tolerate those.
+    # corner pixels in digits) are left at 0 by StandardScaler - tolerate those.
     non_constant = ds.X.std(axis=0, ddof=0).to_numpy() > 0
     scaled_std = x_scaled.std(axis=0)
     assert np.abs(scaled_std[non_constant] - 1).max() < 1e-6, "not unit-variance"
@@ -336,7 +336,7 @@ def plot_elbow_silhouette(ds: Dataset, rows: list[dict[str, Any]], best_k: int, 
     ax1.axvline(best_k, color="grey", ls="--", lw=1)
     ax1.set_xlabel("k (clusters)")
     ax1.set_ylabel("inertia (within-cluster SS)")
-    ax1.set_title("Elbow — inertia vs k")
+    ax1.set_title("Elbow - inertia vs k")
     ax2.plot(ks, [r["silhouette"] for r in rows], "o-", color="#55A868")
     ax2.axvline(best_k, color="grey", ls="--", lw=1, label=f"chosen k={best_k}")
     ax2.set_xlabel("k (clusters)")
@@ -376,14 +376,14 @@ def write_metrics(
     path: Path,
 ) -> None:
     lines = [
-        "K-MEANS + PCA SEGMENTATION — METRICS",
+        "K-MEANS + PCA SEGMENTATION - METRICS",
         "=" * 60,
         f"Dataset      : {ds.name}  ({ds.domain})",
         f"Source       : {ds.source}",
         f"Observations : {len(ds.X)}   Features: {len(ds.feature_names)} (numeric, scaled)",
         f"Features     : {ds.feature_names}",
         "",
-        "Choosing k — inertia (elbow) + silhouette:",
+        "Choosing k - inertia (elbow) + silhouette:",
         f"  {'k':>3}{'inertia':>14}{'silhouette':>13}",
     ]
     for r in rows:
@@ -404,7 +404,7 @@ def write_metrics(
         "",
         f"PCA explained variance: PC1={evr[0]:.4f}  PC2={evr[1]:.4f}  sum={evr[:2].sum():.4f}",
         "",
-        "Segment profile — groupby('segment').mean():",
+        "Segment profile - groupby('segment').mean():",
         profile.round(2).to_string(),
         "",
     ]
@@ -421,7 +421,7 @@ def run_one(name: str, suffix: str = "") -> dict[str, Any]:
 
     Writes ``elbow_silhouette<tag>.png``, ``pca_segments<tag>.png`` and
     ``metrics<tag>.txt`` under ``OUT_DIR``, where ``tag`` is ``suffix`` if
-    given, else ``_<name>`` — so every dataset gets its own set of output
+    given, else ``_<name>`` - so every dataset gets its own set of output
     files by default. Returns a compact result dict.
     """
     ds = load_data(name)
@@ -464,12 +464,12 @@ def run_one(name: str, suffix: str = "") -> dict[str, Any]:
 
 
 def write_summary(results: list[dict[str, Any]], path: Path) -> None:
-    """Deterministic cross-dataset comparison table — no timestamps, no absolute paths."""
+    """Deterministic cross-dataset comparison table - no timestamps, no absolute paths."""
     header = (
         f"{'Dataset':<13}{'n':>7}{'feat':>6}{'best_k':>8}"
         f"{'silhouette':>12}{'PC1+PC2':>10}{'ARI':>8}"
     )
-    lines = ["K-MEANS + PCA — CROSS-DATASET SUMMARY", "=" * 64, header, "-" * 64]
+    lines = ["K-MEANS + PCA - CROSS-DATASET SUMMARY", "=" * 64, header, "-" * 64]
     for r in results:
         ari = f"{r['ari']:.3f}" if r["ari"] is not None else "n/a"
         lines.append(

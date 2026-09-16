@@ -1,4 +1,4 @@
-"""quiz_engine.py — a quiz simulator over the P12 synthetic corpus's question bank.
+"""quiz_engine.py - a quiz simulator over the P12 synthetic corpus's question bank.
 
 Builds a merged question bank from ``corpus/`` (three courses, via
 ``projects.p02_question_bank.qbank.build_bank``), runs a session of random
@@ -6,7 +6,7 @@ closed questions (multiple choice + true/false) with shuffled options, scores
 answers (handling multi-answer ``correct`` lists), and persists each session to
 ``output/history.json`` so ``progress.py`` can compute success rates.
 
-Pure functions: ``load_bank`` / ``build_session`` / ``grade`` / ``save_session`` —
+Pure functions: ``load_bank`` / ``build_session`` / ``grade`` / ``save_session`` -
 all testable without a UI.
 
 CLI: ``python quiz_engine.py --n 5 --seed 42 [--module data-cleaning-basics] [--type true_false]``
@@ -86,7 +86,7 @@ def load_bank(path: str | Path | None = None) -> list[Question]:
         for q in bank["questions"]
         if q["type"] in CLOSED_TYPES
     ]
-    assert len(questions) > 0, "no closed questions found in the bank — is the corpus empty?"
+    assert len(questions) > 0, "no closed questions found in the bank - is the corpus empty?"
     return questions
 
 

@@ -1,4 +1,4 @@
-# 0004: CI matrix — Ubuntu and Windows on every PR, macOS on demand
+# 0004: CI matrix - Ubuntu and Windows on every PR, macOS on demand
 
 ## Context
 

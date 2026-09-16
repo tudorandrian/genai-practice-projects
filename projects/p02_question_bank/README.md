@@ -1,4 +1,4 @@
-# P02 — Question Bank
+# P02 - Question Bank
 
 ## What it does
 
@@ -25,7 +25,7 @@ corrupting the neighbouring question.
 `qbank.build_bank(course_dir, course_id=None) -> (bank, errors)` is the pure
 half of the pipeline: it does no I/O beyond reading the lesson files and
 never writes anything. It is the entry point another project (a quiz
-front-end) is expected to call directly — `run()` is a thin CLI wrapper
+front-end) is expected to call directly - `run()` is a thin CLI wrapper
 around it that adds validation gating and the two output files.
 
 ## Run
@@ -51,7 +51,7 @@ is written and the exit code is `1`.
 | `--output PATH` | Output JSON path | `output/question-bank.json` |
 | `--check-only` | Validate only; write nothing | off |
 | `--course-id ID` | Course id used to build question ids | the folder name |
-| `--demo` | Run the offline demo on the shipped fixtures | — |
+| `--demo` | Run the offline demo on the shipped fixtures | - |
 | `--verbose` | Log per-lesson counts at INFO level | off |
 
 ## Example output
@@ -93,7 +93,7 @@ questions=4
   but the presence of any error anywhere blocks the write: either every
   lesson validates, or nothing is written.
 - **Generic header matching.** `### Qn. (Type)` is matched on any label, so
-  an unrecognized type is still a clean block boundary — it cannot pollute
+  an unrecognized type is still a clean block boundary - it cannot pollute
   the questions around it, and it is reported by name instead of surfacing
   as a generic parse failure or a misleading "numbering is not consecutive."
 - **Multi-Select as a Multiple-Choice variant.** A `(Multi-Select)` header
@@ -102,8 +102,8 @@ questions=4
   lists the same letters (comma-separated). A `(Multiple Choice)` header
   keeps the single-answer constraint.
 - **Layout-agnostic identity.** `course_id_from_dir` is just the folder's own
-  name, and `unit_id_from_filename` is always `f"{course_id}/{path.stem}"` —
-  never `None` — so the tool works on any folder structure or file naming
+  name, and `unit_id_from_filename` is always `f"{course_id}/{path.stem}"` -
+  never `None` - so the tool works on any folder structure or file naming
   convention, not one baked-in scheme.
 - **Deterministic output.** No timestamps or run-order dependence anywhere in
   the bank; two runs over the same input are byte-identical.
@@ -118,9 +118,10 @@ questions=4
 - **Single-line bullets only.** A rationale or hint that wraps onto a second
   line is not recognized as part of the same option (`e12` fixture); the
   continuation line is reported as an unrecognized bullet.
-- **A strict option syntax.** Options must use an em-dash (`—`) between the
-  option text and its `**Correct answer.**\|**Incorrect.**` marker; an ASCII
-  hyphen breaks the whole option line (`e11` fixture).
+- **A strict option syntax.** Options need a hyphen with a space on each side
+  between the option text and its `**Correct answer.**\|**Incorrect.**` marker
+  (an en dash or em dash is accepted too); without it the whole option line is
+  unrecognized (`e11` fixture).
 - **The schema fixes the three question types.** `question_counts` always has
   exactly `multiple_choice`, `true_false`, `open_ended` keys; Multi-Select
   questions are counted under `multiple_choice`.

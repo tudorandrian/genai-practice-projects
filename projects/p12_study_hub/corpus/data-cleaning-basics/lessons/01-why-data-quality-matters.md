@@ -44,10 +44,10 @@ concrete tool for catching one of those failure modes before it reaches a report
 ### Q1. (Multiple Choice)
 A teammate says the average trip duration at Wheel & Way "looks about right, so the data must be clean." What is the strongest reason to be cautious about that conclusion?
 
-- A) Averages are always the wrong statistic for trip durations. — **Incorrect.** Averages are a fine starting point; the issue is trusting them without inspection.
-- B) Bike-share companies never have data quality problems. — **Incorrect.** Every operational data source accumulates quality problems over time.
-- C) A plausible-looking average can still hide compensating errors, such as some durations recorded in seconds and others in minutes cancelling out in the mean. — **Correct answer.** This is exactly the kind of silent error a summary statistic can mask.
-- D) The average should be replaced by the median in every situation. — **Incorrect.** The median has its own uses, but switching statistics does not by itself catch mixed units.
+- A) Averages are always the wrong statistic for trip durations. - **Incorrect.** Averages are a fine starting point; the issue is trusting them without inspection.
+- B) Bike-share companies never have data quality problems. - **Incorrect.** Every operational data source accumulates quality problems over time.
+- C) A plausible-looking average can still hide compensating errors, such as some durations recorded in seconds and others in minutes cancelling out in the mean. - **Correct answer.** This is exactly the kind of silent error a summary statistic can mask.
+- D) The average should be replaced by the median in every situation. - **Incorrect.** The median has its own uses, but switching statistics does not by itself catch mixed units.
 
 - **Answer:** C
 

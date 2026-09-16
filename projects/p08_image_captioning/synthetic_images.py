@@ -1,11 +1,11 @@
-"""synthetic_images.py — generate a small, varied set of test images (offline).
+"""synthetic_images.py - generate a small, varied set of test images (offline).
 
 Run:
     uv run python -m projects.p08_image_captioning.synthetic_images
 
 Writes six deterministic images into ``./test-images`` (gitignored, so the
-demo can regenerate it every run) — a landscape, a ball, a house, a text
-image, an RGBA transparent PNG and a grayscale gradient — plus a
+demo can regenerate it every run) - a landscape, a ball, a house, a text
+image, an RGBA transparent PNG and a grayscale gradient - plus a
 ``not_an_image.txt`` to exercise the batch error path. Uses only Pillow,
 already installed via the ``core`` dependency group (a transitive dependency
 of matplotlib).

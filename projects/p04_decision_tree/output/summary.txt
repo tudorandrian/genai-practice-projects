@@ -1,4 +1,4 @@
-DECISION TREE — CROSS-DATASET SUMMARY
+DECISION TREE - CROSS-DATASET SUMMARY
 ==========================================================
 Dataset              n  classes  feats   acc(d4)   acc(d3)
 ----------------------------------------------------------

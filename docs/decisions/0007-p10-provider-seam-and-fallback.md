@@ -11,8 +11,8 @@ because it stopped.
 ## Decision
 
 Only `ollama` degrades: on any `OSError` (`urllib.error.URLError` is one),
-log a warning and return `"[ollama unavailable — stub used] " +
-stub(prompt)` — visible in the text, never silent. `openai`/`local` still
+log a warning and return `"[ollama unavailable - stub used] " +
+stub(prompt)` - visible in the text, never silent. `openai`/`local` still
 raise (a missing key or weights need attention). `demo()` separately
 force-pins `MEETING_LLM_PROVIDER=stub`, so `output/summary.txt` never
 depends on whether Ollama is running.

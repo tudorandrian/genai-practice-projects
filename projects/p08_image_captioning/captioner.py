@@ -1,15 +1,15 @@
-"""captioner.py — BLIP image-captioning inference, decoupled from any UI.
+"""captioner.py - BLIP image-captioning inference, decoupled from any UI.
 
 Project P08. This module is the *engine*: it loads the BLIP model once and
-turns a PIL image into an English caption. Both entry points — ``app.py``
-(Gradio) and ``batch.py`` (folder -> captions.txt) — import from here, so the
+turns a PIL image into an English caption. Both entry points - ``app.py``
+(Gradio) and ``batch.py`` (folder -> captions.txt) - import from here, so the
 model is never loaded twice and the UI layer stays swappable. ``caption_image``
 is pure from the caller's side (Image -> str) and accepts an injected
 processor/model, so it is testable without downloading the ~1 GB model or
 starting a server.
 
 The heavy imports (torch, transformers) are deferred into ``device`` and
-``load_model`` so this module — and its pure logic, unit-tested with fakes —
+``load_model`` so this module - and its pure logic, unit-tested with fakes -
 stays importable on a machine where those packages are not installed (only
 the ``models`` dependency group needs them).
 
@@ -48,7 +48,7 @@ _MODEL: Any = None
 def device() -> str:
     """Return ``"cuda"`` if a CUDA GPU is available, else ``"cpu"``.
 
-    Imports torch lazily so this function — and this module as a whole — is
+    Imports torch lazily so this function - and this module as a whole - is
     importable and testable (with a monkeypatched ``sys.modules["torch"]`` or
     without torch installed at all) without the ``models`` dependency group.
     """
@@ -124,7 +124,7 @@ def demo() -> DemoResult:
 
     Tier ``models``: downloads/loads the real model and never runs in CI.
     Generates the synthetic image set, captions every image once (the model
-    loads exactly once — see ``batch.caption_folder``), and writes a
+    loads exactly once - see ``batch.caption_folder``), and writes a
     deterministic ``output/captions.txt`` and ``output/metrics.txt``. Only the
     console summary and the returned ``DemoResult`` carry timing; the two
     committed files never vary between runs (greedy decoding is deterministic).

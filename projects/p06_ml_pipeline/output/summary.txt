@@ -1,4 +1,4 @@
-ML PIPELINE — CROSS-DATASET SUMMARY (RF vs LR)
+ML PIPELINE - CROSS-DATASET SUMMARY (RF vs LR)
 ============================================================
 Dataset           Winner                      F1   ROC AUC
 ------------------------------------------------------------

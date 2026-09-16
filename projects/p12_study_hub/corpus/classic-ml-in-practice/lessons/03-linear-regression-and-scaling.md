@@ -45,10 +45,10 @@ for a more complex model.
 ### Q1. (Multiple Choice)
 Why should a `StandardScaler` be fit only on the training set and then applied to the test set with `.transform()`, rather than fit on the combined dataset?
 
-- A) Because `StandardScaler` cannot process more than one dataset at a time. — **Incorrect.** A fitted scaler can be applied to any number of datasets via `.transform()`.
-- B) Because scaling is only needed for categorical features. — **Incorrect.** Scaling concerns numeric features; categorical features are handled separately with encoding.
-- C) Because linear regression cannot run on scaled data. — **Incorrect.** Linear regression runs perfectly well, and often more interpretably, on scaled data.
-- D) Fitting on the combined dataset would leak information about the test set's distribution into training, similar to other forms of data leakage discussed earlier. — **Correct answer.** This leakage of test-set distribution information is exactly the risk being avoided.
+- A) Because `StandardScaler` cannot process more than one dataset at a time. - **Incorrect.** A fitted scaler can be applied to any number of datasets via `.transform()`.
+- B) Because scaling is only needed for categorical features. - **Incorrect.** Scaling concerns numeric features; categorical features are handled separately with encoding.
+- C) Because linear regression cannot run on scaled data. - **Incorrect.** Linear regression runs perfectly well, and often more interpretably, on scaled data.
+- D) Fitting on the combined dataset would leak information about the test set's distribution into training, similar to other forms of data leakage discussed earlier. - **Correct answer.** This leakage of test-set distribution information is exactly the risk being avoided.
 
 - **Answer:** D
 

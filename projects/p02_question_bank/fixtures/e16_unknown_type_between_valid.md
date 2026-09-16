@@ -5,8 +5,8 @@
 ### Q1. (Multiple Choice)
 Which artifact is derived?
 
-- A) Markdown — **Incorrect.** Human source.
-- B) JSON — **Correct answer.** Derived artifact.
+- A) Markdown - **Incorrect.** Human source.
+- B) JSON - **Correct answer.** Derived artifact.
 
 - **Answer:** B
 

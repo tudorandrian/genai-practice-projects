@@ -1,4 +1,4 @@
-# P10 — Meeting Assistant (Whisper + LLM)
+# P10 - Meeting Assistant (Whisper + LLM)
 
 ## What it does
 
@@ -6,7 +6,7 @@ Chains two AI models from different domains into one pipeline: speech ->
 text -> structured text. [Whisper](https://huggingface.co/openai/whisper-tiny.en)
 (`openai/whisper-tiny.en`, via `transformers`) transcribes a meeting
 recording, and the transcript is fed to an LLM behind one provider seam to
-extract three fixed sections — topics discussed, decisions and action items.
+extract three fixed sections - topics discussed, decisions and action items.
 This is the repository's first project where one model's output is the next
 model's input, the composition pattern behind most real GenAI applications.
 
@@ -25,9 +25,9 @@ process_meeting(audio_path) -> {"transcript", "summary"}  # full chain, writes b
 (default, a local model over HTTP, no key), `openai` (Chat Completions,
 needs `OPENAI_API_KEY`), `local` (an offline `transformers` causal LM,
 downloads its own weights), and `stub` (no model at all; it echoes the start
-of the transcript — used by the tests and by `demo()`). If `ollama` is unreachable,
+of the transcript - used by the tests and by `demo()`). If `ollama` is unreachable,
 `summarize_with_llm` logs a warning and falls back to the stub with a
-visible `[ollama unavailable ...]` marker instead of raising — see
+visible `[ollama unavailable ...]` marker instead of raising - see
 [ADR 0007](../../docs/decisions/0007-p10-provider-seam-and-fallback.md).
 
 `synthetic_audio.py` synthesizes two short, scripted meeting recordings with
@@ -47,7 +47,7 @@ uv run pytest projects/p10_meeting_assistant -q          # fast tests, no weight
 
 `--verbose` logs at `INFO`; by default only the summary lines print.
 `--demo` generates (or reuses) `data/standup.wav`, transcribes it with real
-Whisper weights, summarizes it with the `stub` provider (force-pinned — see
+Whisper weights, summarizes it with the `stub` provider (force-pinned - see
 "Design notes"), and writes `output/transcript.txt`, `output/summary.txt`
 and `output/metrics.txt`.
 
@@ -83,12 +83,12 @@ p10-meeting-assistant: ok
 ```
 
 `seconds` varies run to run and is reported only on the console and in the
-returned `DemoResult`, never in a committed file — running `--demo` twice in
+returned `DemoResult`, never in a committed file - running `--demo` twice in
 a row leaves `git status` clean. `output/metrics.txt` (committed,
 deterministic): `provider=stub`, `words=73`, `sections=3`, one `key=value`
 per line.
 
-`output/transcript.txt` (committed, deterministic — Whisper's transcription
+`output/transcript.txt` (committed, deterministic - Whisper's transcription
 of the synthesized standup recording, excerpt):
 
 ```
@@ -96,7 +96,7 @@ Good morning team. Today we discussed three topics. First, the mobile app
 released timeline. Second, the customer feedback from last week. ...
 ```
 
-`output/summary.txt` (committed, deterministic — excerpt):
+`output/summary.txt` (committed, deterministic - excerpt):
 
 ```
 ## Topics discussed
@@ -117,7 +117,7 @@ why `demo()` pins it.
 - **One provider seam, four backends.** `summarize_with_llm(prompt) -> str`
   is the only function `summarize_structured` calls into for text
   generation; swapping providers touches only its body, and no API key ever
-  lives in code — every key/URL/model name is read from the environment at
+  lives in code - every key/URL/model name is read from the environment at
   call time, not cached at import time, so tests and operators can override
   `MEETING_OLLAMA_URL`/`MEETING_OLLAMA_MODEL`/`MEETING_LLM_MODEL` without
   reloading the module.
@@ -135,7 +135,7 @@ why `demo()` pins it.
 - **Visible, not silent, degradation.** Per
   [ADR 0007](../../docs/decisions/0007-p10-provider-seam-and-fallback.md),
   only the `ollama` branch falls back (to the stub, prefixed
-  `[ollama unavailable — stub used]`) when the service is unreachable;
+  `[ollama unavailable - stub used]`) when the service is unreachable;
   `openai` and `local` still raise on failure, since a bad key or missing
   weights need the caller's attention.
 - **Determinism.** `load_asr_model` passes `generate_kwargs={"num_beams": 1,
@@ -151,7 +151,7 @@ why `demo()` pins it.
   already exists unless `force=True`, so repeated `--demo` calls reuse the
   same audio bytes. With the pinned `stub` provider, this keeps
   `output/transcript.txt` and `output/summary.txt` byte-identical across
-  repeated `--demo` runs — WAV files are never tracked by git.
+  repeated `--demo` runs - WAV files are never tracked by git.
 - **No ffmpeg needed for the common case.** `load_audio` decodes WAV with
   `scipy.io.wavfile` and resamples to 16 kHz with
   `scipy.signal.resample_poly`, entirely in-process. Non-WAV formats
@@ -189,11 +189,11 @@ why `demo()` pins it.
   there too, not `failed`. Whisper transcription of the synthesized audio is
   therefore verified on Windows and macOS only.
 - **`whisper-tiny.en` is the smallest, fastest, English-only Whisper
-  checkpoint** — a trade of accuracy for a fast CPU demo. A larger
+  checkpoint** - a trade of accuracy for a fast CPU demo. A larger
   checkpoint (`openai/whisper-base.en`, `-small.en`, ...) would transcribe
   more accurately at proportionally more load/inference time; swapping it
   in only requires overriding `WHISPER_MODEL`.
-- **The `stub` provider produces a summary with no real content** — it
+- **The `stub` provider produces a summary with no real content** - it
   echoes the first 60 characters of the transcript, to prove the hand-off
   and the three-section contract deterministically, not to demonstrate
   summarization quality; see "Run" for exercising a real provider.
@@ -201,13 +201,13 @@ why `demo()` pins it.
   meaningfully slower on CPU than a small model served by Ollama.
 - **No authentication or rate limiting on the Gradio server.** `build_ui()`
   is a local demo UI, not hardened for public exposure; the CLI binds
-  `127.0.0.1` by default — pass `--host 0.0.0.0` to listen everywhere.
+  `127.0.0.1` by default - pass `--host 0.0.0.0` to listen everywhere.
 
 ## Datasets and licences
 
 There is no external dataset. `synthetic_audio.py`'s `SCRIPTS` are two
 hand-written, fixed meeting transcripts ("standup", "budget"), synthesized
-into WAV files with `pyttsx3` — a wrapper around the OS's own text-to-speech
+into WAV files with `pyttsx3` - a wrapper around the OS's own text-to-speech
 engine (SAPI5 on Windows, eSpeak on Linux), not a downloaded model. The WAV
 files are never tracked by git (`.gitignore`:
 `projects/*/data/*.wav`); `demo()` reuses them across runs instead of

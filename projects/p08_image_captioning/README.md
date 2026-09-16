@@ -1,4 +1,4 @@
-# P08 — BLIP Image Captioning
+# P08 - BLIP Image Captioning
 
 ## What it does
 
@@ -7,7 +7,7 @@ Turns any image into a short English caption using
 (`Salesforce/blip-image-captioning-base`), served two ways: a Gradio
 drag-and-drop UI and a folder batch mode. This is the repository's first
 project that loads real Hugging Face model weights instead of running a
-hand-written algorithm — the `models` dependency group and a GPU-or-CPU
+hand-written algorithm - the `models` dependency group and a GPU-or-CPU
 inference step, rather than a `core`-tier script.
 
 `captioner.py` is the engine: `load_model()` downloads BLIP once into the
@@ -25,10 +25,10 @@ caption(image) -> str                                # wrapper: load_model() + c
 
 Two thin front ends sit on top of the engine and never touch BLIP directly:
 
-- **`app.py`** — a Gradio `Interface` around `caption`; `describe_image` is
+- **`app.py`** - a Gradio `Interface` around `caption`; `describe_image` is
   the UI callback, `build_demo()` builds the interface, `main()` warms the
   model cache and launches the server.
-- **`batch.py`** — `caption_folder(folder, output_path)` loads the model
+- **`batch.py`** - `caption_folder(folder, output_path)` loads the model
   *once* via `captioner.load_model()`, then reuses that same
   `(processor, model)` pair for every image in the folder, instead of
   relying on `caption`'s per-call cache lookup. It writes one
@@ -70,7 +70,7 @@ p08-image-captioning: ok
 
 `seconds` (model load + inference time) varies run to run and is reported
 only on the console and in the returned `DemoResult`, never in a committed
-file — running `--demo` twice in a row leaves `git status` clean, because
+file - running `--demo` twice in a row leaves `git status` clean, because
 generation is greedy and deterministic (`num_beams=1, do_sample=False`).
 
 `output/metrics.txt` (committed, deterministic):
@@ -101,7 +101,7 @@ transparent.png: a red circle with a black background
   makes the fast test suite possible.
 - **Lazy heavy imports.** `torch` and `transformers` are imported inside
   `device()` and `load_model()`, not at module level, so `captioner.py` is
-  importable — and its pure logic testable — without the `models` dependency
+  importable - and its pure logic testable - without the `models` dependency
   group installed. `app.py` is the one module that imports `gradio` at the
   top, which is why no `core`-marked test imports `app.py`; building or
   loading the UI is exercised only under the `models` marker, if at all.
@@ -109,14 +109,14 @@ transparent.png: a red circle with a black background
   torch installed.** It does `import torch` *inside* the function body, so a
   test can put a fake module into `sys.modules["torch"]` before calling it
   (`monkeypatch.setitem(sys.modules, "torch", ...)`) and exercise the
-  cuda-unavailable branch — see `test_device_falls_back_to_cpu` — without
+  cuda-unavailable branch - see `test_device_falls_back_to_cpu` - without
   needing the real package.
 - **The batch path loads the model exactly once.** `caption_folder` calls
   `captioner.load_model()` a single time up front and threads the returned
   `(processor, model)` through every `caption_image` call in the loop,
   rather than calling `caption()` per image (which would hit the
   already-loaded cache anyway, but less explicitly). `batch.py` imports the
-  `captioner` *module*, not individual names from it — a
+  `captioner` *module*, not individual names from it - a
   `from captioner import load_model` would bind a private copy of the
   function, which a test that patches `captioner.load_model` afterwards
   would never see; see `test_batch_loads_the_model_once`.
@@ -128,7 +128,7 @@ transparent.png: a red circle with a black background
   `print`; they log through `logging.getLogger(__name__)`. Each module's
   `main()` prints at most a handful of summary lines and sets the logging
   level (`WARNING`, or `INFO` with `--verbose`).
-- **`app.py` binds `127.0.0.1` by default**, never `0.0.0.0` — pass
+- **`app.py` binds `127.0.0.1` by default**, never `0.0.0.0` - pass
   `--host 0.0.0.0` to opt into listening on every interface.
 
 ## Limits
@@ -141,7 +141,7 @@ transparent.png: a red circle with a black background
 - **The model needs ~1 GB of disk and a one-time download.** The first
   `load_model()` call downloads BLIP into the Hugging Face cache
   (`~/.cache/huggingface`); later runs reuse it. `demo()` and the `models`-
-  marked test are never run in CI for this reason — see `.github/workflows/
+  marked test are never run in CI for this reason - see `.github/workflows/
   heavy.yml`, a manually-dispatched workflow, versus the `core`-only `ci.yml`.
   A full `--demo` run (model already cached) takes on the order of 20–30
   seconds on CPU; a cold cache adds the download time.
@@ -157,7 +157,7 @@ transparent.png: a red circle with a black background
 There is no external dataset. `synthetic_images.py` generates six small
 images with Pillow's `ImageDraw` (a landscape, a ball, a house, a text
 banner, a transparent RGBA circle and a grayscale gradient) plus a
-`not_an_image.txt` decoy — all drawn programmatically for this project, not
+`not_an_image.txt` decoy - all drawn programmatically for this project, not
 sourced from any corpus. They are written into the gitignored
 `test-images/` directory and regenerated by `demo()` on every run.
 

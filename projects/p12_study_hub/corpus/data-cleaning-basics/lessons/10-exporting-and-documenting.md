@@ -44,10 +44,10 @@ person does not have to take your word for it.
 ### Q1. (Multiple Choice)
 What is the main advantage of exporting a cleaned dataset to Parquet instead of CSV?
 
-- A) Parquet files can always be opened directly in a plain text editor. — **Incorrect.** Parquet is a binary format and is not directly readable as plain text.
-- B) Parquet preserves each column's data type, so a downstream reader does not need to re-parse timestamps or numbers from text. — **Correct answer.** Preserving type information without re-parsing is exactly Parquet's key advantage here.
-- C) CSV files cannot be read by any tool other than the one that wrote them. — **Incorrect.** CSV is in fact one of the most broadly portable formats available.
-- D) Parquet eliminates the need for any data dictionary. — **Incorrect.** A data dictionary remains valuable regardless of file format.
+- A) Parquet files can always be opened directly in a plain text editor. - **Incorrect.** Parquet is a binary format and is not directly readable as plain text.
+- B) Parquet preserves each column's data type, so a downstream reader does not need to re-parse timestamps or numbers from text. - **Correct answer.** Preserving type information without re-parsing is exactly Parquet's key advantage here.
+- C) CSV files cannot be read by any tool other than the one that wrote them. - **Incorrect.** CSV is in fact one of the most broadly portable formats available.
+- D) Parquet eliminates the need for any data dictionary. - **Incorrect.** A data dictionary remains valuable regardless of file format.
 
 - **Answer:** B
 

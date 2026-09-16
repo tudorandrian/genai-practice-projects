@@ -49,10 +49,10 @@ application is built around a small model, not merely on top of one.
 ### Q1. (Multiple Choice)
 Why does the lesson recommend treating retrieved manual content as data to summarize rather than as instructions to obey?
 
-- A) Manual content is always written in a different language than the system prompt. — **Incorrect.** Language is unrelated to the reasoning given; the concern is about trusting the content's instructions.
-- B) Retrieved content comes from outside the developer's direct control, so text embedded in it could otherwise attempt to override the system instruction through prompt injection. — **Correct answer.** This exact prompt-injection risk from externally sourced content is the stated reason.
-- C) Pebble cannot technically process retrieved content as part of a prompt. — **Incorrect.** Pebble processes retrieved content routinely as part of its context; the issue is how that content should be treated.
-- D) Guardrails are only needed for output, never for retrieved input content. — **Incorrect.** The lesson explicitly discusses both input and output guardrails as distinct, necessary layers.
+- A) Manual content is always written in a different language than the system prompt. - **Incorrect.** Language is unrelated to the reasoning given; the concern is about trusting the content's instructions.
+- B) Retrieved content comes from outside the developer's direct control, so text embedded in it could otherwise attempt to override the system instruction through prompt injection. - **Correct answer.** This exact prompt-injection risk from externally sourced content is the stated reason.
+- C) Pebble cannot technically process retrieved content as part of a prompt. - **Incorrect.** Pebble processes retrieved content routinely as part of its context; the issue is how that content should be treated.
+- D) Guardrails are only needed for output, never for retrieved input content. - **Incorrect.** The lesson explicitly discusses both input and output guardrails as distinct, necessary layers.
 
 - **Answer:** B
 

@@ -1,15 +1,15 @@
-"""app.py — Gradio drag-and-drop image-captioning UI (Project P08).
+"""app.py - Gradio drag-and-drop image-captioning UI (Project P08).
 
 Run:
     uv run python -m projects.p08_image_captioning.app              # http://127.0.0.1:7860
     uv run python -m projects.p08_image_captioning.app --host 0.0.0.0
 
-The UI is a thin layer over ``captioner.caption`` — Gradio builds the whole
+The UI is a thin layer over ``captioner.caption`` - Gradio builds the whole
 interface from the function signature (Image -> str), so all the real work is
 the BLIP inference in ``captioner.py``. The model loads once at startup.
 
 This module imports ``gradio`` at module level (needed to build the UI), so it
-is never imported by a ``core``-marked test — see
+is never imported by a ``core``-marked test - see
 ``projects/p08_image_captioning/tests/test_captioner.py``, which only
 exercises ``captioner.py`` and ``batch.py``.
 
@@ -49,7 +49,7 @@ def build_demo() -> gr.Interface:
         title="Image Captioning with BLIP",
         description=(
             f"The {MODEL_NAME} model describes the uploaded image. "
-            "Runs locally on CPU — the first run downloads the model (~1 GB)."
+            "Runs locally on CPU - the first run downloads the model (~1 GB)."
         ),
         flagging_mode="never",  # Gradio 5+ name (was allow_flagging in Gradio 4)
     )

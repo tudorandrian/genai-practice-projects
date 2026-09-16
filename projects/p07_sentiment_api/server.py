@@ -1,10 +1,10 @@
-"""server.py — a small Flask sentiment-analysis API (Project P07).
+"""server.py - a small Flask sentiment-analysis API (Project P07).
 
 The first step from *scripts* to *services* in this repository: the same kind
 of pure Python analysis function used across earlier projects, now exposed
 over HTTP as a JSON API. The analysis engine is a small local Romanian
 lexicon, so the whole thing runs offline with a single ``pip install flask``
-and no model download. The web layer never touches the lexicon directly —
+and no model download. The web layer never touches the lexicon directly -
 swap ``analyze_sentiment`` for a real model (e.g. ``transformers``) and the
 HTTP contract is unchanged.
 
@@ -41,11 +41,11 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
 
 # ---------------------------------------------------------------------------
-# Analysis engine — a pure function, fully decoupled from Flask
+# Analysis engine - a pure function, fully decoupled from Flask
 # ---------------------------------------------------------------------------
 
 # Sentiment lexicon: word -> weight (+/-1 mild, +/-2 strong). The words are
-# Romanian — this is data for the demo domain, not repository language, so it
+# Romanian - this is data for the demo domain, not repository language, so it
 # is kept as-is (see the README's "Datasets and licences" section). Common
 # feminine/plural forms are listed explicitly (exact match only, so no false
 # hits like "bun" wrongly matching "bunic").
@@ -115,7 +115,8 @@ LEXICON: dict[str, int] = {
 # Words that flip the polarity of the next sentiment-bearing word ("nu bun").
 NEGATIONS: frozenset[str] = frozenset({"nu", "fara", "nici", "niciun", "nicio"})
 
-_PUNCT = string.punctuation + "„”“…–—"
+# Typographic punctuation common in Romanian text (\u2013 en dash, \u2014 em dash).
+_PUNCT = string.punctuation + "„”“…\u2013\u2014"
 
 
 def _fold_diacritics(token: str) -> str:
@@ -167,11 +168,11 @@ def analyze_sentiment(text: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Web layer — Flask
+# Web layer - Flask
 # ---------------------------------------------------------------------------
 
 app = Flask(__name__)
-# Reject bodies above 64 KiB before Flask/Werkzeug buffers them for parsing —
+# Reject bodies above 64 KiB before Flask/Werkzeug buffers them for parsing -
 # without this, a request can grow the process's memory (or, for a
 # pathologically nested JSON body, blow the interpreter's recursion limit
 # inside json.loads) before validation ever runs.
@@ -221,7 +222,7 @@ def _handle_413(_err: Exception) -> tuple[Response, int]:
 @app.errorhandler(500)
 def _handle_500(err: Exception) -> tuple[Response, int]:
     """Return JSON for anything unexpected below (e.g. a RecursionError from
-    parsing a deeply nested — but under the size cap — JSON body), instead of
+    parsing a deeply nested - but under the size cap - JSON body), instead of
     Flask's default HTML error page. The exception is still logged."""
     log.error("unhandled error: %s", err, exc_info=err)
     return jsonify({"error": "Internal server error."}), 500
@@ -243,13 +244,13 @@ def demo() -> DemoResult:
     """Post four sentences through ``app.test_client()`` (no live server) and
     write a deterministic curl-style transcript plus a deterministic metrics
     file. Timing is reported only in the console summary and the returned
-    ``DemoResult`` — the two committed files never vary between runs."""
+    ``DemoResult`` - the two committed files never vary between runs."""
     start = time.perf_counter()
     client = app.test_client()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     transcript = [
-        "# P07 sentiment API — demo curl transcript",
+        "# P07 sentiment API - demo curl transcript",
         "# Generated via app.test_client() against POST /sentiment (no live server)",
         "",
     ]

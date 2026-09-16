@@ -44,10 +44,10 @@ timestamp that happens to parse but is chronologically meaningless.
 ### Q1. (Multiple Choice)
 Why is it risky to rely purely on automatic format inference when a timestamp column mixes two different date formats?
 
-- A) Automatic inference is always slower than explicit parsing. — **Incorrect.** Speed is not the central risk being described here.
-- B) Pandas cannot parse dates automatically under any circumstance. — **Incorrect.** Pandas can and often does infer formats automatically; the risk is ambiguity, not incapability.
-- C) Mixed formats always cause an immediate program crash. — **Incorrect.** Mixed formats more often cause silent misparsing than an immediate crash.
-- D) Automatic inference can misparse rows silently when the format is ambiguous across the mixed batches, rather than failing loudly. — **Correct answer.** This silent misparsing under ambiguity is exactly why explicit, per-batch formats are safer.
+- A) Automatic inference is always slower than explicit parsing. - **Incorrect.** Speed is not the central risk being described here.
+- B) Pandas cannot parse dates automatically under any circumstance. - **Incorrect.** Pandas can and often does infer formats automatically; the risk is ambiguity, not incapability.
+- C) Mixed formats always cause an immediate program crash. - **Incorrect.** Mixed formats more often cause silent misparsing than an immediate crash.
+- D) Automatic inference can misparse rows silently when the format is ambiguous across the mixed batches, rather than failing loudly. - **Correct answer.** This silent misparsing under ambiguity is exactly why explicit, per-batch formats are safer.
 
 - **Answer:** D
 

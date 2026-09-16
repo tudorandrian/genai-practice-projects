@@ -1,4 +1,4 @@
-# 0002: Full English — specs, identifiers, and API contracts
+# 0002: Full English - specs, identifiers, and API contracts
 
 ## Context
 

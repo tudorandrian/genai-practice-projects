@@ -45,10 +45,10 @@ the two extremes this lesson has mostly treated as a binary choice.
 ### Q1. (Multiple Choice)
 Why did Fenwick Labs rule out a hosted-only approach for Pebble's use case, according to the lesson?
 
-- A) Hosted models are always more expensive than local models regardless of usage. — **Incorrect.** The lesson describes cost as usage-dependent, not universally higher for hosted models.
-- B) Hosted models cannot answer factual questions about product manuals. — **Incorrect.** Nothing in the lesson claims hosted models are incapable of this kind of task.
-- C) Local models are always faster than hosted models for every kind of question. — **Incorrect.** The lesson notes a much larger hosted model can sometimes offset network delay with faster generation.
-- D) The privacy of unreleased-product content and the need for the kiosk to keep working without a reliable connection are hard constraints that a hosted-only approach could not satisfy. — **Correct answer.** These hard constraints from lesson one are exactly what the lesson cites as ruling out a hosted-only approach.
+- A) Hosted models are always more expensive than local models regardless of usage. - **Incorrect.** The lesson describes cost as usage-dependent, not universally higher for hosted models.
+- B) Hosted models cannot answer factual questions about product manuals. - **Incorrect.** Nothing in the lesson claims hosted models are incapable of this kind of task.
+- C) Local models are always faster than hosted models for every kind of question. - **Incorrect.** The lesson notes a much larger hosted model can sometimes offset network delay with faster generation.
+- D) The privacy of unreleased-product content and the need for the kiosk to keep working without a reliable connection are hard constraints that a hosted-only approach could not satisfy. - **Correct answer.** These hard constraints from lesson one are exactly what the lesson cites as ruling out a hosted-only approach.
 
 - **Answer:** D
 

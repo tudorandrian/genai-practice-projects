@@ -2,7 +2,7 @@
 
 pyttsx3 is never imported for real here: ``generate()`` imports it lazily
 inside ``_init_engine()``, so stuffing a fake module into ``sys.modules``
-before calling ``generate()`` is enough — these tests run offline, without
+before calling ``generate()`` is enough - these tests run offline, without
 the ``models`` dependency group, like the rest of this project's ``core``
 suite.
 
@@ -35,7 +35,7 @@ class _FakeEngine:
     """Stands in for a pyttsx3 driver. Any file name in ``silent_names`` reproduces the
     real bug this module works around: ``save_to_file``/``runAndWait`` both report
     success but no bytes ever reach disk for that specific file (the eSpeak
-    weak-reference callback failure) — decided by the path's own name, not by call
+    weak-reference callback failure) - decided by the path's own name, not by call
     order, since ``generate()`` iterates a ``set`` whose order is not guaranteed."""
 
     def __init__(self, silent_names: set[str], write_bytes: bytes | None = None) -> None:
@@ -43,13 +43,13 @@ class _FakeEngine:
         self._write_bytes = write_bytes or b"RIFF....WAVEfmt fake audio bytes"
         self._pending: tuple[str, str] | None = None
 
-    def setProperty(self, _name: str, _value: object) -> None:  # noqa: N802 — pyttsx3's real method name
+    def setProperty(self, _name: str, _value: object) -> None:  # noqa: N802 - pyttsx3's real method name
         pass
 
     def save_to_file(self, text: str, path: str) -> None:
         self._pending = (text, path)
 
-    def runAndWait(self) -> None:  # noqa: N802 — pyttsx3's real method name
+    def runAndWait(self) -> None:  # noqa: N802 - pyttsx3's real method name
         if self._pending is None:
             return
         _text, path = self._pending
@@ -71,14 +71,14 @@ def _fake_pyttsx3(silent_names: set[str], write_bytes: bytes | None = None) -> A
 
 
 # =============================================================================
-# Hand-built AIFF/AIFF-C byte fixtures (no aifc module — removed in 3.13; no
-# binary fixture files — built in code, per the mandatory constraints).
+# Hand-built AIFF/AIFF-C byte fixtures (no aifc module - removed in 3.13; no
+# binary fixture files - built in code, per the mandatory constraints).
 # =============================================================================
 
 
 def _write_ieee_extended(value: float) -> bytes:
-    """Encode a big-endian 80-bit IEEE-754 extended-precision float — the
-    inverse of ``synthetic_audio._read_ieee_extended`` — so a COMM chunk's
+    """Encode a big-endian 80-bit IEEE-754 extended-precision float - the
+    inverse of ``synthetic_audio._read_ieee_extended`` - so a COMM chunk's
     sample rate can be hand-built for these fixtures."""
     sign_bit = 0x8000 if value < 0 else 0
     value = abs(value)
@@ -157,7 +157,7 @@ def _disable_stabilize_and_floor(monkeypatch: pytest.MonkeyPatch) -> None:
     samples instantly and synchronously, so there is nothing to actually
     wait for, and the fixtures are far too short to clear
     MIN_SECONDS_PER_WORD's real-world floor. Disabling both keeps those
-    tests fast (no real sleep) and focused on what they mean to test —
+    tests fast (no real sleep) and focused on what they mean to test -
     stabilization and the floor get their own dedicated tests below."""
     monkeypatch.setattr(synthetic_audio, "STABILIZE_POLL_SECONDS", 0.0)
     monkeypatch.setattr(synthetic_audio, "MIN_SECONDS_PER_WORD", 0.0)
@@ -181,7 +181,7 @@ def test_generate_raises_when_pyttsx3_silently_drops_a_file(
     ``save_to_file``/``runAndWait`` while never writing bytes to the requested path
     (the real eSpeak weak-reference bug this module works around, reproduced here
     without a real TTS engine). ``generate()`` must not return that missing path as
-    if it had succeeded — it must raise the same ``TTSEngineUnavailableError`` a
+    if it had succeeded - it must raise the same ``TTSEngineUnavailableError`` a
     genuinely absent engine raises, so callers already handling "no engine at all"
     (``demo()``) also handle "engine present but silently incomplete" the same way:
     a clean ``skipped`` result, never a ``failed`` one from a confusing
@@ -208,7 +208,7 @@ def test_generate_reuses_existing_files_without_calling_pyttsx3(
     (tmp_path / "standup.wav").write_bytes(b"already here")
 
     # Any "import pyttsx3" now raises ImportError (sys.modules["pyttsx3"] = None is
-    # Python's own way to force that) — proving generate() never reaches the import
+    # Python's own way to force that) - proving generate() never reaches the import
     # at all when there is nothing pending to synthesize.
     monkeypatch.setitem(sys.modules, "pyttsx3", None)
     paths = synthetic_audio.generate(tmp_path, only={"standup.wav"})
@@ -234,7 +234,7 @@ def test_generate_converts_a_macos_aiff_file_written_by_a_fake_engine(
 
 
 # =============================================================================
-# generate() — wait for asynchronous writes, plausibility floor
+# generate() - wait for asynchronous writes, plausibility floor
 # =============================================================================
 #
 # macOS's NSSpeechSynthesizer writes asynchronously and runAndWait() returns
@@ -247,7 +247,7 @@ def test_generate_converts_a_macos_aiff_file_written_by_a_fake_engine(
 class _AsyncWriteEngine:
     """Stands in for NSSpeechSynthesizer: ``runAndWait()`` writes
     ``initial_bytes`` synchronously (so the exists/non-empty check right
-    after it still passes) — the rest of a real asynchronous write arrives
+    after it still passes) - the rest of a real asynchronous write arrives
     later, driven here by whatever the test wires up to run on each
     simulated "tick" (the injected ``sleep``), modeling the engine finishing
     the write only after ``runAndWait()`` has already returned."""
@@ -256,13 +256,13 @@ class _AsyncWriteEngine:
         self._path_holder = path_holder
         self._initial_bytes = initial_bytes
 
-    def setProperty(self, _name: str, _value: object) -> None:  # noqa: N802 — pyttsx3's real method name
+    def setProperty(self, _name: str, _value: object) -> None:  # noqa: N802 - pyttsx3's real method name
         pass
 
     def save_to_file(self, _text: str, path: str) -> None:
         self._path_holder["path"] = path
 
-    def runAndWait(self) -> None:  # noqa: N802 — pyttsx3's real method name
+    def runAndWait(self) -> None:  # noqa: N802 - pyttsx3's real method name
         Path(self._path_holder["path"]).write_bytes(self._initial_bytes)
 
 
@@ -283,7 +283,7 @@ def test_generate_waits_for_an_asynchronously_written_file_before_converting(
     """The file grows across several polls (delivered by the injected
     ``sleep`` callback, standing in for the passage of real time) before
     settling on the complete AIFF bytes. generate() must not read/convert
-    the file before its size stops changing — converting after the first
+    the file before its size stops changing - converting after the first
     poll would only see a fraction of the frames, which is exactly what the
     final assertion below would catch."""
     monkeypatch.setattr(synthetic_audio, "MIN_SECONDS_PER_WORD", 0.0)
@@ -489,7 +489,7 @@ def test_generate_spares_a_finished_sibling_when_the_other_script_times_out(
     earlier in the same call."""
     monkeypatch.setattr(synthetic_audio, "MIN_SECONDS_PER_WORD", 0.0)
     names = {"standup.wav", "budget.wav"}
-    # _finish_synthesized_files iterates `pending`, built from `set(only)` —
+    # _finish_synthesized_files iterates `pending`, built from `set(only)` -
     # its order is hash-dependent, not insertion order (see _FakeEngine's
     # docstring above). Read the real order back so the "good" role always
     # lands on whichever name is actually processed first.
@@ -552,8 +552,8 @@ def test_generate_accepts_an_already_final_file_after_minimum_stable_checks(
 ) -> None:
     """The common case (Windows/Linux): the file is already complete by the
     time generate() looks at it. It
-    must still be accepted quickly — via the minimum number of stable
-    reads, not the full timeout — costing exactly
+    must still be accepted quickly - via the minimum number of stable
+    reads, not the full timeout - costing exactly
     STABILIZE_REQUIRED_STABLE_READS - 1 sleeps. A stabilization loop that
     accepts on the very first read (no confirmation at all) or that keeps
     polling past the point of confidence would make this assertion fail."""
@@ -585,7 +585,7 @@ def test_generate_accepts_an_already_final_file_after_minimum_stable_checks(
 
 
 # =============================================================================
-# normalize_speech_audio_to_wav — pure conversion, no TTS engine involved
+# normalize_speech_audio_to_wav - pure conversion, no TTS engine involved
 # =============================================================================
 
 
@@ -739,7 +739,7 @@ def test_normalize_rejects_an_aifc_comm_chunk_without_a_compression_type() -> No
 
 def test_normalize_rejects_malformed_chunks() -> None:
     # A FORM/AIFF header whose only chunk declares a size larger than the
-    # remaining bytes — the kind of truncated/corrupt file _iter_chunks must
+    # remaining bytes - the kind of truncated/corrupt file _iter_chunks must
     # reject cleanly rather than reading past the end.
     truncated = b"FORM" + struct.pack(">I", 100) + b"AIFF" + b"COMM" + struct.pack(">I", 9999)
     with pytest.raises(synthetic_audio.TTSEngineUnavailableError, match="broken.wav"):
@@ -747,7 +747,7 @@ def test_normalize_rejects_malformed_chunks() -> None:
 
 
 # =============================================================================
-# Byte-order check — diagnostic only, the header's order is always used
+# Byte-order check - diagnostic only, the header's order is always used
 # =============================================================================
 #
 # These use a smooth, audio-like signal (not a handful of arbitrary integers)
@@ -757,7 +757,7 @@ def test_normalize_rejects_malformed_chunks() -> None:
 
 def _build_test_signal(num_samples: int = 11025, sample_rate: int = 22050) -> list[int]:
     """A 440 Hz tone under a slower 2 Hz amplitude envelope, ~0.5s at
-    22050Hz by default — smooth, speech-like data, so the byte-order check
+    22050Hz by default - smooth, speech-like data, so the byte-order check
     has an actual signal to tell apart from noise."""
     samples = []
     for i in range(num_samples):
@@ -769,7 +769,7 @@ def _build_test_signal(num_samples: int = 11025, sample_rate: int = 22050) -> li
 
 
 def _build_white_noise_signal(num_samples: int = 11025, seed: int = 12345) -> list[int]:
-    """White noise (16-bit range, seeded for reproducibility) — by
+    """White noise (16-bit range, seeded for reproducibility) - by
     construction has no more structure decoded one way than the other, so
     the check should find neither order convincingly smoother."""
     rng = random.Random(seed)
@@ -915,7 +915,7 @@ def test_smoothness_score_is_lower_for_the_smooth_signal_than_for_noise() -> Non
 
 
 # =============================================================================
-# extract_audio_facts — diagnostics
+# extract_audio_facts - diagnostics
 # =============================================================================
 #
 # These facts make a bad file visible in the log: the source
@@ -1012,7 +1012,7 @@ def test_extract_audio_facts_on_unrecognized_bytes_never_raises() -> None:
 def test_audio_facts_format_flags_a_frame_count_mismatch() -> None:
     """The line fed into DemoResult notes and log output must actually show
     a mismatch when there is one, and stay silent about it when there
-    isn't — and never contain a newline, since it is meant to sit on one
+    isn't - and never contain a newline, since it is meant to sit on one
     log/table line."""
     matching = synthetic_audio.AudioFacts("RIFF", "PCM", 1, 2, 22050, 10, 10, 10 / 22050, 100)
     line = matching.format("ok.wav")

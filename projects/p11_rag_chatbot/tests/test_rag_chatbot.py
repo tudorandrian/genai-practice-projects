@@ -3,13 +3,13 @@
 Ingestion (``load_documents``/``split_documents``) and the LLM provider seam
 (``create_llm``) both import LangChain packages even in their simplest paths, so
 those tests are marked ``rag`` even though they need no network or downloaded
-embeddings — no ``core`` test may import langchain, chromadb or
+embeddings - no ``core`` test may import langchain, chromadb or
 sentence-transformers. The grounding prompt, the source formatter and ``ask()`` are
 pure Python exercised against fakes and stay ``core``. The full index + real
 embeddings + retrieval path (the evaluation set, its negative control, and the
 trap question) needs the ``rag`` group installed, and asserts on the TOP-ranked
 source (or, for the trap question, on the retrieved chunks directly) rather than
-mere presence in the result — see ``test_evaluation_questions_retrieve_the_expected_source``'s
+mere presence in the result - see ``test_evaluation_questions_retrieve_the_expected_source``'s
 docstring for why that distinction matters.
 
 Run
@@ -63,7 +63,7 @@ def test_write_all_creates_three_documents(tmp_path: Path) -> None:
 
 
 # =============================================================================
-# Ingestion — real LangChain loaders/splitters (rag)
+# Ingestion - real LangChain loaders/splitters (rag)
 # =============================================================================
 
 
@@ -114,13 +114,13 @@ def test_formats_file_and_page_and_dedupes() -> None:
 
 
 # =============================================================================
-# LLM provider seam — imports langchain_core (rag)
+# LLM provider seam - imports langchain_core (rag)
 # =============================================================================
 
 
 @pytest.mark.rag
 def test_stub_provider_needs_no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The stub is deterministic and derived from its own input — never a
+    """The stub is deterministic and derived from its own input - never a
     single fixed string regardless of the prompt, and never the exact ``REFUSAL``
     string (that's reserved for a real provider's grounding behaviour)."""
     monkeypatch.setenv("RAG_LLM_PROVIDER", "stub")
@@ -142,7 +142,7 @@ def test_create_llm_provider_argument_overrides_env(monkeypatch: pytest.MonkeyPa
 
 
 # =============================================================================
-# ask() — pure logic against a fake QA object (core)
+# ask() - pure logic against a fake QA object (core)
 # =============================================================================
 
 
@@ -177,7 +177,7 @@ def test_cli_reports_an_empty_corpus_without_a_traceback(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     def empty_index(reindex: bool = False) -> Any:
-        raise rag_chatbot.EmptyCorpusError("no documents to index in data/ — run --demo")
+        raise rag_chatbot.EmptyCorpusError("no documents to index in data/ - run --demo")
 
     monkeypatch.setattr(rag_chatbot, "build_index", empty_index)
     assert rag_chatbot.main(["-q", "How many vacation days?"]) == 1
@@ -185,7 +185,7 @@ def test_cli_reports_an_empty_corpus_without_a_traceback(
 
 
 # =============================================================================
-# load_eval_questions() — pure file parsing (core)
+# load_eval_questions() - pure file parsing (core)
 # =============================================================================
 
 
@@ -199,14 +199,14 @@ def test_load_eval_questions_excludes_trap_row_and_header() -> None:
 
 
 # =============================================================================
-# Evaluation set as a retrieval test (rag) — proves grounding end to end
+# Evaluation set as a retrieval test (rag) - proves grounding end to end
 # =============================================================================
 
 
 @pytest.fixture
 def eval_qa(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     """A real build_index()/build_chain() over the synthetic corpus, with the
-    stub LLM — shared by the retrieval tests below."""
+    stub LLM - shared by the retrieval tests below."""
     monkeypatch.setattr(rag_chatbot, "DATA_DIR", tmp_path / "data")
     monkeypatch.setattr(rag_chatbot, "PERSIST_DIR", tmp_path / "index")
     synthetic_docs.write_all(tmp_path / "data")
@@ -220,7 +220,7 @@ def test_evaluation_questions_retrieve_the_expected_source(eval_qa: Any) -> None
     merely present somewhere in the returned list. With ``CHUNK_SIZE=200`` the
     corpus splits into 9 chunks for ``TOP_K=3`` (see ``rag_chatbot.py``'s comment
     next to ``CHUNK_SIZE``), so retrieval only ever returns a third of the corpus
-    and must genuinely discriminate — a presence-only assertion would still pass
+    and must genuinely discriminate - a presence-only assertion would still pass
     if every query returned the whole corpus."""
     for question, expected_source in rag_chatbot.load_eval_questions():
         result = rag_chatbot.ask(eval_qa, question)
@@ -242,7 +242,7 @@ def test_wrong_document_is_not_ranked_first(eval_qa: Any) -> None:
 
 @pytest.mark.rag
 def test_trap_question_retrieves_no_revenue_related_chunk(eval_qa: Any) -> None:
-    """The evaluation set's trap question has no answer anywhere in the corpus —
+    """The evaluation set's trap question has no answer anywhere in the corpus -
     asserted at the retrieval layer directly. This deliberately does NOT go
     through the stub's answer text: the stub now echoes whatever context WAS
     retrieved rather than judging whether an answer exists, so an
@@ -255,7 +255,7 @@ def test_trap_question_retrieves_no_revenue_related_chunk(eval_qa: Any) -> None:
 
 
 # =============================================================================
-# demo() — deterministic across repeated runs (rag)
+# demo() - deterministic across repeated runs (rag)
 # =============================================================================
 
 
@@ -266,7 +266,7 @@ def test_demo_writes_deterministic_session_and_metrics(
     # Each call gets its own PERSIST_DIR: reusing one directory for two in-process
     # rebuilds hits a Windows-only chromadb/hnswlib quirk (rmtree fails because the
     # first client's memory-mapped index file is still open) that never arises
-    # across two separate `--demo` *processes* — the real proof command — since a
+    # across two separate `--demo` *processes* - the real proof command - since a
     # process exit releases the OS-level file lock. Separate directories test the
     # actual property in question (repeated builds of the same corpus are
     # byte-identical) without depending on that unrelated OS behaviour.
@@ -292,7 +292,7 @@ def test_demo_writes_deterministic_session_and_metrics(
 
 
 # =============================================================================
-# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# Real LLM (llm) - Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
 # =============================================================================
 
 

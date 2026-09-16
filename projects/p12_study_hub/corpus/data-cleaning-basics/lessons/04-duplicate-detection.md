@@ -43,10 +43,10 @@ unusual value actually is.
 ### Q1. (Multiple Choice)
 Why might checking for duplicates only on rows that match on every single column miss real duplicate trips in the Wheel & Way log?
 
-- A) Because `duplicated()` cannot be applied to a whole dataframe. — **Incorrect.** `duplicated()` works perfectly well across an entire dataframe.
-- B) Because exact duplicates never occur in operational data. — **Incorrect.** Exact duplicates can and do occur, for instance from a repeated export job.
-- C) Because trip ids are always identical for the same physical trip. — **Incorrect.** A retried request commonly receives a brand-new trip id, which is exactly the problem.
-- D) Because a retried request often gets a new trip id, so two rows for the same physical trip may differ on that one column while agreeing on everything else that matters. — **Correct answer.** This mismatched trip id is precisely why an all-columns check misses this case.
+- A) Because `duplicated()` cannot be applied to a whole dataframe. - **Incorrect.** `duplicated()` works perfectly well across an entire dataframe.
+- B) Because exact duplicates never occur in operational data. - **Incorrect.** Exact duplicates can and do occur, for instance from a repeated export job.
+- C) Because trip ids are always identical for the same physical trip. - **Incorrect.** A retried request commonly receives a brand-new trip id, which is exactly the problem.
+- D) Because a retried request often gets a new trip id, so two rows for the same physical trip may differ on that one column while agreeing on everything else that matters. - **Correct answer.** This mismatched trip id is precisely why an all-columns check misses this case.
 
 - **Answer:** D
 

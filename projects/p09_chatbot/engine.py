@@ -1,4 +1,4 @@
-"""engine.py — Blenderbot conversational inference, decoupled from Flask.
+"""engine.py - Blenderbot conversational inference, decoupled from Flask.
 
 Project P09. This is the model layer: it loads
 ``facebook/blenderbot-400M-distill`` once and turns a conversation history + a
@@ -7,7 +7,7 @@ a single time per process and the pure inference function ``generate_reply``
 stays testable without the web server or the ~700 MB download.
 
 The heavy imports (torch, transformers) are deferred into ``load_model`` so
-this module — and the pure logic — can be imported and unit-tested with fakes
+this module - and the pure logic - can be imported and unit-tested with fakes
 on a machine without those packages (only the ``models`` dependency group
 needs them).
 
@@ -43,7 +43,7 @@ DEMO_TURNS = (
     "That sounds fun, tell me more.",
 )
 
-# Two conversational turns used only for the curl-contract transcript below —
+# Two conversational turns used only for the curl-contract transcript below -
 # kept separate from DEMO_TURNS so the conversation-content transcript and the
 # HTTP-contract transcript each read as a self-contained, independent demo.
 CURL_DEMO_TURNS = (
@@ -112,7 +112,7 @@ def generate_reply(
     # Greedy decoding (num_beams=1, do_sample=False): Blenderbot's default is
     # 10-way beam search, ~10x slower on CPU. Greedy keeps each turn fast and,
     # set explicitly rather than relying on library defaults, is deterministic
-    # across runs — required so output/conversation_transcript.txt is
+    # across runs - required so output/conversation_transcript.txt is
     # byte-identical between consecutive `--demo` runs. max_length=None avoids
     # the "both max_new_tokens and max_length set" warning.
     output = model.generate(
@@ -140,7 +140,7 @@ def _write_curl_demo(client: Any, app_module: Any) -> None:
     """Drive the ``/chatbot``, ``/reset`` and ``/`` HTTP contract through
     ``app.test_client()`` and write a deterministic curl-style transcript.
 
-    No live server is started — every request goes straight through Flask's
+    No live server is started - every request goes straight through Flask's
     test client, exactly like ``demo()``'s conversation transcript above and
     ``projects/p07_sentiment_api/server.py``'s ``curl_demo.txt``, which this
     follows in format. Covers: a first turn, a follow-up turn that reuses the
@@ -149,7 +149,7 @@ def _write_curl_demo(client: Any, app_module: Any) -> None:
     """
     app_module.history.clear()
     lines = [
-        "# P09 chatbot — demo curl transcript",
+        "# P09 chatbot - demo curl transcript",
         "# Generated via app.test_client() against /chatbot, /reset and / (no live server)",
         "",
     ]
@@ -197,7 +197,7 @@ def demo() -> DemoResult:
     growing the conversation history one turn at a time, and writes a
     deterministic ``output/conversation_transcript.txt`` (conversation
     content) plus ``output/curl_demo.txt`` (the ``/chatbot``/``/reset``/``/``
-    HTTP contract, via ``_write_curl_demo`` — also test-client-only) and
+    HTTP contract, via ``_write_curl_demo`` - also test-client-only) and
     ``output/metrics.txt``. Only the console summary and the returned
     ``DemoResult`` carry timing (``avg_s``); the three committed files never
     vary between runs, because generation is greedy and deterministic.
@@ -210,7 +210,7 @@ def demo() -> DemoResult:
     app_module.history.clear()
     client = app_module.app.test_client()
 
-    transcript = ["# P09 chatbot — demo conversation transcript", ""]
+    transcript = ["# P09 chatbot - demo conversation transcript", ""]
     for turn in DEMO_TURNS:
         response = client.post("/chatbot", json={"message": turn})
         answer = response.get_json()["reply"]

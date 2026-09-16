@@ -215,7 +215,7 @@ def test_run_returns_report_dict(tmp_output: Path) -> None:
 def test_every_shipped_config_cleans_its_dataset(config_path: Path, tmp_output: Path) -> None:
     cfg = json.loads(config_path.read_text(encoding="utf-8"))
     # Shipped configs store `input` relative to their own directory (configs/),
-    # same resolution build_config applies — see test_config_relative_paths_below.
+    # same resolution build_config applies - see test_config_relative_paths_below.
     cfg["input"] = str((config_path.parent / cfg["input"]).resolve())
     cfg["out_dir"] = str(tmp_output)
     report = mini_etl.run(cfg)
@@ -259,7 +259,7 @@ def test_config_relative_paths_resolve_against_config_dir(tmp_path: Path) -> Non
 # per-dataset figures so the table can't drift silently from the code.
 # =============================================================================
 
-# {stem: (rows before impute, nulls before impute, rows after impute)} — nulls
+# {stem: (rows before impute, nulls before impute, rows after impute)} - nulls
 # after impute is always 0 for every shipped config.
 README_TABLE_EXPECTATIONS: dict[str, tuple[int, int, int]] = {
     "airline_passengers": (144, 0, 144),

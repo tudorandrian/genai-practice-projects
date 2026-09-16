@@ -1,4 +1,4 @@
-# P09 chatbot — demo conversation transcript
+# P09 chatbot - demo conversation transcript
 
 user: Hello, how are you?
 bot: I am doing well, how about yourself?    I am just getting ready to go to work.

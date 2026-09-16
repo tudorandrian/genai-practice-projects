@@ -2,7 +2,7 @@
 
 The fast tests inject a fake processor/model, so ``caption_image`` and
 ``caption_folder`` are exercised without downloading BLIP or importing torch.
-One test actually runs real BLIP inference and is marked ``models`` — it is
+One test actually runs real BLIP inference and is marked ``models`` - it is
 excluded from the CI marker filter (``core and not network``) and only runs
 when the ``models`` dependency group is installed.
 
@@ -25,7 +25,7 @@ from projects.p08_image_captioning import batch, captioner
 
 # No blanket module-level ``pytestmark`` here: this file mixes fast fake-model
 # tests with one real-BLIP test, and a module-level marker would add "core" to
-# every test including the real-BLIP one — which the CI filter
+# every test including the real-BLIP one - which the CI filter
 # (``core and not network``) would then wrongly pick up and run without the
 # ``models`` dependency group installed. Each fast test is marked
 # individually instead.
@@ -55,7 +55,7 @@ class FakeModel:
 
 
 # =============================================================================
-# caption_image — pure
+# caption_image - pure
 # =============================================================================
 
 
@@ -169,7 +169,7 @@ def test_batch_loads_the_model_once(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
 
 # =============================================================================
-# Real BLIP integration — needs the `models` dependency group
+# Real BLIP integration - needs the `models` dependency group
 # =============================================================================
 
 
