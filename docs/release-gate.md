@@ -84,5 +84,7 @@ itself.
 | 2026-09-16 | Branch protection on `main` extended to administrators, with review conversations required to be resolved; Dependabot alerts and security updates enabled; wiki and projects disabled. | Repository settings, verified through the GitHub API |
 | 2026-09-16 | Pre-publication security and privacy review; item A8 added. | This document, A8; `64d0215` (#23) |
 | 2026-09-16 | Hugging Face model revisions and container images pinned; trusted hosts for the local Flask servers. | `3098731` (#24) |
-| 2026-09-16 | Publication runbook, history-rewrite tooling and branch protection as code; dry run verified. | [publication.md](publication.md), A8 |
+| 2026-09-16 | Publication runbook, history-rewrite tooling and branch protection as code; dry run verified. | [publication.md](publication.md), A8; #26 |
+| 2026-09-16 | Ollama 0.34.1 in compose and CI, real-LLM tests green on it. | #27 |
+| 2026-09-16 | Version 1.1.0 prepared: `pyproject.toml`, `CITATION.cff`, `CHANGELOG.md`. The tag and GitHub release follow publication. | [CHANGELOG.md](../CHANGELOG.md) |
 | Pending | The owner's steps in [publication.md](publication.md): the A8 decision, the new repository, settings, evidence update, C8-C10, visibility change, A7 re-run, tag and GitHub release. | To be recorded here |
