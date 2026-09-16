@@ -8,8 +8,13 @@ updates:
     directory: /
     schedule: { interval: monthly }
     groups: { actions: { patterns: ["*"] } }
-  # The Dockerfile's base image and the uv binary it copies.
+  # The Dockerfile's base image and the uv binary it copies. The Python image stays on the
+  # minor version pyproject.toml's requires-python allows (>=3.13,<3.14); moving to 3.14 is
+  # a deliberate change to both files, not a routine bump.
   - package-ecosystem: docker
     directory: /
     schedule: { interval: monthly }
     groups: { docker: { patterns: ["*"] } }
+    ignore:
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
