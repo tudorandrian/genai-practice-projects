@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.1.0
         with: { enable-cache: true }
       - run: uv python install 3.13
@@ -58,7 +58,7 @@ jobs:
       OLLAMA_MODEL: qwen2.5:1.5b
       REQUIRE_OLLAMA: "1"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.1.0
         with: { enable-cache: true }
       - run: uv python install 3.13
