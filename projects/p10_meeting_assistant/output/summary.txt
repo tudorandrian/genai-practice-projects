@@ -1,0 +1,8 @@
+## Topics discussed
+- (stub) List up to five main topics discussed in the meeting below.
+
+## Decisions
+- (stub) List every decision that was made in the meeting below. Answ
+
+## Action items
+- (stub) List every action item in the meeting below, including who i

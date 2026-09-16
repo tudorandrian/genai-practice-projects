@@ -19,6 +19,7 @@ p06-ml-pipeline = "projects.p06_ml_pipeline.ml_pipeline:main"
 p07-sentiment-api = "projects.p07_sentiment_api.server:main"
 p08-image-captioning = "projects.p08_image_captioning.captioner:main"
 p09-chatbot = "projects.p09_chatbot.engine:main"
+p10-meeting-assistant = "projects.p10_meeting_assistant.assistant:main"
 
 [dependency-groups]
 core = [
@@ -40,6 +41,7 @@ models = [
   "transformers>=5.13,<6",
   "gradio>=6.19,<7",
   "pillow>=12",
+  "pyttsx3>=2.99",
 ]
 rag = [
   { include-group = "models" },
