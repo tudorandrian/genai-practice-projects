@@ -1,0 +1,4 @@
+questions=5
+session_score=5/5
+lessons_indexed=30
+provider=stub

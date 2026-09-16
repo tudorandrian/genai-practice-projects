@@ -1,0 +1,3 @@
+Q: What does the missing-value lesson recommend for a skewed numeric column?
+A: STUB: For numeric columns you intend to keep, filling gaps with th
+Sources: data-cleaning-basics/lessons/06-missing-value-imputation.md

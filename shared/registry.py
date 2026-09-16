@@ -27,4 +27,5 @@ ENTRIES: list[Entry] = [
     Entry("p09-chatbot", "models", "projects.p09_chatbot.engine:demo"),
     Entry("p10-meeting-assistant", "models", "projects.p10_meeting_assistant.assistant:demo"),
     Entry("p11-rag-chatbot", "rag", "projects.p11_rag_chatbot.rag_chatbot:demo"),
+    Entry("p12-study-hub", "rag", "projects.p12_study_hub.app:demo"),
 ]

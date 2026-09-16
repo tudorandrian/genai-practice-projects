@@ -21,6 +21,7 @@ p08-image-captioning = "projects.p08_image_captioning.captioner:main"
 p09-chatbot = "projects.p09_chatbot.engine:main"
 p10-meeting-assistant = "projects.p10_meeting_assistant.assistant:main"
 p11-rag-chatbot = "projects.p11_rag_chatbot.rag_chatbot:main"
+p12-study-hub = "projects.p12_study_hub.app:main"
 
 [dependency-groups]
 core = [
