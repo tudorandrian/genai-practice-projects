@@ -18,6 +18,8 @@ PATTERNS: list[str] = [
     r"M[0-9]-[0-9]-L(AB)?[0-9]",
     "cf-courses-" + "data",
     "lara" + "gon",
+    r"[A-Za-z]:[\\/]{1,2}Users[\\/]{1,2}[^\\/\s]",  # a Windows home directory
+    r"/(home|Users)/[A-Za-z]",  # a Linux or macOS home directory
     "watson" + "x",
 ]
 ALLOWED: set[str] = {"README.md", "docs/certificate.md"}
@@ -33,6 +35,7 @@ TEXT_SUFFIXES = {
     ".tsv",
     ".html",
     ".cfg",
+    ".cff",
     ".ini",
     ".example",  # .env.example: the one place a real key is most likely pasted by mistake
     "",

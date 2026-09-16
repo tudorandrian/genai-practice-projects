@@ -57,3 +57,26 @@ def test_only_the_root_readme_is_allowed_not_a_nested_one(
 
 def test_env_example_is_a_scanned_text_file() -> None:
     assert blocklist.ROOT / ".env.example" in blocklist.tracked_text_files()
+
+
+BACKSLASH = chr(92)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "C:" + BACKSLASH.join(["", "Users", "someone", "project"]),
+        "C:" + "/Us" + "ers/someone/project",
+        "D:" + (BACKSLASH * 2).join(["", "Users", "someone"]),
+        "/ho" + "me/someone/project",
+        "/Us" + "ers/someone/project",
+    ],
+)
+def test_home_directory_paths_are_flagged_without_naming_an_account(
+    tmp_path: Path, line: str
+) -> None:
+    # Local paths are caught by their shape, so the tracked blocklist never has to spell
+    # out a real account name.
+    note = tmp_path / "note.md"
+    note.write_text(f"see {line}\n", encoding="utf-8")
+    assert blocklist.scan([note])

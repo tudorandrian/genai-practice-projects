@@ -13,3 +13,12 @@ htmlcov/
 .env
 projects/*/chroma_index/
 projects/*/data/cache/
+.env.*
+!.env.example
+.cache/
+**/*.wav
+projects/*/output/runs/
+projects/*/index/
+projects/*/test-images/
+projects/p11_rag_chatbot/data/*
+!projects/p11_rag_chatbot/data/.gitkeep

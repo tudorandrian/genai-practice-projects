@@ -391,9 +391,13 @@ def load_eval_questions(path: str | Path | None = None) -> list[tuple[str, str]]
 # =============================================================================
 
 
-def _write_session(question: str, result: dict[str, Any]) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    session_path = OUT_DIR / "session.txt"
+def _write_session(question: str, result: dict[str, Any], session_path: Path | None = None) -> None:
+    """Append one Q/A entry. Interactive runs log to ``output/runs/session.txt``
+    (gitignored), so questions about private documents never reach the committed
+    ``output/session.txt``, which only ``demo()`` writes."""
+    if session_path is None:
+        session_path = OUT_DIR / "runs" / "session.txt"
+    session_path.parent.mkdir(parents=True, exist_ok=True)
     entry = (
         f"Q: {question}\nA: {result['answer']}\n"
         f"Sources: {', '.join(result['sources']) or '(none)'}\n"
@@ -429,6 +433,7 @@ def build_ui(qa: Any) -> Any:
         title="RAG chatbot - ask your documents",
         description="Answers ONLY from the indexed documents (Chroma + your chosen LLM "
         "provider), with cited sources.",
+        analytics_enabled=False,
     )
 
 
@@ -474,7 +479,7 @@ def demo() -> DemoResult:
 
     questions = [question for question, _source in load_eval_questions()[:DEMO_QUESTION_COUNT]]
     for question in questions:
-        _write_session(question, ask(qa, question))
+        _write_session(question, ask(qa, question), session_path)
 
     metrics_lines = [f"chunks={len(chunks)}", "provider=stub", f"questions={len(questions)}"]
     (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")

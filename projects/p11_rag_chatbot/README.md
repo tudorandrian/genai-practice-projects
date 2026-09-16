@@ -50,7 +50,9 @@ or `--ui`, which otherwise stop with a message saying so. `--demo`
 generates the synthetic corpus into `data/` (never tracked - see "Datasets and
 licences"), rebuilds the index, asks three questions with the `stub` provider
 (force-pinned - see "Design notes"), and writes `output/session.txt` and
-`output/metrics.txt`.
+`output/metrics.txt`. Questions asked with `-q`, the loop or the UI are logged to
+`output/runs/session.txt` instead, which Git ignores, so questions about your own
+documents never reach the committed session file.
 
 To run the CLI against a real LLM instead of the stub (`--demo` always pins
 `stub`):

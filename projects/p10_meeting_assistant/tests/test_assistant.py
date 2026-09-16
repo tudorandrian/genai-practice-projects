@@ -169,9 +169,12 @@ def test_process_meeting_writes_both_files(
     result = assistant.process_meeting("whichever.wav")
 
     assert result["transcript"] == "fake meeting transcript"
-    assert (tmp_output / "transcript.txt").exists()
-    assert (tmp_output / "summary.txt").exists()
-    summary_text = (tmp_output / "summary.txt").read_text(encoding="utf-8")
+    runs = tmp_output / "runs"  # gitignored; the committed proofs are demo() output only
+    assert (runs / "transcript.txt").exists()
+    assert (runs / "summary.txt").exists()
+    assert not (tmp_output / "transcript.txt").exists()
+    assert not (tmp_output / "summary.txt").exists()
+    summary_text = (runs / "summary.txt").read_text(encoding="utf-8")
     for title, _ in assistant.SECTIONS:
         assert f"## {title}" in summary_text
 
@@ -186,7 +189,7 @@ def test_stub_pipeline_produces_all_three_sections(
         assistant, "transcribe", lambda path: "We agreed to ship on Friday. Ana owns the release."
     )
     result = assistant.process_meeting("ignored.wav")
-    summary = (tmp_output / "summary.txt").read_text(encoding="utf-8")
+    summary = (tmp_output / "runs" / "summary.txt").read_text(encoding="utf-8")
     for header in ("Topics discussed", "Decisions", "Action items"):
         assert header in summary and header in result["summary"]
 

@@ -19,4 +19,5 @@ projects), `models` (Hugging Face weights), `rag` (LangChain + Chroma), and `dev
 - One lockfile, one CI workflow, one `uv sync` to reproduce the whole repository.
 - Cheap projects stay cheap: `uv sync` alone does not install torch.
 - Heavier groups (`models`, `rag`) are opt-in via `uv sync --group …` and exercised
-  in the manual `heavy.yml` workflow rather than on every push.
+  by `heavy.yml` rather than on every push: on pull requests that touch P08-P12,
+  `shared/` or the dependencies, and on demand.

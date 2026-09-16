@@ -54,7 +54,9 @@ uv run pytest projects/p08_image_captioning -m models -q      # real BLIP infere
 
 `--verbose` logs at `INFO` on every entry point; by default only the summary
 lines print. `--demo` regenerates `test-images/` (gitignored), captions all
-six images, and writes `output/captions.txt` and `output/metrics.txt`.
+six images, and writes `output/captions.txt` and `output/metrics.txt`. Only `--demo`
+writes those committed files: the batch script defaults to `output/runs/captions.txt`,
+which Git ignores, so your own image names never end up in a commit.
 
 ## Example output
 

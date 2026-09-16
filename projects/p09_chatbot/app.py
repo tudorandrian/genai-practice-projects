@@ -28,7 +28,6 @@ import argparse
 import logging
 
 from flask import Flask, Response, jsonify, render_template, request
-from flask_cors import CORS
 
 from projects.p09_chatbot import engine
 
@@ -44,9 +43,8 @@ app = Flask(__name__)
 # inside json.loads) before validation ever runs. Matches P07's cap so the
 # two Flask APIs in this repository behave the same way here.
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
-# Allow calls from other origins. Fine for a local single-user demo; a real
-# deployment would scope this to specific origins instead of the whole app.
-CORS(app)
+# No CORS headers: the page is served from this same origin, so other sites' scripts
+# cannot read the API's responses.
 
 # Single shared conversation history. NOTE: one global conversation is fine
 # for a single local user (dev server, one worker); a multi-user/production
@@ -126,7 +124,7 @@ def main(argv: list[str] | None = None) -> None:
     """Load the model once, then start the dev server."""
     args = parse_args(argv)
     engine.load_model()  # warm the cache before serving
-    app.run(host=args.host, port=args.port)
+    app.run(host=args.host, port=args.port, debug=False)  # FLASK_DEBUG cannot turn on the debugger
 
 
 if __name__ == "__main__":

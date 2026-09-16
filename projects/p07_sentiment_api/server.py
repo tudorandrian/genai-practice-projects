@@ -319,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
         waitress.serve(app, host=args.host, port=args.port)
         return 0
 
-    app.run(host=args.host, port=args.port)
+    app.run(host=args.host, port=args.port, debug=False)  # FLASK_DEBUG cannot turn on the debugger
     return 0
 
 

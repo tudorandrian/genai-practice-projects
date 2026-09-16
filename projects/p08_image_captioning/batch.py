@@ -3,7 +3,8 @@
 Run:
     uv run python -m projects.p08_image_captioning.batch [folder] [output_file]
 
-Defaults: folder = ./test-images, output = ./output/captions.txt. Writes one
+Defaults: folder = ./test-images, output = ./output/runs/captions.txt (gitignored; only
+the demo writes the committed ./output/captions.txt). Writes one
 ``filename: caption`` line per valid image; corrupt/unsupported files are
 logged and skipped, never crashing the run.
 
@@ -28,7 +29,7 @@ log = logging.getLogger(__name__)
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_INPUT = HERE / "test-images"
-DEFAULT_OUTPUT = HERE / "output" / "captions.txt"
+DEFAULT_OUTPUT = HERE / "output" / "runs" / "captions.txt"
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tiff"}
 
 

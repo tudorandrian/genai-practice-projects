@@ -57,3 +57,15 @@ def test_every_registry_entry_matches_its_console_script() -> None:
         # find_spec locates the module without importing it, so models/rag projects stay
         # cheap to check in the core environment.
         assert importlib.util.find_spec(target_module) is not None, entry.slug
+
+
+def test_no_tracked_text_file_contains_an_em_dash() -> None:
+    from shared.blocklist import tracked_text_files
+
+    em_dash = chr(0x2014)  # spelled as a code point so this file passes its own test
+    offenders = [
+        str(path.relative_to(ROOT))
+        for path in tracked_text_files()
+        if em_dash in path.read_text(encoding="utf-8", errors="replace")
+    ]
+    assert offenders == [], "use the ASCII hyphen '-' instead of the em dash"

@@ -10,6 +10,7 @@ htmlcov/
 # Secrets and local tooling
 .env
 .claude/
+.superpowers/
 .vscode/
 .idea/
 # Generated artefacts: everything under any output/ except the two proof files

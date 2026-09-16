@@ -154,10 +154,9 @@ bot: ...
   swapping it in only requires overriding `MODEL_NAME` (`engine.load_model`
   takes the model name as a parameter) - no other code changes, though
   prompt formatting and generation quality would differ from Blenderbot's.
-- **`CORS(app)` is applied app-wide.** That is fine for a local, single-user
-  demo reached only from `http://127.0.0.1`, but it would not be an
-  appropriate setting for a real deployment, which should scope allowed
-  origins explicitly instead of allowing every origin.
+- **No CORS headers.** The page is served by the same Flask app, so no
+  cross-origin access is needed and none is granted; a front end on another
+  origin would need that origin allowed explicitly.
 - **No authentication, rate limiting, or per-session isolation.** `app.py`
   is a local demo UI, not hardened for public exposure; see "Single shared
   history" above.

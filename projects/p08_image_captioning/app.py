@@ -20,11 +20,14 @@ interface (e.g. to reach the UI from another machine on the network).
 from __future__ import annotations
 
 import argparse
+import logging
 
 import gradio as gr
 from PIL import Image
 
 from projects.p08_image_captioning.captioner import MODEL_NAME, caption, load_model
+
+log = logging.getLogger(__name__)
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 7860
@@ -36,8 +39,9 @@ def describe_image(image: Image.Image | None) -> str:
         return "Upload an image first."
     try:
         return caption(image)
-    except Exception as exc:  # never crash the server on a bad upload
-        return f"Could not process the image: {exc}"
+    except Exception as exc:  # never crash the server; the details stay in the server log
+        log.exception("could not caption the uploaded image")
+        return f"Could not process the image ({type(exc).__name__}); see the server log."
 
 
 def build_demo() -> gr.Interface:
@@ -52,6 +56,7 @@ def build_demo() -> gr.Interface:
             "Runs locally on CPU - the first run downloads the model (~1 GB)."
         ),
         flagging_mode="never",  # Gradio 5+ name (was allow_flagging in Gradio 4)
+        analytics_enabled=False,
     )
 
 
@@ -68,7 +73,7 @@ def main(argv: list[str] | None = None) -> None:
     """Load the model once, then start the Gradio server."""
     args = parse_args(argv)
     load_model()  # warm the cache before serving so the first request is fast
-    build_demo().launch(server_name=args.host, server_port=args.port)
+    build_demo().launch(server_name=args.host, server_port=args.port, max_file_size="25mb")
 
 
 if __name__ == "__main__":

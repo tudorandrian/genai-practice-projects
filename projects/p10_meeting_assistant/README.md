@@ -49,7 +49,9 @@ uv run pytest projects/p10_meeting_assistant -q          # fast tests, no weight
 `--demo` generates (or reuses) `data/standup.wav`, transcribes it with real
 Whisper weights, summarizes it with the `stub` provider (force-pinned - see
 "Design notes"), and writes `output/transcript.txt`, `output/summary.txt`
-and `output/metrics.txt`.
+and `output/metrics.txt`. A file or UI run writes its transcript and summary to
+`output/runs/` instead, which Git ignores, so a real meeting never overwrites the
+committed files.
 
 To run the chain against a real LLM instead of the stub, set the provider
 before the CLI mode (not `--demo`, which always pins `stub`):

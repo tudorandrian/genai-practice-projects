@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Pre-publication security and privacy review. Runs on the user's own data write to the
+  gitignored `output/runs/` (P08, P10, P11, P12), so only `--demo` writes the committed
+  outputs. Gradio analytics are off; the Gradio apps limit upload size and keep exception
+  details in the server log. P09 no longer sends CORS headers (`flask-cors` removed), and
+  P07 and P09 never start the Werkzeug debugger. CI pins every action to a commit SHA,
+  stops checkouts from keeping credentials, and audits dependencies with `pip-audit`. The
+  test image runs as an unprivileged user, and `.dockerignore` excludes local data. The
+  blocklist detects home-directory paths by their shape instead of naming an account.
+- Documentation: the root README is rewritten as the project's presentation (scope,
+  requirements, how to run a single project, tests, layout, documentation index);
+  `CITATION.cff` added; `SECURITY.md` describes data handling; the release gate gains item
+  A8 (history and pull-request descriptions) and a dated publication record; the pull
+  request template is generic.
 - Typography: the em dash is no longer used anywhere in the repository; an ASCII hyphen
   replaces it. P02's option separator is now a spaced hyphen (`- A) text - **Correct answer.**`);
   en and em dashes are still accepted as input, and P07 still strips both from input text.

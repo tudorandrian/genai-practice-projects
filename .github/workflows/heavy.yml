@@ -24,8 +24,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with: { enable-cache: true }
       - run: uv python install 3.13
       - run: uv sync --frozen --group rag
@@ -33,11 +34,11 @@ jobs:
       - name: Install speech engine for P10's synthetic audio (Linux only)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y espeak-ng
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with: { path: ~/.cache/huggingface, key: "hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}" }
       - run: uv run pytest -m "models or rag or network" -q
       - run: uv run demo --all
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with: { name: "demo-summary-${{ matrix.os }}", path: output/demo-summary.md }
 
@@ -58,8 +59,9 @@ jobs:
       OLLAMA_MODEL: qwen2.5:1.5b
       REQUIRE_OLLAMA: "1"
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with: { enable-cache: true }
       - run: uv python install 3.13
       - run: uv sync --frozen --group rag
@@ -67,6 +69,6 @@ jobs:
         run: |
           curl -fsS "$OLLAMA_URL/api/pull" -d "{\"model\": \"$OLLAMA_MODEL\", \"stream\": false}" | tee pull.json
           grep -q '"status":"success"' pull.json
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with: { path: ~/.cache/huggingface, key: "hf-llm-${{ runner.os }}-${{ hashFiles('uv.lock') }}" }
       - run: uv run pytest -m llm -q -rs

@@ -11,9 +11,9 @@ jobs:
       matrix: { os: [ubuntu-latest, windows-latest] }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
-      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with: { enable-cache: true }
       - run: uv python install 3.13
       - run: uv sync --frozen
@@ -26,13 +26,20 @@ jobs:
       - run: uv run mypy
       - run: uv run pytest -m "core and not network" --cov=projects --cov=shared --cov-report=term-missing -q
       - run: uv run python -m shared.blocklist --all
+      - name: dependency audit (pip-audit; the four ignored chromadb advisories are explained in SECURITY.md)
+        if: runner.os == 'Linux'
+        run: |
+          uv export --frozen --all-groups --no-hashes --no-emit-project -q > "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit==2.10.1 -r "$RUNNER_TEMP/requirements.txt" --no-deps --disable-pip --progress-spinner off \
+            --ignore-vuln PYSEC-2026-311 --ignore-vuln PYSEC-2026-3813 \
+            --ignore-vuln PYSEC-2026-3814 --ignore-vuln PYSEC-2026-3815
       - name: release check (offline; exits 1 on any failing check)
         if: runner.os == 'Linux'
         run: uv run python -m scripts.release_check --offline
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
       - name: gitleaks (full history)
         run: docker run --rm -v "${{ github.workspace }}:/repo" ghcr.io/gitleaks/gitleaks:v8.28.0 git /repo --config /repo/.gitleaks.toml --redact --verbose --exit-code 1

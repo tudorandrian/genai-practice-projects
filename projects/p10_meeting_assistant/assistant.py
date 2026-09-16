@@ -402,18 +402,22 @@ def summarize_structured(transcript: str) -> str:
 # =============================================================================
 
 
-def _write_outputs(transcript: str, summary: str) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "transcript.txt").write_text(transcript.rstrip("\n") + "\n", encoding="utf-8")
-    (OUT_DIR / "summary.txt").write_text(summary.rstrip("\n") + "\n", encoding="utf-8")
-    log.info("wrote transcript.txt and summary.txt to %s", OUT_DIR)
+def _write_outputs(transcript: str, summary: str, out_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "transcript.txt").write_text(transcript.rstrip("\n") + "\n", encoding="utf-8")
+    (out_dir / "summary.txt").write_text(summary.rstrip("\n") + "\n", encoding="utf-8")
+    log.info("wrote transcript.txt and summary.txt to %s", out_dir)
 
 
-def process_meeting(audio_path: str | Path) -> dict[str, str]:
-    """Full chain: audio -> transcript -> structured summary; saves both."""
+def process_meeting(audio_path: str | Path, out_dir: Path | None = None) -> dict[str, str]:
+    """Full chain: audio -> transcript -> structured summary; saves both.
+
+    Saves to ``out_dir``, by default ``output/runs/`` (gitignored): a real meeting's
+    transcript must never overwrite the committed proofs, which only ``demo()`` writes.
+    """
     transcript = transcribe(audio_path)
     summary = summarize_structured(transcript)
-    _write_outputs(transcript, summary)
+    _write_outputs(transcript, summary, OUT_DIR / "runs" if out_dir is None else out_dir)
     return {"transcript": transcript, "summary": summary}
 
 
@@ -429,8 +433,9 @@ def _ui_handler(audio_path: str | None) -> tuple[str, str]:
     try:
         result = process_meeting(audio_path)
         return result["transcript"], result["summary"]
-    except Exception as exc:
-        return "", f"Could not process the file: {exc}"
+    except Exception as exc:  # the details stay in the server log, not in the browser
+        log.exception("could not process %s", Path(audio_path).name)
+        return "", f"Could not process the file ({type(exc).__name__}); see the server log."
 
 
 def build_ui() -> Any:
@@ -445,6 +450,7 @@ def build_ui() -> Any:
         description="Whisper transcribes audio, then an LLM extracts topics, decisions "
         "and action items. Runs locally on CPU.",
         flagging_mode="never",
+        analytics_enabled=False,
     )
 
 
@@ -535,7 +541,7 @@ def demo() -> DemoResult:
         log.warning("demo: %s", note)
         return DemoResult("p10-meeting-assistant", "failed", seconds=round(seconds, 2), note=note)
 
-    _write_outputs(transcript, summary)
+    _write_outputs(transcript, summary, OUT_DIR)
     sections = summary.count("## ")
     metrics_lines = ["provider=stub", f"words={words}", f"sections={sections}"]
     (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
@@ -588,10 +594,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"p10-meeting-assistant: {args.audio.name}")
         print(f"  words: {words}")
         print(f"  sections: {sections}")
-        print(f"  wrote: {OUT_DIR / 'transcript.txt'}, {OUT_DIR / 'summary.txt'}")
+        print(f"  wrote: {OUT_DIR / 'runs'}")
         return 0
 
-    build_ui().launch(server_name=args.host, server_port=args.port)
+    build_ui().launch(server_name=args.host, server_port=args.port, max_file_size="200mb")
     return 0
 
 

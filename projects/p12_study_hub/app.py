@@ -175,14 +175,14 @@ def _tab_tutor(gr: Any) -> None:
         sources = f"\n\n_Sources: {', '.join(result['sources'])}_" if result["sources"] else ""
         return str(result["answer"]) + sources
 
-    gr.ChatInterface(fn=respond)
+    gr.ChatInterface(fn=respond, analytics_enabled=False)
 
 
 def build_ui() -> Any:
     """Assemble the three-tab Gradio app."""
     import gradio as gr  # lazy import, see module docstring
 
-    with gr.Blocks(title="Study Hub Assistant") as demo_app:
+    with gr.Blocks(title="Study Hub Assistant", analytics_enabled=False) as demo_app:
         gr.Markdown("# Study Hub Assistant - capstone (Quiz - Progress - Tutor)")
         with gr.Tab("Quiz"):
             _tab_quiz(gr)

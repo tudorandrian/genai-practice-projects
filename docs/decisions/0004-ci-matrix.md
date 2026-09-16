@@ -32,3 +32,7 @@ engines that write asynchronously, and gives a Linux-specific install hint); `he
 installs `espeak-ng` on Linux only. Two P12 retrieval tests are `xfail` on macOS (see
 P12's README, "Limits"). Both projects are exercised on Ubuntu and macOS by `heavy.yml`,
 not by the per-PR matrix.
+
+A later change widened `heavy.yml`: it also runs on pull requests that touch P08-P12,
+`shared/` or the dependencies, and an `llm` job runs the real-LLM tests against Ollama. The
+required checks are unchanged; `ci.yml` gained a pre-commit step and a dependency audit.

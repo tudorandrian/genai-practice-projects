@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it using these metadata."
+type: software
+title: "Generative AI Engineering: Twelve Practice Projects"
+abstract: >-
+  Twelve independent, tested Python projects that progress from data preparation and
+  classical machine learning to web APIs, pretrained transformer models and
+  retrieval-augmented generation.
+authors:
+  - given-names: Tudor
+    family-names: Andrian
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/tudorandrian/genai-practice-projects"
+keywords:
+  - generative AI
+  - machine learning
+  - retrieval-augmented generation
+  - LangChain
+  - Hugging Face
+  - Python

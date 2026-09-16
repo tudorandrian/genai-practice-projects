@@ -483,10 +483,11 @@ def main(argv: list[str] | None = None) -> int:
         report = index_lessons(reindex=args.reindex)
         print(f"[index] {report}")
     if args.ask:
-        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        runs_dir = OUT_DIR / "runs"  # gitignored; output/tutor_session.txt is demo() output
+        runs_dir.mkdir(parents=True, exist_ok=True)
         result = ask(args.ask)
         print(f"\nQ: {args.ask}\nA: {result['answer']}\nSources: {', '.join(result['sources'])}")
-        with (OUT_DIR / "tutor_session.txt").open("a", encoding="utf-8") as handle:
+        with (runs_dir / "tutor_session.txt").open("a", encoding="utf-8") as handle:
             handle.write(
                 f"Q: {args.ask}\nA: {result['answer']}\nSources: {', '.join(result['sources'])}\n\n"
             )

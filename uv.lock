@@ -573,19 +573,6 @@ wheels = [
 ]
 
 [[package]]
-name = "flask-cors"
-version = "6.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "flask" },
-    { name = "werkzeug" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/47/03/4e464a50860f9adf08b5c1d3479cb8ea1f12af2aa69535c7042c6e628135/flask_cors-6.0.5.tar.gz", hash = "sha256:30c5031552cd59f620ac0c8211dac45b345d3b2df310e7721879e4f46ef9c601", size = 101386, upload-time = "2026-06-08T20:20:17.765Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/55/5bb1a2d918e9f02f131e47a59032bae70e48050e986e941511fd737a935c/flask_cors-6.0.5-py3-none-any.whl", hash = "sha256:68fcf75693e961f3af26683b23c4b9a8fb6b64de17d20d0c37b95e8de7ab2ed8", size = 16692, upload-time = "2026-06-08T20:20:16.247Z" },
-]
-
-[[package]]
 name = "flatbuffers"
 version = "25.12.19"
 source = { registry = "https://pypi.org/simple" }
@@ -682,7 +669,6 @@ source = { editable = "." }
 [package.dev-dependencies]
 core = [
     { name = "flask" },
-    { name = "flask-cors" },
     { name = "joblib" },
     { name = "jsonschema" },
     { name = "matplotlib" },
@@ -695,7 +681,6 @@ core = [
 ]
 dev = [
     { name = "flask" },
-    { name = "flask-cors" },
     { name = "joblib" },
     { name = "jsonschema" },
     { name = "matplotlib" },
@@ -716,7 +701,6 @@ dev = [
 ]
 models = [
     { name = "flask" },
-    { name = "flask-cors" },
     { name = "gradio" },
     { name = "joblib" },
     { name = "jsonschema" },
@@ -736,7 +720,6 @@ models = [
 rag = [
     { name = "chromadb" },
     { name = "flask" },
-    { name = "flask-cors" },
     { name = "fpdf2" },
     { name = "gradio" },
     { name = "joblib" },
@@ -768,7 +751,6 @@ rag = [
 [package.metadata.requires-dev]
 core = [
     { name = "flask", specifier = ">=3.1,<4" },
-    { name = "flask-cors", specifier = ">=6" },
     { name = "joblib", specifier = ">=1.5" },
     { name = "jsonschema", specifier = ">=4.23" },
     { name = "matplotlib", specifier = ">=3.10,<4" },
@@ -781,7 +763,6 @@ core = [
 ]
 dev = [
     { name = "flask", specifier = ">=3.1,<4" },
-    { name = "flask-cors", specifier = ">=6" },
     { name = "joblib", specifier = ">=1.5" },
     { name = "jsonschema", specifier = ">=4.23" },
     { name = "matplotlib", specifier = ">=3.10,<4" },
@@ -802,7 +783,6 @@ dev = [
 ]
 models = [
     { name = "flask", specifier = ">=3.1,<4" },
-    { name = "flask-cors", specifier = ">=6" },
     { name = "gradio", specifier = ">=6.19,<7" },
     { name = "joblib", specifier = ">=1.5" },
     { name = "jsonschema", specifier = ">=4.23" },
@@ -821,7 +801,6 @@ models = [
 rag = [
     { name = "chromadb", specifier = ">=1.5,<2" },
     { name = "flask", specifier = ">=3.1,<4" },
-    { name = "flask-cors", specifier = ">=6" },
     { name = "fpdf2", specifier = ">=2.8" },
     { name = "gradio", specifier = ">=6.19,<7" },
     { name = "joblib", specifier = ">=1.5" },
