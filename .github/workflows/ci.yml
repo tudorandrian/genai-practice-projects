@@ -17,6 +17,10 @@ jobs:
         with: { enable-cache: true }
       - run: uv python install 3.13
       - run: uv sync --frozen
+      - name: pre-commit hooks on every file (gitleaks has its own full-history job)
+        if: runner.os == 'Linux'
+        env: { SKIP: gitleaks }
+        run: uv run pre-commit run --all-files --show-diff-on-failure
       - run: uv run ruff format --check .
       - run: uv run ruff check .
       - run: uv run mypy

@@ -54,6 +54,16 @@ def test_negation_flip() -> None:
     assert server.analyze_sentiment("Nu este prost")["sentiment"] == "positive"
 
 
+def test_text_with_romanian_diacritics_matches_the_lexicon() -> None:
+    # Romanian is normally written with diacritics; the lexicon lists the plain forms.
+    # Both comma-below (ș, ț) and the older cedilla (ş, ţ) spellings must match.
+    positive = server.analyze_sentiment("Mâncarea a fost excelentă și plăcută")
+    assert (positive["score"], positive["sentiment"]) == (3, "positive")
+    assert server.analyze_sentiment("Aplicaţia e lentă şi scumpă")["score"] == -2
+    assert server.analyze_sentiment("Nu este bună")["sentiment"] == "negative"
+    assert server.analyze_sentiment("Fără defecte, rapidă")["text"] == "Fără defecte, rapidă"
+
+
 def test_negation_carries_across_sentence_punctuation() -> None:
     # Pins the documented Limit: a negation stays active until the next
     # scored word, even across a full stop and an intervening filler

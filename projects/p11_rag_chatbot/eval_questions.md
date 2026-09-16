@@ -6,7 +6,8 @@ information in the documents." Run: `uv run p11-rag-chatbot -q "<question>"`.
 `rag_chatbot.load_eval_questions()` parses the twelve grounded rows (skipping the
 header, the separator row and the trap row) into `(question, expected_source)` pairs
 for `test_evaluation_questions_retrieve_the_expected_source`; the trap row has its
-own test, `test_trap_question_triggers_refusal`.
+own tests: `test_trap_question_retrieves_no_revenue_related_chunk` (retrieval, offline) and
+`test_real_llm_refuses_the_trap_question` (the refusal itself, `llm`-marked, needs Ollama).
 
 | # | Question | Expected answer | Source |
 |---|----------|-----------------|--------|

@@ -147,6 +147,16 @@ def test_create_llm_provider_argument_overrides_env(monkeypatch: pytest.MonkeyPa
 
 
 @pytest.mark.core
+def test_a_refusal_cites_no_sources() -> None:
+    # Retrieval always returns chunks, but citing them under "the documents do not say"
+    # would present unrelated files as the evidence for a refusal (seen in the UI).
+    docs = [FakeDoc("/d/acme_handbook.pdf", page=0)]
+    for answer in (rag_chatbot.REFUSAL, f' "{rag_chatbot.REFUSAL}" '):
+        result = rag_chatbot.ask(FakeQA(answer, docs), "What is the annual revenue?")
+        assert result == {"answer": rag_chatbot.REFUSAL, "sources": []}
+
+
+@pytest.mark.core
 def test_ask_returns_answer_and_sources() -> None:
     qa = FakeQA("  25 days.  ", [FakeDoc("/d/acme_handbook.pdf", page=0)])
     result = rag_chatbot.ask(qa, "How many vacation days?")
@@ -238,9 +248,8 @@ def test_trap_question_retrieves_no_revenue_related_chunk(eval_qa: Any) -> None:
     retrieved rather than judging whether an answer exists, so an
     answer-text assertion here would be true by construction regardless of the
     question (the corpus contains no chunk about revenue, so this is checkable
-    offline without a real LLM; an end-to-end refusal from a real provider is a
-    separate, ``llm``-marked concern this port does not add — see the README's
-    "Run" section for exercising a real provider by hand)."""
+    offline without a real LLM; the end-to-end refusal from a real provider is
+    ``test_real_llm_refuses_the_trap_question``, ``llm``-marked, at the end of this file)."""
     retrieved = eval_qa.retriever.invoke("What is ACME Robotics' annual revenue?")
     assert not any("revenue" in doc.page_content.lower() for doc in retrieved)
 
@@ -280,3 +289,38 @@ def test_demo_writes_deterministic_session_and_metrics(
     assert metrics_1 == metrics_2
     assert "provider=stub" in metrics_1
     assert "questions=3" in metrics_1
+
+
+# =============================================================================
+# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# =============================================================================
+
+
+@pytest.fixture
+def real_llm_qa(ollama: tuple[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """``eval_qa`` with the real ``ollama`` provider instead of the stub."""
+    url, model = ollama
+    monkeypatch.setenv("RAG_OLLAMA_URL", url)
+    monkeypatch.setenv("RAG_OLLAMA_MODEL", model)
+    monkeypatch.setattr(rag_chatbot, "DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr(rag_chatbot, "PERSIST_DIR", tmp_path / "index")
+    synthetic_docs.write_all(tmp_path / "data")
+    store = rag_chatbot.build_index(reindex=True)
+    return rag_chatbot.build_chain(store, llm=rag_chatbot.create_llm(provider="ollama"))
+
+
+@pytest.mark.llm
+def test_real_llm_answers_a_grounded_question_from_the_documents(real_llm_qa: Any) -> None:
+    result = rag_chatbot.ask(real_llm_qa, "How many paid vacation days do employees get?")
+    assert "25" in result["answer"]
+    assert result["answer"] != rag_chatbot.REFUSAL
+    assert "acme_handbook.pdf" in result["sources"][0]
+
+
+@pytest.mark.llm
+def test_real_llm_refuses_the_trap_question(real_llm_qa: Any) -> None:
+    """End to end, the refusal the retrieval-layer trap test above cannot check offline:
+    the corpus has no revenue figure, and the grounding prompt makes the model say so
+    instead of inventing one."""
+    result = rag_chatbot.ask(real_llm_qa, "What is ACME Robotics' annual revenue?")
+    assert result["answer"].strip().strip('"') == rag_chatbot.REFUSAL

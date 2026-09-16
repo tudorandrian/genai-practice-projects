@@ -22,6 +22,26 @@ This is a personal portfolio repository; the rules below are the ones I hold mys
     uv run pytest -m "core and not network"
     uv run ruff check . && uv run ruff format --check . && uv run mypy
     docker compose run --rm tests   # the same core suite on Linux
+    docker compose --profile llm up -d && uv run pytest -m llm   # P10-P12 against Qwen2.5 1.5B
+    docker compose --profile llm down                            # stop Ollama (the model volume stays)
+
+## Automated checks come before review
+
+Nobody reads a pull request whose automated checks are not green. In order:
+
+1. **On commit:** pre-commit (`uv run pre-commit install` once) checks file size, end of
+   file and whitespace, merge markers, secrets (gitleaks), ruff (the `uv.lock` version) and
+   the blocklist.
+2. **On every pull request:** `ci.yml` runs the same pre-commit hooks on every file, then
+   ruff, mypy, the `core` tests on Ubuntu and Windows, the blocklist, the offline release
+   check, and gitleaks over the full history. Branch protection on `main` requires
+   `checks (ubuntu-latest)`, `checks (windows-latest)` and `gitleaks` to pass, on a branch
+   that is up to date with `main`.
+3. **On pull requests that touch P08-P12, `shared/` or the dependencies:** `heavy.yml` runs
+   the model and RAG tests and every demo on Ubuntu and macOS, and the `llm` tests against
+   Qwen2.5 1.5B. It is not a required check (it does not run on every pull request), so
+   review waits for it too when it runs. It can also be started by hand from the Actions tab.
+4. **Then manual review**, against the pull request template's checklist.
 
 ## Pull requests
 

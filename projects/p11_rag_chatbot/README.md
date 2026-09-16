@@ -11,11 +11,11 @@ Chroma store and a sentence-transformers embedding model, so `uv run demo` and
 The pipeline, in `rag_chatbot.py`:
 
 ```
-load_documents(folder)    -> [Document]         # PyPDFLoader / TextLoader, keeps source+page
+load_documents(folder)    -> [Document]         # pypdf pages / text files, keeps source+page
 split_documents(docs)     -> [Document]          # RecursiveCharacterTextSplitter (200/20)
 build_index(reindex, ...) -> Chroma              # embed with MiniLM, persist to chroma_index/
 create_llm(provider)      -> LLM                 # THE provider seam
-build_chain(store, llm)   -> RetrievalQA         # grounding prompt + source return
+build_chain(store, llm)   -> GroundedQA          # grounding prompt + source return
 ask(qa, question)         -> {"answer","sources"}  # one question in, one grounded answer out
 ```
 
@@ -56,7 +56,7 @@ To run the CLI against a real LLM instead of the stub (`--demo` always pins
 `stub`):
 
 ```bash
-# Ollama running locally, e.g. `ollama pull qwen2.5:1.5b`
+docker compose --profile llm up -d        # Qwen2.5 1.5B served by Ollama on localhost
 export RAG_LLM_PROVIDER=ollama          # RAG_OLLAMA_MODEL/_URL override the defaults
 uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
 ```
@@ -145,7 +145,7 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   chunk that then out-competes the actually-relevant chunk for a different
   question (verified against all twelve real questions before picking 200/20).
 - **Marker discipline.** `load_documents`/`split_documents` import
-  `langchain_community`/`langchain_text_splitters`, and `create_llm` imports
+  `pypdf`/`langchain_core`/`langchain_text_splitters`, and `create_llm` imports
   `langchain_core`, even for their simplest (`stub`, local-file) paths — so those
   tests are marked `rag`, not `core`, even though none needs a network
   connection. Only the pure-Python pieces (the grounding prompt, `format_sources`,
@@ -160,8 +160,10 @@ answer; see "Design notes" for why `demo()` pins `stub`.
 ## Limits
 
 - **`ollama` and `openai` each need their own setup** (`ollama serve` + a pulled
-  model, or an `OPENAI_API_KEY`). CI never exercises either — the tests force
-  `stub` throughout, and `demo()` force-pins `stub` too.
+  model, or an `OPENAI_API_KEY`). The `rag` tests and `demo()` force-pin `stub`;
+  the `llm`-marked tests run the grounded answer and the trap-question refusal
+  against Qwen2.5 1.5B served by Ollama (`heavy.yml`'s `llm` job, or locally after
+  `docker compose --profile llm up -d`). `openai` is never exercised.
 - **The `stub` provider never actually generates an answer** — it echoes a
   snippet of the retrieved context, to prove the pipeline deterministically
   without a real model, not to demonstrate generation quality; see "Run" for a

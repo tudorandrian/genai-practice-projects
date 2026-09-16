@@ -8,18 +8,26 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-merge-conflict
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.7
-    hooks:
-      - id: ruff
-        args: ["--fix"]
-      - id: ruff-format
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.28.0
     hooks:
       - id: gitleaks
+  # Local hooks run the tools from uv.lock, so a commit is checked by exactly the ruff
+  # version CI uses (a pinned mirror repo here would drift from the lock on every bump).
   - repo: local
     hooks:
+      - id: ruff-check
+        name: ruff check (version from uv.lock)
+        entry: uv run --frozen ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format (version from uv.lock)
+        entry: uv run --frozen ruff format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
       - id: blocklist
         name: blocklist scan (no course material, no local paths)
         entry: uv run python -m shared.blocklist --staged

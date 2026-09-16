@@ -16,5 +16,5 @@ on, by number and public catalogue title. No course material is in this reposito
 | P08 image captioning | 6 Building Generative AI-Powered Applications with Python | BLIP, Gradio, batch inference |
 | P09 chatbot | 6 Building Generative AI-Powered Applications with Python | Hugging Face seq2seq, Flask, history window |
 | P10 meeting assistant | 6 Building Generative AI-Powered Applications with Python · 3 Generative AI: Prompt Engineering Basics | Whisper → LLM chain, provider seam |
-| P11 RAG chatbot | 15 Fundamentals of AI Agents Using RAG and LangChain · 16 Project: Generative AI Applications with RAG and LangChain | loaders, splitters, embeddings, Chroma, RetrievalQA |
+| P11 RAG chatbot | 15 Fundamentals of AI Agents Using RAG and LangChain · 16 Project: Generative AI Applications with RAG and LangChain | loaders, splitters, embeddings, Chroma, a grounded retrieval-QA chain |
 | P12 study hub | all of the above | integration: P02 → quiz, progress, RAG tutor |

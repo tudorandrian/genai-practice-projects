@@ -54,8 +54,22 @@ Run every project's demo in one command:
     uv run demo --all        # + rag group, P11-P12 — + the embedding model (~90 MB);
                               # LLM steps always use the deterministic stub provider in the demo
 
+P10-P12 also run against a real local model, Qwen2.5 1.5B served by Ollama in Docker:
+
+    docker compose --profile llm up -d   # starts Ollama on 127.0.0.1:11434, pulls the model (~1 GB)
+    uv sync --group rag
+    uv run pytest -m llm                 # the real-model tests; they skip when Ollama is not running
+
 ## More
 
 - [docs/certificate.md](docs/certificate.md) — which courses each project draws on, and the technique it demonstrates.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — the two rules this repository holds itself to, and the tooling.
 - [docs/release-gate.md](docs/release-gate.md) — the checklist this repository had to clear before it went public.
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability, and the dependency advisories that do not apply here.
+
+## Licence
+
+The code and the original material are [MIT-licensed](LICENSE). Committed third-party datasets keep
+their own licences, and model weights are downloaded from their publishers at run time; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). IBM and Coursera are trademarks of their
+owners; this repository is not affiliated with or endorsed by either.

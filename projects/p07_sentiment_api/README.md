@@ -143,7 +143,9 @@ $ curl -s -X POST http://127.0.0.1:5000/sentiment -H 'Content-Type: application/
 - **The lexicon is small and exact-match only.** 58 entries covering common
   positive/negative words and a handful of inflected forms; anything outside
   the list contributes zero weight, so subtler or misspelled sentiment is
-  scored as neutral rather than approximated.
+  scored as neutral rather than approximated. Diacritics are folded before lookup
+  (`excelentă`, `şi` and `și` match `excelenta`, `si`), so text written with or without
+  them scores the same.
 - **A negation stays active until the next scored word, however far away.**
   `"nu"`/`"fara"`/`"nici"`/`"niciun"`/`"nicio"` flip the sign of the next
   lexicon word regardless of how many unscored filler words — or sentence

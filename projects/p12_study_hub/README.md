@@ -63,7 +63,7 @@ To run the tutor against a real LLM instead of the stub (`--demo` always
 pins `stub`):
 
 ```bash
-# Ollama running locally, e.g. `ollama pull qwen2.5:1.5b`
+docker compose --profile llm up -d        # Qwen2.5 1.5B served by Ollama on localhost
 export TUTOR_LLM_PROVIDER=ollama        # TUTOR_OLLAMA_MODEL/_URL override the defaults
 uv run p12-study-hub --ask "How does chunk overlap help retrieval?"
 ```
@@ -184,8 +184,10 @@ shape that keeps this slice on real lesson content, not a citation label.
   prove the pipeline deterministically without a real model, not to
   demonstrate generation quality; run against `ollama`/`openai` (see "Run")
   for an actual generated answer.
-- **`ollama` and `openai` each need their own setup.** CI never exercises
-  either — the tests force `stub` throughout, and `demo()` force-pins it too.
+- **`ollama` and `openai` each need their own setup.** The `rag` tests and
+  `demo()` force-pin `stub`; one `llm`-marked test asks the tutor an on-topic and an
+  off-topic question with Qwen2.5 1.5B served by Ollama (`heavy.yml`'s `llm` job, or
+  locally after `docker compose --profile llm up -d`). `openai` is never exercised.
 - **The corpus is intentionally small** (30 lessons, 90 questions) — enough
   to exercise every code path (multi-course filtering, incremental
   reindexing, a genuine relevance gate) without a large, slow index.

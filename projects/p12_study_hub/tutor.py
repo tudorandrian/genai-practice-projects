@@ -460,9 +460,9 @@ def ask(question: str, k: int = TOP_K, provider: str | None = None) -> dict[str,
     # PROMPT_TEMPLATE never asks the model to cite sources inline from such a
     # label; citations are attached out-of-band via format_sources(docs)
     # below, which reads doc.metadata directly and does not depend on this
-    # string at all (mirroring P11's rag_chatbot.py: RetrievalQA's "stuff"
-    # chain feeds the model page_content only, and sources come from
-    # return_source_documents=True, never from in-context labels).
+    # string at all (mirroring P11's rag_chatbot.py: its GroundedQA
+    # feeds the model page_content only, and sources come from the retrieved
+    # documents' metadata, never from in-context labels).
     context = "\n\n".join(d.page_content for d in docs)
     answer = ask_llm(PROMPT_TEMPLATE.format(context=context, question=question), provider=provider)
     return {"answer": answer.strip(), "sources": format_sources(docs)}

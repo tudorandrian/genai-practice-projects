@@ -518,3 +518,35 @@ def test_embeddings_are_actually_normalized_and_cosine_configured(
     vector = embeddings.embed_query("what is a sentinel value?")
     norm = sum(x * x for x in vector) ** 0.5
     assert abs(norm - 1.0) < 1e-3, f"embedding vector is not unit-norm (norm={norm})"
+
+
+# =============================================================================
+# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# =============================================================================
+
+
+@pytest.mark.llm
+@pytest.mark.xfail(
+    sys.platform == "darwin", reason=_MACOS_RELEVANCE_GATE_XFAIL_REASON, strict=False
+)
+def test_real_llm_tutor_answers_on_topic_and_refuses_off_topic(
+    ollama: tuple[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The tutor with a real model: an on-topic question gets a generated answer about
+    the retrieved lesson, and an off-topic one is refused by the relevance gate before
+    any model call."""
+    url, model = ollama
+    monkeypatch.setenv("TUTOR_OLLAMA_URL", url)
+    monkeypatch.setenv("TUTOR_OLLAMA_MODEL", model)
+    monkeypatch.setattr(tutor, "INDEX_DIR", tmp_path / "index")
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", tmp_path / "index" / "manifest.json")
+    tutor.index_lessons(reindex=True, corpus_dir=CORPUS)
+
+    on_topic = tutor.ask("What is a sentinel value in a messy dataset?", provider="ollama")
+    assert on_topic["answer"] != tutor.REFUSAL
+    assert not on_topic["answer"].startswith("STUB:")
+    assert "sentinel" in on_topic["answer"].lower()
+    assert any("sentinel" in source for source in on_topic["sources"])
+
+    off_topic = tutor.ask("What is the capital city of France?", provider="ollama")
+    assert off_topic == {"answer": tutor.REFUSAL, "sources": []}

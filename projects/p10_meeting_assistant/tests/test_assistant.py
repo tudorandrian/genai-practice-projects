@@ -453,3 +453,39 @@ def test_demo_failure_note_includes_asr_device_facts(
     assert "device=fake-readback-device:7" in result.note
     assert "dtype=fake.float32-readback" in result.note
     assert "torch=" in result.note and "transformers=" in result.note
+
+
+# =============================================================================
+# Real LLM (llm) — Qwen2.5 1.5B served by Ollama; skipped when Ollama is not running
+# =============================================================================
+
+
+@pytest.mark.llm
+def test_real_ollama_summary_is_grounded_in_the_transcript(
+    ollama: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The provider seam against a real model: all three sections come back from Ollama
+    (no fallback marker, no stub text, no placeholder), and the action items name the two
+    people the transcript assigns work to. Loose on wording on purpose: a small model's
+    phrasing is not a contract, who owns the work is."""
+    url, model = ollama
+    monkeypatch.setenv("MEETING_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("MEETING_OLLAMA_URL", url)
+    monkeypatch.setenv("MEETING_OLLAMA_MODEL", model)
+    transcript = (
+        "Good morning everyone. We decided to move the mobile release to March 3 because "
+        "the payment tests are not finished. Maria will finish the invoice export by Friday. "
+        "Andrei will update the database backup script before the release. We also talked "
+        "about the new office printer and the team lunch."
+    )
+
+    summary = assistant.summarize_structured(transcript)
+
+    assert "ollama unavailable" not in summary
+    assert "(stub)" not in summary
+    sections = summary.split("## ")[1:]
+    assert [section.splitlines()[0] for section in sections] == [t for t, _ in assistant.SECTIONS]
+    assert all("(unspecified)" not in section for section in sections)
+    action_items = sections[2].lower()
+    assert "maria" in action_items
+    assert "andrei" in action_items

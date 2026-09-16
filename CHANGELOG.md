@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- P11 and P12 run on LangChain 1.x. The `langchain` 0.3 packages had published advisories
+  fixed only in 1.x. P11's `RetrievalQA` chain is replaced by `GroundedQA` on `langchain-core`,
+  and its loaders by `pypdf`. The prompts, answers and chunks are byte-identical, and
+  `langchain` and `langchain-community` are no longer dependencies.
+- Fixes found by exercising the web UIs in a browser: P07 folds Romanian diacritics before the
+  lexicon lookup (`excelentă și plăcută` scored neutral before), and P11 no longer cites
+  sources under a refusal.
+- Real-LLM tests: `llm`-marked tests for P10-P12 against Qwen2.5 1.5B served by Ollama, a
+  compose `llm` profile that serves it locally, and a `heavy.yml` job that runs them.
+- Checks before review: CI runs the pre-commit hooks on every file; `heavy.yml` also runs on
+  pull requests that touch P08-P12, `shared/` or the dependencies; the ruff hook uses the
+  `uv.lock` version; Dependabot also watches the Dockerfile.
+- Licensing and security: `THIRD_PARTY_NOTICES.md` separates the MIT-licensed work from
+  third-party datasets and model weights; `SECURITY.md` explains how to report a vulnerability.
+
 ## 1.0.0 — 2026-09-16
 
 Fifteen pull requests, squash-merged in order:

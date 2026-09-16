@@ -55,7 +55,7 @@ To run the chain against a real LLM instead of the stub, set the provider
 before the CLI mode (not `--demo`, which always pins `stub`):
 
 ```bash
-# Ollama running locally, e.g. `ollama pull qwen2.5:1.5b`
+docker compose --profile llm up -d        # Qwen2.5 1.5B served by Ollama on localhost
 export MEETING_LLM_PROVIDER=ollama       # MEETING_OLLAMA_MODEL/_URL override the defaults
 uv run p10-meeting-assistant path/to/audio.wav
 
@@ -165,8 +165,13 @@ why `demo()` pins it.
 
 - **`ollama`, `openai` and `local` each need their own setup** (`ollama
   serve` + a pulled model; an `OPENAI_API_KEY`; or a second Hugging Face
-  download for `local`). CI runs none of them — the tests force `stub` or a
-  monkeypatched seam throughout, and `demo()` force-pins `stub` too.
+  download for `local`). The `core` tests force `stub` or a monkeypatched seam,
+  and `demo()` force-pins `stub`; one `llm`-marked test runs the three-section
+  summary against Qwen2.5 1.5B served by Ollama (`heavy.yml`'s `llm` job, or locally
+  after `docker compose --profile llm up -d`). `openai` and `local` are never exercised.
+  Measured with that model: all three sections are populated and name the right
+  owners, but the 1.5B model repeats action items under "Decisions"; a larger model
+  (`MEETING_OLLAMA_MODEL`) separates them better.
 - **On macOS, `pyttsx3`'s driver (`NSSpeechSynthesizer`) writes AIFF/AIFF-C
   bytes to the `.wav` path it is given.** `synthetic_audio.generate()`
   detects this and converts uncompressed AIFF/AIFF-C output to a standard

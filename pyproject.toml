@@ -5,6 +5,7 @@ description = "Twelve practice projects in data, machine learning and generative
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{ name = "Tudor Andrian" }]
 dependencies = []
 
@@ -47,14 +48,12 @@ models = [
 ]
 rag = [
   { include-group = "models" },
-  "langchain>=0.3.30,<0.4",
-  "langchain-community>=0.3.31,<0.4",
-  "langchain-core>=0.3,<0.4",
-  "langchain-text-splitters>=0.3,<0.4",
-  "langchain-huggingface>=0.3,<0.4",
-  "langchain-chroma>=0.2,<0.3",
-  "langchain-ollama>=0.3,<0.4",
-  "langchain-openai>=0.3,<0.4",
+  "langchain-core>=1.2.22,<2",
+  "langchain-text-splitters>=1.1.2,<2",
+  "langchain-huggingface>=1.2,<2",
+  "langchain-chroma>=1.1,<2",
+  "langchain-ollama>=1.1,<2",
+  "langchain-openai>=1.1.14,<2",
   "chromadb>=1.5,<2",
   "sentence-transformers>=5.6,<6",
   "pypdf>=6",
@@ -74,6 +73,8 @@ dev = [
 
 [tool.uv]
 default-groups = ["core", "dev"]
+# setup-uv in CI installs the newest uv in this range; the Dockerfile pins one inside it.
+required-version = ">=0.12.15,<0.13"
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
@@ -98,7 +99,7 @@ markers = [
   "network: downloads public data",
   "models: needs Hugging Face weights",
   "rag: needs LangChain + Chroma",
-  "llm: needs Ollama or an API key; not selected by any workflow",
+  "llm: needs a running Ollama serving the model (compose profile llm); heavy.yml's llm job",
 ]
 
 [tool.ruff]

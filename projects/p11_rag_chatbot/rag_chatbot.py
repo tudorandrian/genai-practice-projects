@@ -30,10 +30,10 @@ Run
     uv run pytest projects/p11_rag_chatbot -q               # core tests, no rag group needed
     uv run pytest projects/p11_rag_chatbot -m rag -q        # needs the rag group installed
 
-Dependencies  langchain, langchain-community, langchain-huggingface, langchain-chroma,
-langchain-ollama, langchain-openai, chromadb, sentence-transformers, pypdf, fpdf2 — the
-``rag`` dependency group. Every one of those imports stays inside a function so this
-module (and its ``core``-marked tests) stay importable without the group installed.
+Dependencies  langchain-core, langchain-text-splitters, langchain-huggingface,
+langchain-chroma, langchain-ollama, langchain-openai, chromadb, sentence-transformers,
+pypdf, fpdf2 — the ``rag`` dependency group. Every one of those imports stays inside a
+function so this module (and its ``core``-marked tests) stay importable without the group installed.
 """
 
 from __future__ import annotations
@@ -103,22 +103,33 @@ class EmptyCorpusError(ValueError):
 def load_documents(folder: str | Path | None = None) -> list[Any]:
     """Load every supported document in ``folder`` (default: ``DATA_DIR``).
 
-    .pdf via PyPDFLoader (one Document per page, with a ``page`` in metadata),
-    .md/.txt via TextLoader. Returns a list of LangChain Documents.
+    .pdf via pypdf (one Document per page, with a 0-based ``page`` in metadata),
+    .md/.txt as one Document per file. Every Document carries its ``source`` path.
+    Returns a list of LangChain Documents. Read directly rather than through
+    ``langchain-community``'s loaders, which produced the same text and chunks for
+    this corpus and would add that package (and its dependency tree) for two loops.
     """
-    from langchain_community.document_loaders import (  # lazy import, see module docstring
-        PyPDFLoader,
-        TextLoader,
-    )
+    from langchain_core.documents import Document  # lazy import, see module docstring
+    from pypdf import PdfReader  # lazy import, see module docstring
 
     folder = Path(folder) if folder is not None else DATA_DIR
     documents: list[Any] = []
     for path in sorted(folder.iterdir()):
         suffix = path.suffix.lower()
         if suffix == ".pdf":
-            documents.extend(PyPDFLoader(str(path)).load())
+            for page_number, page in enumerate(PdfReader(str(path)).pages):
+                documents.append(
+                    Document(
+                        page_content=page.extract_text().strip(),
+                        metadata={"source": str(path), "page": page_number},
+                    )
+                )
         elif suffix in (".md", ".txt"):
-            documents.extend(TextLoader(str(path), encoding="utf-8").load())
+            documents.append(
+                Document(
+                    page_content=path.read_text(encoding="utf-8"), metadata={"source": str(path)}
+                )
+            )
     return documents
 
 
@@ -276,10 +287,33 @@ def create_llm(provider: str | None = None) -> Any:
     return ChatOllama(model=model, base_url=url, temperature=LLM_TEMPERATURE)
 
 
-def build_chain(vector_store: Any, llm: Any = None) -> Any:
-    """Wire the RetrievalQA chain with the grounding prompt and source return."""
-    from langchain.chains import (  # lazy import, see module docstring
-        RetrievalQA,
+class GroundedQA:
+    """Retrieve the top chunks, stuff them into the grounding prompt, make one LLM call.
+
+    This is what LangChain's legacy ``RetrievalQA`` "stuff" chain did, rebuilt on
+    ``langchain-core`` alone: ``RetrievalQA`` lived in the ``langchain`` 0.3 line,
+    which has published advisories fixed only in 1.x, where the class moved to
+    ``langchain-classic``. The contract is unchanged:
+    ``invoke({"query": q}) -> {"result": str, "source_documents": list}``, with chunks
+    joined by a blank line, as the "stuff" chain joined them.
+    """
+
+    def __init__(self, retriever: Any, answer_chain: Any) -> None:
+        self.retriever = retriever
+        self._answer_chain = answer_chain
+
+    def invoke(self, inputs: dict[str, str]) -> dict[str, Any]:
+        question = inputs["query"]
+        docs = self.retriever.invoke(question)
+        context = "\n\n".join(doc.page_content for doc in docs)
+        answer = self._answer_chain.invoke({"context": context, "question": question})
+        return {"result": str(answer), "source_documents": docs}
+
+
+def build_chain(vector_store: Any, llm: Any = None) -> GroundedQA:
+    """Wire retrieval, the grounding prompt and the LLM, returning answer + sources."""
+    from langchain_core.output_parsers import (  # lazy import, see module docstring
+        StrOutputParser,
     )
     from langchain_core.prompts import (  # lazy import, see module docstring
         PromptTemplate,
@@ -287,12 +321,10 @@ def build_chain(vector_store: Any, llm: Any = None) -> Any:
 
     llm = llm if llm is not None else create_llm()
     prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
-    return RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
+    # StrOutputParser accepts both a plain LLM's str and a chat model's message.
+    return GroundedQA(
         retriever=vector_store.as_retriever(search_kwargs={"k": TOP_K}),
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": prompt},
+        answer_chain=prompt | llm | StrOutputParser(),
     )
 
 
@@ -309,12 +341,16 @@ def format_sources(source_documents: list[Any]) -> list[str]:
 
 
 def ask(qa: Any, question: str) -> dict[str, Any]:
-    """Ask one question; return ``{"answer": str, "sources": list[str]}``."""
+    """Ask one question; return ``{"answer": str, "sources": list[str]}``.
+
+    A refusal cites no sources: retrieval always returns the nearest chunks, and listing
+    them under "I cannot find that information" would present them as its evidence.
+    """
     result = qa.invoke({"query": question})
-    return {
-        "answer": result["result"].strip(),
-        "sources": format_sources(result.get("source_documents", [])),
-    }
+    answer = result["result"].strip()
+    if answer.strip('"') == REFUSAL:
+        return {"answer": REFUSAL, "sources": []}
+    return {"answer": answer, "sources": format_sources(result.get("source_documents", []))}
 
 
 # =============================================================================

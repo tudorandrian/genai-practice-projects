@@ -27,6 +27,7 @@ import json
 import logging
 import string
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -117,9 +118,19 @@ NEGATIONS: frozenset[str] = frozenset({"nu", "fara", "nici", "niciun", "nicio"})
 _PUNCT = string.punctuation + "„”“…–—"
 
 
+def _fold_diacritics(token: str) -> str:
+    """``"excelentă"`` -> ``"excelenta"``: decompose, then drop the combining marks.
+
+    The lexicon lists plain forms, and Romanian is normally written with ă, â, î, ș, ț
+    (or the older cedilla ş, ţ); without this, correctly spelled text scored neutral.
+    """
+    decomposed = unicodedata.normalize("NFKD", token)
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+
 def _tokenize(text: str) -> list[str]:
-    """Lower-case and strip surrounding punctuation from each whitespace token."""
-    return [token.strip(_PUNCT).lower() for token in text.split()]
+    """Lower-case each whitespace token, strip surrounding punctuation, fold diacritics."""
+    return [_fold_diacritics(token.strip(_PUNCT).lower()) for token in text.split()]
 
 
 def analyze_sentiment(text: str) -> dict[str, Any]:
