@@ -12,7 +12,7 @@ services:
   # Qwen2.5 1.5B is served by Ollama; the model files live in the `ollama` volume, or in
   # the directory named by OLLAMA_DATA when set (reuse models already on disk).
   ollama:
-    image: ollama/ollama:0.34.1@sha256:0c0a83210471fb50226bcdc2d6611d20ab13ae87e024cc304c94a6a5765c5e65
+    image: ollama/ollama:0.34.2@sha256:da6e0dc5651df159e45686fd663c4dbe1624a52c44d7280eeac1551d8f865532
     profiles: ["llm"]
     ports: ["127.0.0.1:11434:11434"] # Ollama has no authentication: never bind 0.0.0.0
     volumes: ["${OLLAMA_DATA:-ollama}:/root/.ollama"]
@@ -25,7 +25,7 @@ services:
 
   # One-shot: pulls the model into the volume (a no-op when it is already there), then exits.
   ollama-pull:
-    image: ollama/ollama:0.34.1@sha256:0c0a83210471fb50226bcdc2d6611d20ab13ae87e024cc304c94a6a5765c5e65
+    image: ollama/ollama:0.34.2@sha256:da6e0dc5651df159e45686fd663c4dbe1624a52c44d7280eeac1551d8f865532
     profiles: ["llm"]
     environment: { OLLAMA_HOST: "http://ollama:11434" }
     entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-qwen2.5:1.5b}"]

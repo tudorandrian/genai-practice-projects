@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Ollama 0.34.2 (pinned by digest) in `compose.yaml` and `heavy.yml`.
+
 ## 1.1.0 - 2026-09-16
 
 Hardening and preparation for publication. No project changes its command-line interface or
