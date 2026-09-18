@@ -6,6 +6,8 @@ steps below are the ones that need the owner, because they change what is public
 history, or change account settings. Record each completed step, with its date and
 evidence, in the publication record of [release-gate.md](release-gate.md).
 
+**Status.** Steps 1-5 were carried out on 2026-09-18; the publication record has the details.
+
 ## Why a new repository
 
 Release-gate item A8 found three things that a visibility change of this repository would
