@@ -63,7 +63,7 @@ engineering standard, not products.
 | [P09 chatbot](projects/p09_chatbot/README.md) | Local Flask chatbot on BlenderBot with a bounded conversation history. | models | `uv run p09-chatbot --demo` |
 | [P10 meeting assistant](projects/p10_meeting_assistant/README.md) | Transcribes a recording with Whisper, then summarises it with an LLM. | models | `uv run p10-meeting-assistant --demo` |
 | [P11 RAG chatbot](projects/p11_rag_chatbot/README.md) | Answers questions from your own PDF, Markdown or text files with LangChain and Chroma, citing sources. | rag | `uv run p11-rag-chatbot --demo` |
-| [P12 study hub](projects/p12_study_hub/README.md) | Capstone: a quiz, a progress tracker and a RAG tutor over an original synthetic course corpus. | rag | `uv run p12-study-hub --demo` |
+| [P12 study hub](projects/p12_study_hub/README.md) | Capstone: a quiz, a progress tracker and a RAG tutor over an original synthetic course corpus. Reuses P02's question parser. | rag | `uv run p12-study-hub --demo` |
 
 ## Requirements
 
