@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Ollama 0.34.2 (pinned by digest) in `compose.yaml` and `heavy.yml`.
+- The release gate records the publication: every item ticked, evidence from this repository.
 
 ## 1.1.0 - 2026-09-16
 

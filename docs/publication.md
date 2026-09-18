@@ -6,7 +6,8 @@ steps below are the ones that need the owner, because they change what is public
 history, or change account settings. Record each completed step, with its date and
 evidence, in the publication record of [release-gate.md](release-gate.md).
 
-**Status.** Steps 1-5 were carried out on 2026-09-18; the publication record has the details.
+**Status.** All seven steps were carried out on 2026-09-18; the publication record has the
+details. The runbook stays as the record of how the public history was produced.
 
 ## Why a new repository
 
