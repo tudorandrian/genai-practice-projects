@@ -7,9 +7,10 @@ knowledge. The pipeline:
     load -> split (200/20, keep source+page) -> embed (MiniLM) -> Chroma (on disk)
     question -> embed -> top-k similar chunks -> grounded prompt -> LLM -> answer + sources
 
-The answer is generated ONLY from the retrieved context, and every answer cites the
-files/pages it came from - the standard technique for reducing hallucinations and
-connecting an LLM to private data.
+Every answer has the files/pages retrieved for it attached as sources - the standard
+technique for connecting an LLM to private data. Those sources are the retrieved
+context, not verified support: nothing checks that the answer's claims actually
+appear in them (see the README's "Limits").
 
 Key seams
   * ``create_llm()`` isolates the LLM provider: ``ollama`` (default, a local model

@@ -67,8 +67,9 @@ To run the CLI against a real LLM instead of the stub (`--demo` always pins
 
 ```bash
 docker compose --profile llm up -d        # Qwen2.5 1.5B served by Ollama on localhost
+uv run python -m projects.p11_rag_chatbot.synthetic_docs  # seed data/ - --demo's corpus never lands there
 export RAG_LLM_PROVIDER=ollama          # RAG_OLLAMA_MODEL/_URL override the defaults
-uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
+uv run p11-rag-chatbot --reindex && uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
 ```
 
 `RAG_LLM_PROVIDER=openai` (with `OPENAI_API_KEY`, `RAG_OPENAI_MODEL`) works the
@@ -185,6 +186,9 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   snippet of the retrieved context, to prove the pipeline deterministically
   without a real model, not to demonstrate generation quality; see "Run" for a
   real provider.
+- **`data/demo/` and `data/demo-index/` are reserved for `demo()`.** It
+  overwrites files in the former and deletes and rebuilds the latter on every
+  run; do not put your own documents or index there - use `data/` instead.
 - **`all-MiniLM-L6-v2` is small, and the corpus is tiny and stylistically
   uniform** (short, similarly-phrased sentences) - enough to exercise every
   loader, chunking and citation path, but together they make chunk-level
@@ -204,9 +208,10 @@ are hand-written, fixed text, written specifically for this repository, with
 facts invented for the exercise (a fictional company, "ACME Robotics").
 `write_all()` renders them into `acme_handbook.pdf` (via `fpdf2`, pure Python),
 `engineering_notes.md` and `support_faq.txt`, under `data/demo/` for `demo()`
-and under `data/` for the seeding command; none of the three is ever tracked by git (`.gitignore`: `projects/p11_rag_chatbot/data/*`,
-with an exception for `data/.gitkeep`) - `demo()` and the `rag`-marked tests
-regenerate the corpus on demand instead of committing it.
+and under `data/` for the seeding command; none of the three is ever tracked by
+git (`.gitignore`: `projects/p11_rag_chatbot/data/*`, with an exception for
+`data/.gitkeep`) - `demo()` and the `rag`-marked tests regenerate the corpus on
+demand instead of committing it.
 
 The embedding model is
 [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
