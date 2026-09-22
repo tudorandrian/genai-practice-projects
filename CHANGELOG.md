@@ -11,6 +11,9 @@
   `output/history.json`; `--ask` and the UI re-embed changed lessons instead of answering from a
   stale index.
 - `uv run demo --strict` fails when a selected demo reports `skipped`; the macOS heavy job uses it.
+- P10's speech-engine wait can be raised with `P10_TTS_TIMEOUT_SECONDS` (default 60 s); the macOS
+  heavy job sets 180.
+- The release gate records the closure of the 2026-09-22 audit (#5).
 - Documentation: P12's macOS limit is stated in the root README; P11 describes its sources as
   retrieved context; every `--host 0.0.0.0` line warns that the servers are single-user.
 
