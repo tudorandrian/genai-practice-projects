@@ -471,7 +471,7 @@ def demo() -> DemoResult:
 
     from projects.p11_rag_chatbot import synthetic_docs
 
-    synthetic_docs.write_all(DATA_DIR)
+    synthetic_docs.write_all(DATA_DIR, overwrite=True)
     chunks = _load_and_split(DATA_DIR)
     store = _rebuild_index(chunks, PERSIST_DIR)
     qa = build_chain(store, llm=create_llm(provider="stub"))

@@ -62,6 +62,29 @@ def test_write_all_creates_three_documents(tmp_path: Path) -> None:
     assert all(p.exists() for p in paths.values())
 
 
+@pytest.mark.rag
+def test_write_all_refuses_to_overwrite_an_existing_file(tmp_path: Path) -> None:
+    """data/ is where a user's own documents live (and Git ignores it), so a
+    colliding name must never be silently replaced."""
+    folder = tmp_path / "data"
+    folder.mkdir()
+    mine = folder / "support_faq.txt"
+    mine.write_text("my own notes", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="support_faq.txt"):
+        synthetic_docs.write_all(folder)
+    assert mine.read_text(encoding="utf-8") == "my own notes"
+    assert not (folder / "acme_handbook.pdf").exists()  # nothing written at all
+
+
+@pytest.mark.rag
+def test_write_all_overwrites_only_when_asked(tmp_path: Path) -> None:
+    folder = tmp_path / "data"
+    folder.mkdir()
+    (folder / "support_faq.txt").write_text("old", encoding="utf-8")
+    paths = synthetic_docs.write_all(folder, overwrite=True)
+    assert paths["support_faq.txt"].read_text(encoding="utf-8") == synthetic_docs.FAQ
+
+
 # =============================================================================
 # Ingestion - real LangChain loaders/splitters (rag)
 # =============================================================================
