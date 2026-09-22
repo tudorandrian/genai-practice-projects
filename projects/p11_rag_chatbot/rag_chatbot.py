@@ -7,9 +7,10 @@ knowledge. The pipeline:
     load -> split (200/20, keep source+page) -> embed (MiniLM) -> Chroma (on disk)
     question -> embed -> top-k similar chunks -> grounded prompt -> LLM -> answer + sources
 
-The answer is generated ONLY from the retrieved context, and every answer cites the
-files/pages it came from - the standard technique for reducing hallucinations and
-connecting an LLM to private data.
+Every answer has the files/pages retrieved for it attached as sources - the standard
+technique for connecting an LLM to private data. Those sources are the retrieved
+context, not verified support: nothing checks that the answer's claims actually
+appear in them (see the README's "Limits").
 
 Key seams
   * ``create_llm()`` isolates the LLM provider: ``ollama`` (default, a local model
@@ -54,6 +55,12 @@ HERE = Path(__file__).resolve().parent
 DATA_DIR = HERE / "data"
 PERSIST_DIR = HERE / "chroma_index"
 OUT_DIR = HERE / "output"
+# demo() keeps its synthetic corpus and its index apart from the user's: data/ is
+# where a user's own documents go (and Git ignores it), so the demo must never
+# write, delete or index anything there. load_documents() reads files only, so
+# these two directories are invisible to --reindex, -q, the loop and the UI.
+DEMO_DATA_DIR = DATA_DIR / "demo"
+DEMO_PERSIST_DIR = DATA_DIR / "demo-index"
 EVAL_QUESTIONS_PATH = HERE / "eval_questions.md"
 
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -175,8 +182,9 @@ def _rebuild_index(chunks: list[Any], persist_dir: str | Path | None = None) -> 
         # Chroma would otherwise fail with an unexplained "Expected Embeddings to be
         # non-empty" error. data/ is empty on a fresh clone until the corpus is written.
         raise EmptyCorpusError(
-            "no documents to index in data/ - run `uv run p11-rag-chatbot --demo` or "
-            "`uv run python -m projects.p11_rag_chatbot.synthetic_docs` first"
+            "no documents to index in data/ - copy your PDF, Markdown or text files "
+            "there, or run `uv run python -m projects.p11_rag_chatbot.synthetic_docs` "
+            "to create the sample corpus"
         )
     from langchain_chroma import Chroma  # lazy import, see module docstring
 
@@ -446,8 +454,10 @@ def build_ui(qa: Any) -> Any:
 
 
 def demo() -> DemoResult:
-    """Write the synthetic corpus, build the index, ask three questions through the
-    ``stub`` provider, and write ``output/session.txt`` and ``output/metrics.txt``.
+    """Write the synthetic corpus into ``data/demo/`` and build its index in
+    ``data/demo-index/`` (never the user's ``data/`` or ``chroma_index/``), ask three
+    questions through the ``stub`` provider, and write ``output/session.txt`` and
+    ``output/metrics.txt``.
 
     Tier ``rag``: needs LangChain + Chroma + the MiniLM embedding model, so it never
     runs in CI and is skipped by ``uv run demo``/``uv run demo --models`` - only
@@ -471,9 +481,9 @@ def demo() -> DemoResult:
 
     from projects.p11_rag_chatbot import synthetic_docs
 
-    synthetic_docs.write_all(DATA_DIR)
-    chunks = _load_and_split(DATA_DIR)
-    store = _rebuild_index(chunks, PERSIST_DIR)
+    synthetic_docs.write_all(DEMO_DATA_DIR, overwrite=True)
+    chunks = _load_and_split(DEMO_DATA_DIR)
+    store = _rebuild_index(chunks, DEMO_PERSIST_DIR)
     qa = build_chain(store, llm=create_llm(provider="stub"))
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

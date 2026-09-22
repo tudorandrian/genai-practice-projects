@@ -33,7 +33,7 @@ result is `{"text", "score", "sentiment"}`, where `sentiment` is
 ```bash
 uv run p07-sentiment-api --demo                  # offline demo, writes output/
 uv run p07-sentiment-api                         # dev server on http://127.0.0.1:5000
-uv run p07-sentiment-api --host 0.0.0.0 --port 8080
+uv run p07-sentiment-api --host 0.0.0.0 --port 8080  # listen on every interface: single user, trusted network only (see Limits)
 uv run p07-sentiment-api --production            # served through waitress
 uv run pytest projects/p07_sentiment_api -q      # tests, no server needed
 ```

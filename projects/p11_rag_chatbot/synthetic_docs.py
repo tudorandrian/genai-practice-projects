@@ -75,8 +75,15 @@ def _write_pdf(lines: list[str], path: Path) -> None:
     pdf.output(str(path))
 
 
-def write_all(folder: str | Path) -> dict[str, Path]:
-    """Generate the synthetic document set into ``folder``. Returns {filename: path}."""
+def write_all(folder: str | Path, *, overwrite: bool = False) -> dict[str, Path]:
+    """Generate the synthetic document set into ``folder``. Returns {filename: path}.
+
+    ``folder`` is normally ``data/``, which is also where a user's own documents
+    go and which Git ignores, so an existing file is never replaced unless
+    ``overwrite`` is True: with the default, a collision raises
+    ``FileExistsError`` before anything is written. ``demo()`` passes
+    ``overwrite=True`` for its own dedicated directory.
+    """
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     paths = {
@@ -84,6 +91,13 @@ def write_all(folder: str | Path) -> dict[str, Path]:
         "engineering_notes.md": folder / "engineering_notes.md",
         "support_faq.txt": folder / "support_faq.txt",
     }
+    if not overwrite:
+        existing = [name for name, path in paths.items() if path.exists()]
+        if existing:
+            raise FileExistsError(
+                f"{', '.join(existing)} already exist(s) in the target folder; move or "
+                "rename your file(s), or pass overwrite=True"
+            )
     _write_pdf(HANDBOOK, paths["acme_handbook.pdf"])
     paths["engineering_notes.md"].write_text(ENGINEERING, encoding="utf-8")
     paths["support_faq.txt"].write_text(FAQ, encoding="utf-8")

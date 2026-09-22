@@ -41,7 +41,7 @@ uv sync --group models                                 # torch, transformers, gr
 uv run p10-meeting-assistant --demo                     # Whisper transcript + stub summary, writes output/
 uv run p10-meeting-assistant path/to/audio.wav          # transcribe + summarize one file
 uv run p10-meeting-assistant                             # Gradio UI, http://127.0.0.1:7860
-uv run p10-meeting-assistant --host 0.0.0.0              # UI: listen on every interface
+uv run p10-meeting-assistant --host 0.0.0.0              # listen on every interface: single user, trusted network only (see Limits)
 uv run pytest projects/p10_meeting_assistant -q          # fast tests, no weights needed
 ```
 
@@ -181,7 +181,8 @@ why `demo()` pins it.
   (which only reads RIFF via `scipy.io.wavfile`) never sees a mislabelled
   file; a compressed or unrecognized file instead raises
   `TTSEngineUnavailableError`, degrading `demo()` to `skipped`. The macOS
-  driver also writes asynchronously, so `generate()` waits (up to 60 s) until
+  driver also writes asynchronously, so `generate()` waits (up to 60 s,
+  configurable with the `P10_TTS_TIMEOUT_SECONDS` environment variable) until
   the file is long enough for its script and has stopped growing; a file
   that never gets there is deleted and the demo reports `skipped`.
 - **On Linux, `pyttsx3` needs `espeak-ng`** (`sudo apt-get install

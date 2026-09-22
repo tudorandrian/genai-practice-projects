@@ -62,6 +62,29 @@ def test_write_all_creates_three_documents(tmp_path: Path) -> None:
     assert all(p.exists() for p in paths.values())
 
 
+@pytest.mark.rag
+def test_write_all_refuses_to_overwrite_an_existing_file(tmp_path: Path) -> None:
+    """data/ is where a user's own documents live (and Git ignores it), so a
+    colliding name must never be silently replaced."""
+    folder = tmp_path / "data"
+    folder.mkdir()
+    mine = folder / "support_faq.txt"
+    mine.write_text("my own notes", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="support_faq.txt"):
+        synthetic_docs.write_all(folder)
+    assert mine.read_text(encoding="utf-8") == "my own notes"
+    assert not (folder / "acme_handbook.pdf").exists()  # nothing written at all
+
+
+@pytest.mark.rag
+def test_write_all_overwrites_only_when_asked(tmp_path: Path) -> None:
+    folder = tmp_path / "data"
+    folder.mkdir()
+    (folder / "support_faq.txt").write_text("old", encoding="utf-8")
+    paths = synthetic_docs.write_all(folder, overwrite=True)
+    assert paths["support_faq.txt"].read_text(encoding="utf-8") == synthetic_docs.FAQ
+
+
 # =============================================================================
 # Ingestion - real LangChain loaders/splitters (rag)
 # =============================================================================
@@ -167,9 +190,21 @@ def test_ask_returns_answer_and_sources() -> None:
 @pytest.mark.core
 def test_rebuild_index_explains_an_empty_corpus(tmp_path: Path) -> None:
     """A fresh clone's data/ holds only .gitkeep; indexing nothing must say how to
-    create the corpus instead of failing inside Chroma."""
-    with pytest.raises(rag_chatbot.EmptyCorpusError, match="--demo"):
+    create a corpus instead of failing inside Chroma. The demo no longer seeds
+    data/ (it keeps its corpus in data/demo/), so the message names the seeding
+    module, not --demo."""
+    with pytest.raises(rag_chatbot.EmptyCorpusError, match="synthetic_docs"):
         rag_chatbot._rebuild_index([], tmp_path / "index")
+
+
+@pytest.mark.core
+def test_demo_directories_live_under_data_and_are_not_the_user_corpus() -> None:
+    """F1 of the 2026-09-22 audit: the demo must never write into the folder a
+    user fills with their own documents, nor replace their index."""
+    assert rag_chatbot.DEMO_DATA_DIR.parent == rag_chatbot.DATA_DIR
+    assert rag_chatbot.DEMO_PERSIST_DIR.parent == rag_chatbot.DATA_DIR
+    assert rag_chatbot.DEMO_DATA_DIR != rag_chatbot.DATA_DIR
+    assert rag_chatbot.DEMO_PERSIST_DIR != rag_chatbot.PERSIST_DIR
 
 
 @pytest.mark.core
@@ -177,7 +212,7 @@ def test_cli_reports_an_empty_corpus_without_a_traceback(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     def empty_index(reindex: bool = False) -> Any:
-        raise rag_chatbot.EmptyCorpusError("no documents to index in data/ - run --demo")
+        raise rag_chatbot.EmptyCorpusError("no documents to index in data/ - run synthetic_docs")
 
     monkeypatch.setattr(rag_chatbot, "build_index", empty_index)
     assert rag_chatbot.main(["-q", "How many vacation days?"]) == 1
@@ -271,14 +306,19 @@ def test_demo_writes_deterministic_session_and_metrics(
     # actual property in question (repeated builds of the same corpus are
     # byte-identical) without depending on that unrelated OS behaviour.
     monkeypatch.setattr(rag_chatbot, "DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr(rag_chatbot, "PERSIST_DIR", tmp_path / "chroma_index")
+    monkeypatch.setattr(rag_chatbot, "DEMO_DATA_DIR", tmp_path / "data" / "demo")
     monkeypatch.setattr(rag_chatbot, "OUT_DIR", tmp_path / "output")
+    (tmp_path / "data").mkdir()
+    mine = tmp_path / "data" / "support_faq.txt"
+    mine.write_text("my own notes", encoding="utf-8")
 
-    monkeypatch.setattr(rag_chatbot, "PERSIST_DIR", tmp_path / "index1")
+    monkeypatch.setattr(rag_chatbot, "DEMO_PERSIST_DIR", tmp_path / "data" / "demo-index1")
     first = rag_chatbot.demo()
     session_1 = (tmp_path / "output" / "session.txt").read_text(encoding="utf-8")
     metrics_1 = (tmp_path / "output" / "metrics.txt").read_text(encoding="utf-8")
 
-    monkeypatch.setattr(rag_chatbot, "PERSIST_DIR", tmp_path / "index2")
+    monkeypatch.setattr(rag_chatbot, "DEMO_PERSIST_DIR", tmp_path / "data" / "demo-index2")
     second = rag_chatbot.demo()
     session_2 = (tmp_path / "output" / "session.txt").read_text(encoding="utf-8")
     metrics_2 = (tmp_path / "output" / "metrics.txt").read_text(encoding="utf-8")
@@ -289,6 +329,9 @@ def test_demo_writes_deterministic_session_and_metrics(
     assert metrics_1 == metrics_2
     assert "provider=stub" in metrics_1
     assert "questions=3" in metrics_1
+    assert mine.read_text(encoding="utf-8") == "my own notes"  # the user's file survived
+    assert not (tmp_path / "chroma_index").exists()  # the user's index was not touched
+    assert "chunks=9" in metrics_1  # the user's file was not indexed by the demo
 
 
 # =============================================================================

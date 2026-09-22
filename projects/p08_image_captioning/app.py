@@ -3,6 +3,7 @@
 Run:
     uv run python -m projects.p08_image_captioning.app              # http://127.0.0.1:7860
     uv run python -m projects.p08_image_captioning.app --host 0.0.0.0
+        # listen on every interface: single user, trusted network only (see README's Limits)
 
 The UI is a thin layer over ``captioner.caption`` - Gradio builds the whole
 interface from the function signature (Image -> str), so all the real work is
@@ -14,7 +15,8 @@ is never imported by a ``core``-marked test - see
 exercises ``captioner.py`` and ``batch.py``.
 
 Binds to ``127.0.0.1`` by default; pass ``--host 0.0.0.0`` to listen on every
-interface (e.g. to reach the UI from another machine on the network).
+interface (e.g. to reach the UI from another machine on the network) - single
+user, trusted network only (see the README's Limits).
 """
 
 from __future__ import annotations

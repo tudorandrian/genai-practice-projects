@@ -76,3 +76,55 @@ def test_main_writes_the_summary_under_the_repository_root_whatever_the_cwd(
     monkeypatch.chdir(tmp_path)
     assert demo.main([]) == 0
     assert seen == [Path(demo.__file__).resolve().parents[1] / "output" / "demo-summary.md"]
+
+
+def skipping_demo() -> demo.DemoResult:
+    return demo.DemoResult(name="p00-skip", status="skipped", note="no speech engine")
+
+
+def test_strict_flag_is_parsed() -> None:
+    assert demo.parse_args([]).strict is False
+    assert demo.parse_args(["--all", "--strict"]).strict is True
+    assert demo.parse_args(["--all", "--strict"]).tiers == {"core", "models", "rag"}
+
+
+def test_a_selected_project_that_skips_fails_only_in_strict_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F5 of the 2026-09-22 audit: a green demo step must mean every selected demo
+    ran. A tier that was not selected is not a skip of that kind."""
+    entries = [
+        registry.Entry("p00-ok", "core", "shared.tests.test_demo:ok_demo"),
+        registry.Entry("p00-skip", "core", "shared.tests.test_demo:skipping_demo"),
+        registry.Entry("p00-heavy", "models", "shared.tests.test_demo:ok_demo"),
+    ]
+    monkeypatch.setattr(demo, "ENTRIES", entries)
+    monkeypatch.setattr(demo, "REPO_ROOT", tmp_path)
+    assert demo.main([]) == 0  # permissive: skipped is not failed
+    assert demo.main(["--strict"]) == 1  # p00-skip was selected and did not run
+    monkeypatch.setattr(demo, "ENTRIES", entries[:1] + entries[2:])
+    assert demo.main(["--strict"]) == 0  # p00-heavy is tier-skipped, which is fine
+
+
+def skipping_demo_with_a_different_name() -> demo.DemoResult:
+    """Reports `skipped`, like `skipping_demo`, but under a name that does not
+    match its own registry slug - strict mode must still catch this."""
+    return demo.DemoResult(name="not-the-slug", status="skipped", note="no speech engine")
+
+
+def test_strict_mode_catches_a_skip_even_when_the_result_name_differs_from_the_slug(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F4 of the 2026-09-22 whole-branch review: strict mode must pair each entry
+    with its result by position (the order run_demo appends them in), not by
+    matching DemoResult.name against the registry slug."""
+    entries = [
+        registry.Entry("p00-ok", "core", "shared.tests.test_demo:ok_demo"),
+        registry.Entry(
+            "p00-renamed-skip", "core", "shared.tests.test_demo:skipping_demo_with_a_different_name"
+        ),
+    ]
+    monkeypatch.setattr(demo, "ENTRIES", entries)
+    monkeypatch.setattr(demo, "REPO_ROOT", tmp_path)
+    assert demo.main([]) == 0  # permissive: skipped is not failed
+    assert demo.main(["--strict"]) == 1  # selected, skipped, name != slug - still fails

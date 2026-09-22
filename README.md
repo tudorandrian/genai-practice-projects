@@ -44,7 +44,9 @@ engineering standard, not products.
   `output/` folder are exactly what its `--demo` produces.
 - **Tested on three operating systems.** CI runs the core tests on Ubuntu and Windows for
   every pull request. The model, RAG and real-LLM tests run on Ubuntu and macOS
-  (`.github/workflows/heavy.yml`).
+  (`.github/workflows/heavy.yml`). One known platform limit: P12's tutor cannot tell
+  on-topic from off-topic questions on macOS (two tests are expected failures there; the
+  P12 README's *Limits* gives the measurements).
 - **Limits stated.** Every project README has a *Limits* section and lists each dataset's
   source and licence.
 
@@ -63,7 +65,7 @@ engineering standard, not products.
 | [P09 chatbot](projects/p09_chatbot/README.md) | Local Flask chatbot on BlenderBot with a bounded conversation history. | models | `uv run p09-chatbot --demo` |
 | [P10 meeting assistant](projects/p10_meeting_assistant/README.md) | Transcribes a recording with Whisper, then summarises it with an LLM. | models | `uv run p10-meeting-assistant --demo` |
 | [P11 RAG chatbot](projects/p11_rag_chatbot/README.md) | Answers questions from your own PDF, Markdown or text files with LangChain and Chroma, citing sources. | rag | `uv run p11-rag-chatbot --demo` |
-| [P12 study hub](projects/p12_study_hub/README.md) | Capstone: a quiz, a progress tracker and a RAG tutor over an original synthetic course corpus. Reuses P02's question parser. | rag | `uv run p12-study-hub --demo` |
+| [P12 study hub](projects/p12_study_hub/README.md) | Capstone: a quiz, a progress tracker and a RAG tutor over an original synthetic course corpus. Reuses P02's question parser. The tutor's relevance gate does not hold on macOS (see its Limits). | rag | `uv run p12-study-hub --demo` |
 
 ## Requirements
 
@@ -126,10 +128,13 @@ Git ignores, so your data never overwrites the committed files.
 uv run demo              # P01-P07: offline and deterministic
 uv run demo --models     # adds P08-P10 (needs the models group)
 uv run demo --all        # adds P11-P12 (needs the rag group)
+uv run demo --all --strict  # also fail if a selected demo was skipped (what CI uses on macOS)
 ```
 
 The runner writes a summary table to `output/demo-summary.md`. LLM steps in the demos always
-use a deterministic stub, so the results do not depend on a running model.
+use a deterministic stub, so the results do not depend on a running model. A demo that cannot
+run on the machine (for example P10 without a speech engine) reports `skipped`; `--strict`
+turns that into a non-zero exit.
 
 ## Tests and quality checks
 

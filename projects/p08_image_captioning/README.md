@@ -46,7 +46,7 @@ uv sync --group models                              # torch, transformers, gradi
 uv run p08-image-captioning --demo                   # captions 6 synthetic images, writes output/
 uv run p08-image-captioning --image path/to/pic.png  # caption a single image
 uv run python -m projects.p08_image_captioning.app                   # Gradio UI, http://127.0.0.1:7860
-uv run python -m projects.p08_image_captioning.app --host 0.0.0.0    # listen on every interface
+uv run python -m projects.p08_image_captioning.app --host 0.0.0.0    # listen on every interface: single user, trusted network only (see Limits)
 uv run python -m projects.p08_image_captioning.batch [folder] [out]  # caption a folder
 uv run pytest projects/p08_image_captioning -q                # fast tests, no weights needed
 uv run pytest projects/p08_image_captioning -m models -q      # real BLIP inference (slow)

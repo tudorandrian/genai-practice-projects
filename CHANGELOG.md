@@ -4,6 +4,15 @@
 
 - Ollama 0.34.2 (pinned by digest) in `compose.yaml` and `heavy.yml`.
 - The release gate records the publication: every item ticked, evidence from this repository.
+- P11's `--demo` writes its corpus to `data/demo/` and its index to `data/demo-index/`, and no
+  longer overwrites files or the index under `data/`; `synthetic_docs.write_all` refuses to
+  overwrite an existing file unless asked.
+- P12's `--demo` saves its session to `output/demo-history.json` instead of the user's
+  `output/history.json`; `--ask` and the UI re-embed changed lessons instead of answering from a
+  stale index.
+- `uv run demo --strict` fails when a selected demo reports `skipped`; the macOS heavy job uses it.
+- Documentation: P12's macOS limit is stated in the root README; P11 describes its sources as
+  retrieved context; every `--host 0.0.0.0` line warns that the servers are single-user.
 
 ## 1.1.0 - 2026-09-16
 

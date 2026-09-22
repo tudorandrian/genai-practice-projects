@@ -19,11 +19,12 @@ build_chain(store, llm)   -> GroundedQA          # grounding prompt + source ret
 ask(qa, question)         -> {"answer","sources"}  # one question in, one grounded answer out
 ```
 
-The answer is generated **only** from the retrieved context: the grounding prompt
-instructs the model to answer exclusively from the supplied context and to reply
-with a fixed refusal string, `REFUSAL`, when the answer is not in it. Every answer
-also carries the file (and PDF page) it was retrieved from - the standard technique
-for reducing hallucinations and connecting an LLM to private data.
+The grounding prompt instructs the model to answer only from the retrieved
+context and to reply with a fixed refusal string, `REFUSAL`, when the answer is
+not in it. Every answer also lists the files (and PDF pages) whose chunks were
+retrieved for the question: that is *retrieved context*, the standard technique
+for connecting an LLM to private data, not a claim-by-claim verification of the
+answer against those passages (see "Limits").
 
 `synthetic_docs.py` generates a small, invented company corpus (`acme_handbook.pdf`,
 `engineering_notes.md`, `support_faq.txt`) with specific, checkable facts, and
@@ -43,24 +44,32 @@ uv run pytest projects/p11_rag_chatbot -q                  # core tests, no rag 
 uv run pytest projects/p11_rag_chatbot -m rag -q           # full pipeline, needs the rag group
 ```
 
-`--verbose` logs at `INFO`; by default only the summary lines print. On a fresh
-clone `data/` is empty: run `--demo` (or `uv run python -m
-projects.p11_rag_chatbot.synthetic_docs`) once before `--reindex`, `-q`, the loop
-or `--ui`, which otherwise stop with a message saying so. `--demo`
-generates the synthetic corpus into `data/` (never tracked - see "Datasets and
-licences"), rebuilds the index, asks three questions with the `stub` provider
-(force-pinned - see "Design notes"), and writes `output/session.txt` and
-`output/metrics.txt`. Questions asked with `-q`, the loop or the UI are logged to
-`output/runs/session.txt` instead, which Git ignores, so questions about your own
-documents never reach the committed session file.
+`--verbose` logs at `INFO`; by default only the summary lines print. `--demo`
+generates the synthetic corpus into `data/demo/` and its index into
+`data/demo-index/` (both never tracked - see "Datasets and licences"), asks
+three questions with the `stub` provider (force-pinned - see "Design notes"),
+and writes `output/session.txt` and `output/metrics.txt`. It never reads,
+writes or indexes anything else under `data/`, so your own documents and
+your index survive it.
+
+To ask questions about your own documents, copy your PDF, Markdown or text
+files into `data/` and run `--reindex` once; `-q`, the loop and `--ui` then
+answer from them. On a fresh clone `data/` is empty and those commands stop
+with a message saying so; `uv run python -m
+projects.p11_rag_chatbot.synthetic_docs` writes the sample corpus into `data/`
+instead (it refuses to overwrite a file of yours with the same name). Questions
+asked with `-q`, the loop or the UI are logged to `output/runs/session.txt`,
+which Git ignores, so questions about your own documents never reach the
+committed session file.
 
 To run the CLI against a real LLM instead of the stub (`--demo` always pins
 `stub`):
 
 ```bash
 docker compose --profile llm up -d        # Qwen2.5 1.5B served by Ollama on localhost
+uv run python -m projects.p11_rag_chatbot.synthetic_docs  # seed data/ - --demo's corpus never lands there
 export RAG_LLM_PROVIDER=ollama          # RAG_OLLAMA_MODEL/_URL override the defaults
-uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
+uv run p11-rag-chatbot --reindex && uv run p11-rag-chatbot -q "Who is the CEO of ACME Robotics?"
 ```
 
 `RAG_LLM_PROVIDER=openai` (with `OPENAI_API_KEY`, `RAG_OPENAI_MODEL`) works the
@@ -161,6 +170,13 @@ answer; see "Design notes" for why `demo()` pins `stub`.
 
 ## Limits
 
+- **Sources are retrieved context, not verified support.** `ask()` attaches the
+  retrieved files to any non-refusal answer; nothing checks that the answer's
+  claims appear in them, so a model that ignores the prompt can still return an
+  unsupported answer with a source next to it. The `stub` provider echoes the
+  retrieved context and never refuses; the refusal behaviour is exercised only
+  by the real-LLM trap-question test. Treat a citation as "where to look", not
+  as proof.
 - **`ollama` and `openai` each need their own setup** (`ollama serve` + a pulled
   model, or an `OPENAI_API_KEY`). The `rag` tests and `demo()` force-pin `stub`;
   the `llm`-marked tests run the grounded answer and the trap-question refusal
@@ -170,6 +186,9 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   snippet of the retrieved context, to prove the pipeline deterministically
   without a real model, not to demonstrate generation quality; see "Run" for a
   real provider.
+- **`data/demo/` and `data/demo-index/` are reserved for `demo()`.** It
+  overwrites files in the former and deletes and rebuilds the latter on every
+  run; do not put your own documents or index there - use `data/` instead.
 - **`all-MiniLM-L6-v2` is small, and the corpus is tiny and stylistically
   uniform** (short, similarly-phrased sentences) - enough to exercise every
   loader, chunking and citation path, but together they make chunk-level
@@ -178,18 +197,21 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   chunk-size trade-off this surfaced.
 - **No authentication or rate limiting on the Gradio server.** `build_ui()` is a
   local demo UI, not hardened for public exposure; the CLI binds `127.0.0.1` by
-  default - pass `--host 0.0.0.0` to listen on every interface.
+  default - pass `--host 0.0.0.0` to listen on every interface. With one shared
+  server there is also no per-user isolation, so `--host 0.0.0.0` is for a
+  trusted network only.
 
 ## Datasets and licences
 
 There is no external dataset. `synthetic_docs.py`'s `HANDBOOK`/`ENGINEERING`/`FAQ`
 are hand-written, fixed text, written specifically for this repository, with
 facts invented for the exercise (a fictional company, "ACME Robotics").
-`write_all()` renders them into `data/acme_handbook.pdf` (via `fpdf2`, pure
-Python), `data/engineering_notes.md` and `data/support_faq.txt`; none of the
-three is ever tracked by git (`.gitignore`: `projects/p11_rag_chatbot/data/*`,
-with an exception for `data/.gitkeep`) - `demo()` and the `rag`-marked tests
-regenerate the corpus on demand instead of committing it.
+`write_all()` renders them into `acme_handbook.pdf` (via `fpdf2`, pure Python),
+`engineering_notes.md` and `support_faq.txt`, under `data/demo/` for `demo()`
+and under `data/` for the seeding command; none of the three is ever tracked by
+git (`.gitignore`: `projects/p11_rag_chatbot/data/*`, with an exception for
+`data/.gitkeep`) - `demo()` and the `rag`-marked tests regenerate the corpus on
+demand instead of committing it.
 
 The embedding model is
 [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)

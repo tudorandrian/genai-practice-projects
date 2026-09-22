@@ -126,19 +126,22 @@ def grade(question: Question, answer: Any) -> bool:
     return bool(given) and given == correct
 
 
-def load_history() -> list[dict[str, Any]]:
+def load_history(path: str | Path | None = None) -> list[dict[str, Any]]:
     """Return the saved quiz sessions (empty list if none yet)."""
-    if HISTORY_PATH.exists():
-        return json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
+    path = Path(path) if path is not None else HISTORY_PATH
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
     return []
 
 
-def save_session(summary: dict[str, Any]) -> None:
-    """Append one session summary to ``output/history.json``."""
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    history = load_history()
+def save_session(summary: dict[str, Any], path: str | Path | None = None) -> None:
+    """Append one session summary to ``output/history.json`` (or to ``path``:
+    ``demo()`` keeps its synthetic session out of the user's real history)."""
+    path = Path(path) if path is not None else HISTORY_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    history = load_history(path)
     history.append(summary)
-    HISTORY_PATH.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _session_summary(session: list[Question], answers: list[Any]) -> dict[str, Any]:

@@ -13,6 +13,7 @@ Run
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -132,6 +133,41 @@ def test_history_round_trip(tmp_output: Path, monkeypatch: pytest.MonkeyPatch) -
     assert quiz_engine.load_history() == []
     quiz_engine.save_session({"score": 3, "total": 5, "questions": []})
     assert len(quiz_engine.load_history()) == 1
+
+
+@pytest.mark.core
+def test_save_session_to_an_explicit_path(
+    tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(quiz_engine, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(quiz_engine, "HISTORY_PATH", tmp_output / "history.json")
+    other = tmp_output / "demo-history.json"
+    quiz_engine.save_session({"score": 5, "total": 5, "questions": []}, path=other)
+    assert json.loads(other.read_text(encoding="utf-8"))[0]["score"] == 5
+    assert quiz_engine.load_history() == []  # the real history is untouched
+
+
+@pytest.mark.core
+def test_demo_does_not_append_to_the_real_quiz_history(
+    tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F4 of the 2026-09-22 audit: every demo run used to add a perfect session to
+    output/history.json, inflating the user's own success rate."""
+    monkeypatch.setattr(quiz_engine, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(quiz_engine, "HISTORY_PATH", tmp_output / "history.json")
+    monkeypatch.setattr(quiz_engine, "BANK_PATH", tmp_output / "question-bank.json")
+    monkeypatch.setattr(app, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(app, "DEMO_HISTORY_PATH", tmp_output / "demo-history.json")
+    monkeypatch.setattr(progress, "plot_progress", lambda pivot, path=None: tmp_output / "p.png")
+    monkeypatch.setattr(tutor, "index_lessons", lambda **_kw: {"total_files": 30})
+    monkeypatch.setattr(tutor, "ask", lambda q, provider=None: {"answer": "A", "sources": []})
+
+    app.demo()
+    app.demo()
+
+    assert quiz_engine.load_history() == []
+    demo_history = json.loads((tmp_output / "demo-history.json").read_text(encoding="utf-8"))
+    assert len(demo_history) == 1 and demo_history[0]["score"] == 5
 
 
 # =============================================================================
@@ -314,7 +350,7 @@ def test_ask_does_not_reindex_when_an_index_exists(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = tmp_path / "manifest.json"
-    manifest.write_text("{}", encoding="utf-8")
+    manifest.write_text(json.dumps(tutor.corpus_manifest()), encoding="utf-8")
     calls: list[str] = []
     monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
 
@@ -331,6 +367,51 @@ def test_ask_does_not_reindex_when_an_index_exists(
 
     assert app.main(["--ask", "q"]) == 0
     assert calls == ["ask"]
+
+
+@pytest.mark.core
+def test_ask_reindexes_when_a_lesson_changed_since_the_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F7 of the 2026-09-22 audit: an edited, added or removed lesson must be
+    picked up by --ask and the UI, not only by an explicit --reindex."""
+    manifest = tmp_path / "manifest.json"
+    stale = tutor.corpus_manifest()
+    first = next(iter(stale))
+    stale[first] = "0000000000000000"  # that lesson's content changed since indexing
+    manifest.write_text(json.dumps(stale), encoding="utf-8")
+    calls: list[str] = []
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
+
+    def fake_index_lessons(**_kwargs: object) -> dict[str, int]:
+        calls.append("index")
+        return {}
+
+    def fake_ask(question: str) -> dict[str, object]:
+        calls.append("ask")
+        return {"answer": "", "sources": []}
+
+    monkeypatch.setattr(tutor, "index_lessons", fake_index_lessons)
+    monkeypatch.setattr(tutor, "ask", fake_ask)
+
+    assert app.main(["--ask", "q"]) == 0
+    assert calls == ["index", "ask"]
+
+
+@pytest.mark.core
+def test_index_is_stale_reads_files_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    corpus = tmp_path / "corpus" / "c1" / "lessons"
+    corpus.mkdir(parents=True)
+    (corpus / "01-a.md").write_text("alpha", encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
+    assert tutor.index_is_stale(tmp_path / "corpus") is True  # no manifest yet
+    manifest.write_text(json.dumps(tutor.corpus_manifest(tmp_path / "corpus")), encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is False
+    (corpus / "01-a.md").write_text("alpha edited", encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is True
+    (corpus / "02-b.md").write_text("beta", encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is True
 
 
 @pytest.mark.rag

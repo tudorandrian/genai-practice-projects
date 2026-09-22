@@ -82,25 +82,50 @@ def _write_summary(results: list[DemoResult], out_path: Path) -> None:
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def tiers_from_args(argv: list[str]) -> set[str]:
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="demo")
     parser.add_argument(
         "--models", action="store_true", help="also run projects that need model weights"
     )
     parser.add_argument("--all", action="store_true", help="run every project (models + rag)")
-    args = parser.parse_args(argv)
-    tiers = {"core"}
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 if a selected project reports skipped (a tier not selected is fine)",
+    )
+    return parser
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    args = _parser().parse_args(argv)
+    args.tiers = {"core"}
     if args.models or args.all:
-        tiers.add("models")
+        args.tiers.add("models")
     if args.all:
-        tiers.add("rag")
+        args.tiers.add("rag")
+    return args
+
+
+def tiers_from_args(argv: list[str]) -> set[str]:
+    tiers: set[str] = parse_args(argv).tiers
     return tiers
 
 
 def main(argv: list[str] | None = None) -> int:
-    tiers = tiers_from_args(sys.argv[1:] if argv is None else argv)
-    results = run_demo(ENTRIES, tiers, REPO_ROOT / "output" / "demo-summary.md")
-    return 0 if all(r.status != "failed" for r in results) else 1
+    args = parse_args(sys.argv[1:] if argv is None else argv)
+    results = run_demo(ENTRIES, args.tiers, REPO_ROOT / "output" / "demo-summary.md")
+    if any(r.status == "failed" for r in results):
+        return 1
+    if args.strict:
+        # Paired by position, not by DemoResult.name: run_demo appends exactly one
+        # result per entry, in entry order (see run_demo), so strict mode does not
+        # depend on a project returning its own registry slug as its result name.
+        # A project that was selected and still reported `skipped` (no speech engine,
+        # a timeout, ...) means the run did not cover what it claims to cover.
+        for entry, result in zip(ENTRIES, results, strict=True):
+            if result.status == "skipped" and entry.tier in args.tiers:
+                return 1
+    return 0
 
 
 if __name__ == "__main__":

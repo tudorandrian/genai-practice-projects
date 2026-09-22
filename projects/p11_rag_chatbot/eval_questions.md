@@ -1,7 +1,8 @@
 # RAG evaluation questions
 
-Twelve grounded questions (answers exist in `data/`) plus one **trap** question whose
-answer is deliberately absent - it must trigger the refusal "I cannot find that
+Twelve grounded questions (answers exist in the sample corpus written by
+`uv run python -m projects.p11_rag_chatbot.synthetic_docs`) plus one **trap** question
+whose answer is deliberately absent - it must trigger the refusal "I cannot find that
 information in the documents." Run: `uv run p11-rag-chatbot -q "<question>"`.
 `rag_chatbot.load_eval_questions()` parses the twelve grounded rows (skipping the
 header, the separator row and the trap row) into `(question, expected_source)` pairs
