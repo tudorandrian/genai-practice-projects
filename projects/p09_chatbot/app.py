@@ -6,6 +6,7 @@ Flask JSON API that keeps conversation history, and an HTML/JS chat page.
 Run:
     uv run python -m projects.p09_chatbot.app              # http://127.0.0.1:5000
     uv run python -m projects.p09_chatbot.app --host 0.0.0.0
+        # listen on every interface: single user, trusted network only (see README's Limits)
 
 Endpoints
     GET  /          -> the chat page (templates/index.html)
@@ -19,7 +20,7 @@ monkeypatch of ``engine.reply`` (as opposed to a private copy bound by
 ``from engine import reply``) is visible here too.
 
 Binds to ``127.0.0.1`` by default; pass ``--host 0.0.0.0`` to listen on every
-interface.
+interface - single user, trusted network only (see the README's Limits).
 """
 
 from __future__ import annotations
