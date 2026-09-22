@@ -181,7 +181,8 @@ why `demo()` pins it.
   (which only reads RIFF via `scipy.io.wavfile`) never sees a mislabelled
   file; a compressed or unrecognized file instead raises
   `TTSEngineUnavailableError`, degrading `demo()` to `skipped`. The macOS
-  driver also writes asynchronously, so `generate()` waits (up to 60 s) until
+  driver also writes asynchronously, so `generate()` waits (up to 60 s,
+  configurable with the `P10_TTS_TIMEOUT_SECONDS` environment variable) until
   the file is long enough for its script and has stopped growing; a file
   that never gets there is deleted and the demo reports `skipped`.
 - **On Linux, `pyttsx3` needs `espeak-ng`** (`sudo apt-get install

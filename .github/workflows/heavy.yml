@@ -41,9 +41,13 @@ jobs:
       # step means all twelve ran. Linux stays permissive: P10's speech engine
       # (eSpeak, installed above) writes no audio on the GitHub Ubuntu runner, so
       # P10 reports `skipped` there; docs/release-gate.md A1 records it, and the
-      # uploaded summary shows it.
+      # uploaded summary shows it. macOS runs strict, with a longer speech-engine
+      # wait (P10_TTS_TIMEOUT_SECONDS) because the macOS runner has been recorded
+      # going past the 60s default (release-gate.md A1, run 35311307417).
       - run: uv run demo --all --strict
         if: runner.os == 'macOS'
+        env:
+          P10_TTS_TIMEOUT_SECONDS: "180"
       - run: uv run demo --all
         if: runner.os != 'macOS'
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

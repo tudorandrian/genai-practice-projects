@@ -457,6 +457,79 @@ def test_generate_times_out_waiting_for_audio_on_a_header_only_file(
     assert any("wait=60.00s" in line and f"polls={expected_polls}" in line for line in facts_lines)
 
 
+def test_generate_honours_the_p10_tts_timeout_env_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """P10_TTS_TIMEOUT_SECONDS, when set to a valid positive float, replaces
+    STABILIZE_TIMEOUT_SECONDS as the deadline - this is what lets the macOS
+    heavy CI job give the speech engine more than 60s without changing local
+    or Linux behaviour (which leave the variable unset)."""
+    monkeypatch.setenv("P10_TTS_TIMEOUT_SECONDS", "10")
+    header_only = _build_aiff_or_aifc(
+        _speech_like_samples(8.0)[:_HEADER_ONLY_FRAMES], aifc_compression=b"twos"
+    )
+    clock = _FakeClock()
+    monkeypatch.setitem(sys.modules, "pyttsx3", _fake_async_pyttsx3(header_only))
+
+    with pytest.raises(
+        synthetic_audio.TTSEngineUnavailableError,
+        match="timed out after 10.0s waiting for audio",
+    ) as excinfo:
+        synthetic_audio.generate(
+            tmp_path, only={"standup.wav"}, sleep=clock.sleep, monotonic=clock.monotonic
+        )
+
+    message = str(excinfo.value)
+    assert "10s timeout" in message
+    expected_polls = int(10.0 / synthetic_audio.STABILIZE_POLL_SECONDS) + 1
+    assert f"polls={expected_polls}" in message
+
+
+def test_generate_falls_back_to_the_default_timeout_on_an_invalid_env_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An unparsable or non-positive P10_TTS_TIMEOUT_SECONDS must not shorten
+    or disable the wait - it falls back to STABILIZE_TIMEOUT_SECONDS (60s),
+    same as when the variable is unset."""
+    monkeypatch.setenv("P10_TTS_TIMEOUT_SECONDS", "not-a-number")
+    header_only = _build_aiff_or_aifc(
+        _speech_like_samples(8.0)[:_HEADER_ONLY_FRAMES], aifc_compression=b"twos"
+    )
+    clock = _FakeClock()
+    monkeypatch.setitem(sys.modules, "pyttsx3", _fake_async_pyttsx3(header_only))
+
+    with pytest.raises(
+        synthetic_audio.TTSEngineUnavailableError,
+        match="timed out after 60.0s waiting for audio",
+    ) as excinfo:
+        synthetic_audio.generate(
+            tmp_path, only={"standup.wav"}, sleep=clock.sleep, monotonic=clock.monotonic
+        )
+
+    assert "60s timeout" in str(excinfo.value)
+
+
+def test_effective_stabilize_timeout_is_read_at_call_time_not_import(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Directly exercises _effective_stabilize_timeout's env parsing, since
+    generate()'s only path to that value is through a real wait."""
+    monkeypatch.delenv("P10_TTS_TIMEOUT_SECONDS", raising=False)
+    assert (
+        synthetic_audio._effective_stabilize_timeout() == synthetic_audio.STABILIZE_TIMEOUT_SECONDS
+    )
+
+    monkeypatch.setenv("P10_TTS_TIMEOUT_SECONDS", "180")
+    assert synthetic_audio._effective_stabilize_timeout() == 180.0
+
+    for invalid in ("0", "-5", "not-a-number", ""):
+        monkeypatch.setenv("P10_TTS_TIMEOUT_SECONDS", invalid)
+        assert (
+            synthetic_audio._effective_stabilize_timeout()
+            == synthetic_audio.STABILIZE_TIMEOUT_SECONDS
+        )
+
+
 def test_generate_deletes_the_file_when_waiting_for_audio_times_out(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

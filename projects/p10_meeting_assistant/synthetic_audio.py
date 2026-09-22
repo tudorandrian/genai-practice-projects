@@ -27,6 +27,7 @@ Run
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import struct
 import sys
@@ -665,12 +666,34 @@ def _ensure_facts_logging_visible(logger: logging.Logger | None = None) -> None:
 
 STABILIZE_POLL_SECONDS = 0.25  # how often to re-check the file's size
 STABILIZE_REQUIRED_STABLE_READS = 3  # consecutive unchanged reads before "final"
-STABILIZE_TIMEOUT_SECONDS = 60.0  # give up and treat the engine as broken
+STABILIZE_TIMEOUT_SECONDS = 60.0  # give up and treat the engine as broken; default and fallback
 # A conservative floor on synthesized speech: even fast, dense speech is
 # implausible under this many seconds per word. SAPI5 on Windows speaks the
 # 73-word standup script in about 34 s (about 0.47 s/word), well above it; a
 # header-only file (a few milliseconds) is far below it.
 MIN_SECONDS_PER_WORD = 0.1
+
+TTS_TIMEOUT_ENV_VAR = "P10_TTS_TIMEOUT_SECONDS"
+
+
+def _effective_stabilize_timeout() -> float:
+    """The timeout ``_wait_for_audio`` gives the speech engine, in seconds.
+
+    Reads ``P10_TTS_TIMEOUT_SECONDS`` each time it is called (not cached at
+    import) so a test can override it with ``monkeypatch.setenv``. Falls back
+    to ``STABILIZE_TIMEOUT_SECONDS`` when the variable is unset, not a valid
+    float, or not positive - keeping local runs and Linux CI unchanged.
+    """
+    raw = os.environ.get(TTS_TIMEOUT_ENV_VAR)
+    if raw is None:
+        return STABILIZE_TIMEOUT_SECONDS
+    try:
+        value = float(raw)
+    except ValueError:
+        return STABILIZE_TIMEOUT_SECONDS
+    if value <= 0:
+        return STABILIZE_TIMEOUT_SECONDS
+    return value
 
 
 @dataclass(frozen=True)
@@ -684,6 +707,7 @@ class WaitOutcome:
     facts: AudioFacts  # extract_audio_facts(raw)
     elapsed_seconds: float
     polls: int  # number of size reads taken
+    timeout_seconds: float  # the effective timeout this wait was given
 
 
 def _wait_for_audio(
@@ -697,8 +721,10 @@ def _wait_for_audio(
     its size unchanged for ``STABILIZE_REQUIRED_STABLE_READS`` consecutive
     reads *and* its measured duration at least ``min_duration_seconds``. A
     size-stable file below that floor keeps being polled - the engine may
-    simply not have written its first audio buffer yet. Gives up after
-    ``STABILIZE_TIMEOUT_SECONDS`` and returns ``ready=False``; the caller
+    simply not have written its first audio buffer yet. Gives up after the
+    effective timeout (``P10_TTS_TIMEOUT_SECONDS`` if set to a valid positive
+    float, otherwise ``STABILIZE_TIMEOUT_SECONDS``, see
+    ``_effective_stabilize_timeout``) and returns ``ready=False``; the caller
     raises. The file's bytes are re-read and re-parsed only when its size
     changes. On a platform where the file is already complete (Windows/
     Linux), this costs ``(STABILIZE_REQUIRED_STABLE_READS - 1) *
@@ -707,8 +733,9 @@ def _wait_for_audio(
     ``sleep``/``monotonic`` are injectable (default: the real ``time``
     functions) so tests can drive this without a real clock or real sleeps.
     """
+    timeout_seconds = _effective_stabilize_timeout()
     start = monotonic()
-    deadline = start + STABILIZE_TIMEOUT_SECONDS
+    deadline = start + timeout_seconds
     last_size = -1
     stable_reads = 0
     polls = 0
@@ -730,9 +757,13 @@ def _wait_for_audio(
                 raw = path.read_bytes()
                 facts = extract_audio_facts(raw)
             if size_stable and facts.duration_seconds >= min_duration_seconds:
-                return WaitOutcome(True, True, raw, facts, monotonic() - start, polls)
+                return WaitOutcome(
+                    True, True, raw, facts, monotonic() - start, polls, timeout_seconds
+                )
             if timed_out:
-                return WaitOutcome(False, size_stable, raw, facts, monotonic() - start, polls)
+                return WaitOutcome(
+                    False, size_stable, raw, facts, monotonic() - start, polls, timeout_seconds
+                )
         sleep(STABILIZE_POLL_SECONDS)
 
 
@@ -820,7 +851,9 @@ def generate(
       clean ``skipped``).
     - It is polled (``_wait_for_audio``) until its size stops changing *and*
       its duration reaches ``MIN_SECONDS_PER_WORD`` times its script's word
-      count, within ``STABILIZE_TIMEOUT_SECONDS``; on timeout,
+      count, within the effective timeout (``STABILIZE_TIMEOUT_SECONDS``,
+      overridable with ``P10_TTS_TIMEOUT_SECONDS``; see
+      ``_effective_stabilize_timeout``); on timeout,
       ``TTSEngineUnavailableError`` with the facts in the message.
     - One facts line (``AudioFacts.format`` plus the wait's elapsed time and
       poll count) is logged at INFO, and stored in ``facts_out`` if given.
@@ -902,7 +935,7 @@ def _finish_synthesized_files(
                     f"its size is stable but it stayed below the plausibility floor for its "
                     f"{word_count}-word script ({facts.duration_seconds:.3f}s < "
                     f"{min_duration:.3f}s minimum, {MIN_SECONDS_PER_WORD}s/word) for the whole "
-                    f"{STABILIZE_TIMEOUT_SECONDS:.0f}s timeout; {wait_line}; {facts.format(name)}"
+                    f"{outcome.timeout_seconds:.0f}s timeout; {wait_line}; {facts.format(name)}"
                 )
             raise TTSEngineUnavailableError(
                 f"'{name}' never finished writing: timed out after "
