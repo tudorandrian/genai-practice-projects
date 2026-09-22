@@ -41,7 +41,7 @@ uv sync --group models                                 # torch, transformers, gr
 uv run p10-meeting-assistant --demo                     # Whisper transcript + stub summary, writes output/
 uv run p10-meeting-assistant path/to/audio.wav          # transcribe + summarize one file
 uv run p10-meeting-assistant                             # Gradio UI, http://127.0.0.1:7860
-uv run p10-meeting-assistant --host 0.0.0.0              # UI: listen on every interface
+uv run p10-meeting-assistant --host 0.0.0.0              # listen on every interface: single user, trusted network only (see Limits)
 uv run pytest projects/p10_meeting_assistant -q          # fast tests, no weights needed
 ```
 

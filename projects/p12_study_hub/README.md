@@ -46,7 +46,7 @@ uv run p12-study-hub --dashboard                      # progress scan + chart
 uv run p12-study-hub --ask "what is a sentinel value?" # RAG tutor
 uv run p12-study-hub --reindex                         # rebuild the lesson index
 uv run p12-study-hub                                   # Gradio UI (3 tabs), http://127.0.0.1:7860
-uv run p12-study-hub --host 0.0.0.0                     # UI: listen on every interface
+uv run p12-study-hub --host 0.0.0.0                     # listen on every interface: single user, trusted network only (see Limits)
 uv run pytest projects/p12_study_hub -q                  # core tests, no rag group needed
 uv run pytest projects/p12_study_hub -m rag -q            # needs the rag group installed
 ```

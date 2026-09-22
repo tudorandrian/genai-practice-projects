@@ -19,11 +19,12 @@ build_chain(store, llm)   -> GroundedQA          # grounding prompt + source ret
 ask(qa, question)         -> {"answer","sources"}  # one question in, one grounded answer out
 ```
 
-The answer is generated **only** from the retrieved context: the grounding prompt
-instructs the model to answer exclusively from the supplied context and to reply
-with a fixed refusal string, `REFUSAL`, when the answer is not in it. Every answer
-also carries the file (and PDF page) it was retrieved from - the standard technique
-for reducing hallucinations and connecting an LLM to private data.
+The grounding prompt instructs the model to answer only from the retrieved
+context and to reply with a fixed refusal string, `REFUSAL`, when the answer is
+not in it. Every answer also lists the files (and PDF pages) whose chunks were
+retrieved for the question: that is *retrieved context*, the standard technique
+for connecting an LLM to private data, not a claim-by-claim verification of the
+answer against those passages (see "Limits").
 
 `synthetic_docs.py` generates a small, invented company corpus (`acme_handbook.pdf`,
 `engineering_notes.md`, `support_faq.txt`) with specific, checkable facts, and
@@ -168,6 +169,13 @@ answer; see "Design notes" for why `demo()` pins `stub`.
 
 ## Limits
 
+- **Sources are retrieved context, not verified support.** `ask()` attaches the
+  retrieved files to any non-refusal answer; nothing checks that the answer's
+  claims appear in them, so a model that ignores the prompt can still return an
+  unsupported answer with a source next to it. The `stub` provider echoes the
+  retrieved context and never refuses; the refusal behaviour is exercised only
+  by the real-LLM trap-question test. Treat a citation as "where to look", not
+  as proof.
 - **`ollama` and `openai` each need their own setup** (`ollama serve` + a pulled
   model, or an `OPENAI_API_KEY`). The `rag` tests and `demo()` force-pin `stub`;
   the `llm`-marked tests run the grounded answer and the trap-question refusal
@@ -185,7 +193,9 @@ answer; see "Design notes" for why `demo()` pins `stub`.
   chunk-size trade-off this surfaced.
 - **No authentication or rate limiting on the Gradio server.** `build_ui()` is a
   local demo UI, not hardened for public exposure; the CLI binds `127.0.0.1` by
-  default - pass `--host 0.0.0.0` to listen on every interface.
+  default - pass `--host 0.0.0.0` to listen on every interface. With one shared
+  server there is also no per-user isolation, so `--host 0.0.0.0` is for a
+  trusted network only.
 
 ## Datasets and licences
 

@@ -39,7 +39,7 @@ that a later patch could not reach.
 uv sync --group models                              # torch, transformers
 uv run p09-chatbot --demo                            # three-turn demo, writes output/
 uv run python -m projects.p09_chatbot.app            # chat UI, http://127.0.0.1:5000
-uv run python -m projects.p09_chatbot.app --host 0.0.0.0   # listen on every interface
+uv run python -m projects.p09_chatbot.app --host 0.0.0.0   # listen on every interface: single user, trusted network only (see Limits)
 uv run pytest projects/p09_chatbot -q                # fast tests, no weights needed
 ```
 
@@ -142,7 +142,9 @@ bot: ...
 - **Single shared history.** `app.history` is one global conversation list,
   which is fine for a single local user hitting one dev-server worker; a
   multi-user or production deployment would need per-session state (e.g. a
-  session id in the request, history keyed by it) instead.
+  session id in the request, history keyed by it) instead. With `--host
+  0.0.0.0`, two people on the network share one conversation and either can
+  `/reset` it; do not use that bind with more than one user.
 
 ## Limits
 
