@@ -37,7 +37,15 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with: { path: ~/.cache/huggingface, key: "hf-${{ runner.os }}-${{ hashFiles('uv.lock') }}" }
       - run: uv run pytest -m "models or rag or network" -q
+      # --strict: a selected demo that reports `skipped` fails the job, so a green
+      # step means all twelve ran. Linux stays permissive: P10's speech engine
+      # (eSpeak, installed above) writes no audio on the GitHub Ubuntu runner, so
+      # P10 reports `skipped` there; docs/release-gate.md A1 records it, and the
+      # uploaded summary shows it.
+      - run: uv run demo --all --strict
+        if: runner.os == 'macOS'
       - run: uv run demo --all
+        if: runner.os != 'macOS'
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with: { name: "demo-summary-${{ matrix.os }}", path: output/demo-summary.md }

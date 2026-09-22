@@ -126,10 +126,13 @@ Git ignores, so your data never overwrites the committed files.
 uv run demo              # P01-P07: offline and deterministic
 uv run demo --models     # adds P08-P10 (needs the models group)
 uv run demo --all        # adds P11-P12 (needs the rag group)
+uv run demo --all --strict  # also fail if a selected demo was skipped (what CI uses on macOS)
 ```
 
 The runner writes a summary table to `output/demo-summary.md`. LLM steps in the demos always
-use a deterministic stub, so the results do not depend on a running model.
+use a deterministic stub, so the results do not depend on a running model. A demo that cannot
+run on the machine (for example P10 without a speech engine) reports `skipped`; `--strict`
+turns that into a non-zero exit.
 
 ## Tests and quality checks
 
