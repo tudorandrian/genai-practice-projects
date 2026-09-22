@@ -2,20 +2,40 @@
 
 ## Unreleased
 
-- Ollama 0.34.2 (pinned by digest) in `compose.yaml` and `heavy.yml`.
-- The release gate records the publication: every item ticked, evidence from this repository.
-- P11's `--demo` writes its corpus to `data/demo/` and its index to `data/demo-index/`, and no
-  longer overwrites files or the index under `data/`; `synthetic_docs.write_all` refuses to
+## 1.2.0 - 2026-09-23
+
+Fixes from the audit of 2026-09-22. Two demos no longer modify user data, and the demo runner can
+now fail on skipped demos. No command-line flag was removed or renamed, and the results committed
+in `output/` are unchanged.
+
+### Fixed
+
+- P11: `--demo` writes its corpus to `data/demo/` and its index to `data/demo-index/`, and no
+  longer overwrites your files or your index under `data/`. `synthetic_docs.write_all` refuses to
   overwrite an existing file unless asked.
-- P12's `--demo` saves its session to `output/demo-history.json` instead of the user's
-  `output/history.json`; `--ask` and the UI re-embed changed lessons instead of answering from a
-  stale index.
-- `uv run demo --strict` fails when a selected demo reports `skipped`; the macOS heavy job uses it.
-- P10's speech-engine wait can be raised with `P10_TTS_TIMEOUT_SECONDS` (default 60 s); the macOS
+- P12: `--demo` saves its session to `output/demo-history.json`, so your `output/history.json` and
+  success rate are no longer inflated.
+- P12: `--ask` and the UI re-embed lessons that changed since the last index, instead of
+  answering from a stale index.
+
+### Added
+
+- `uv run demo --strict` fails when a demo from a selected tier reports `skipped`. The macOS heavy
+  job uses it.
+- P10's speech-engine wait can be raised with `P10_TTS_TIMEOUT_SECONDS` (default 60 s). The macOS
   heavy job sets 180.
-- The release gate records the closure of the 2026-09-22 audit (#5).
-- Documentation: P12's macOS limit is stated in the root README; P11 describes its sources as
-  retrieved context; every `--host 0.0.0.0` line warns that the servers are single-user.
+
+### Documentation
+
+- The root README states P12's macOS limit.
+- P11 describes its sources as retrieved context, not verified support.
+- The network-bind (`--host 0.0.0.0`) examples warn that the servers are single-user, for a
+  trusted network only.
+- The release gate records the publication and the closure of the audit (#5).
+
+### Maintenance
+
+- Ollama 0.34.2, pinned by digest, in `compose.yaml` and `heavy.yml`.
 
 ## 1.1.0 - 2026-09-16
 
