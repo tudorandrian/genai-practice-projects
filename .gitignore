@@ -11,6 +11,7 @@ htmlcov/
 .env
 .claude/
 .superpowers/
+/AUDIT_REPORT.md
 .vscode/
 .idea/
 # Generated artefacts: everything under any output/ except the two proof files
