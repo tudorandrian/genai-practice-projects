@@ -117,11 +117,14 @@ def main(argv: list[str] | None = None) -> int:
     if any(r.status == "failed" for r in results):
         return 1
     if args.strict:
-        selected = {e.slug for e in ENTRIES if e.tier in args.tiers}
+        # Paired by position, not by DemoResult.name: run_demo appends exactly one
+        # result per entry, in entry order (see run_demo), so strict mode does not
+        # depend on a project returning its own registry slug as its result name.
         # A project that was selected and still reported `skipped` (no speech engine,
         # a timeout, ...) means the run did not cover what it claims to cover.
-        if any(r.status == "skipped" and r.name in selected for r in results):
-            return 1
+        for entry, result in zip(ENTRIES, results, strict=True):
+            if result.status == "skipped" and entry.tier in args.tiers:
+                return 1
     return 0
 
 
