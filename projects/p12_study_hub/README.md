@@ -11,7 +11,8 @@ that answers questions grounded only in the lessons, with citations.
 `app.py` serves all three through one Gradio interface, or headless in a CLI.
 
 The three modules are coupled only through files - `output/history.json`
-(quiz_engine writes it, progress.py reads it), `corpus/` (all three read it),
+(quiz_engine writes it, progress.py reads it; `--demo` writes its own
+`output/demo-history.json` instead), `corpus/` (all three read it),
 `index/` (tutor.py's persistent Chroma store) - never by calling into each
 other's internals:
 
@@ -52,7 +53,9 @@ uv run pytest projects/p12_study_hub -m rag -q            # needs the rag group 
 
 `--verbose` logs at `INFO`; by default only the summary lines print. `--demo`
 builds the merged question bank from `corpus/`, runs a seeded 5-question
-session answered correctly, scans progress and saves `output/progress.png`,
+session answered correctly (saved to `output/demo-history.json`, so your
+own `history.json` and success rate are untouched), scans progress and
+saves `output/progress.png`,
 (re)indexes the lessons and asks one question with the `stub` provider
 (force-pinned - see "Design notes"), and writes `output/tutor_session.txt`
 and `output/metrics.txt`. `--ask` and the UI's Tutor tab build the lesson
@@ -107,7 +110,8 @@ own lesson text (`"STUB: " + context[:60]`, the same shape as P11's
 visibly derived from the actual retrieved prose, not a real generated
 answer; see "Design notes" for why `demo()` pins `stub` and for the context
 shape that keeps this slice on real lesson content, not a citation label.
-`output/progress.png`/`output/history.json` regenerate every run, never committed.
+`output/progress.png`/`output/history.json`/`output/demo-history.json`
+regenerate every run, never committed.
 
 ## Design notes
 
@@ -251,8 +255,9 @@ The embedding model is
 [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
 (Apache-2.0), downloaded on first use and cached locally; this project only
 performs inference against it. `index/` (the persisted Chroma store) and
-`output/history.json`/`output/progress.png`/`output/question-bank.json` are
-all regenerated artefacts, never tracked by git.
+`output/history.json`/`output/demo-history.json`/`output/progress.png`/
+`output/question-bank.json` are all regenerated artefacts, never tracked
+by git.
 
 ## Courses drawn on
 

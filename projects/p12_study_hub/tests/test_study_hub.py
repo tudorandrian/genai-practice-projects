@@ -13,6 +13,7 @@ Run
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -132,6 +133,41 @@ def test_history_round_trip(tmp_output: Path, monkeypatch: pytest.MonkeyPatch) -
     assert quiz_engine.load_history() == []
     quiz_engine.save_session({"score": 3, "total": 5, "questions": []})
     assert len(quiz_engine.load_history()) == 1
+
+
+@pytest.mark.core
+def test_save_session_to_an_explicit_path(
+    tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(quiz_engine, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(quiz_engine, "HISTORY_PATH", tmp_output / "history.json")
+    other = tmp_output / "demo-history.json"
+    quiz_engine.save_session({"score": 5, "total": 5, "questions": []}, path=other)
+    assert json.loads(other.read_text(encoding="utf-8"))[0]["score"] == 5
+    assert quiz_engine.load_history() == []  # the real history is untouched
+
+
+@pytest.mark.core
+def test_demo_does_not_append_to_the_real_quiz_history(
+    tmp_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F4 of the 2026-09-22 audit: every demo run used to add a perfect session to
+    output/history.json, inflating the user's own success rate."""
+    monkeypatch.setattr(quiz_engine, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(quiz_engine, "HISTORY_PATH", tmp_output / "history.json")
+    monkeypatch.setattr(quiz_engine, "BANK_PATH", tmp_output / "question-bank.json")
+    monkeypatch.setattr(app, "OUT_DIR", tmp_output)
+    monkeypatch.setattr(app, "DEMO_HISTORY_PATH", tmp_output / "demo-history.json")
+    monkeypatch.setattr(progress, "plot_progress", lambda pivot, path=None: tmp_output / "p.png")
+    monkeypatch.setattr(tutor, "index_lessons", lambda **_kw: {"total_files": 30})
+    monkeypatch.setattr(tutor, "ask", lambda q, provider=None: {"answer": "A", "sources": []})
+
+    app.demo()
+    app.demo()
+
+    assert quiz_engine.load_history() == []
+    demo_history = json.loads((tmp_output / "demo-history.json").read_text(encoding="utf-8"))
+    assert len(demo_history) == 1 and demo_history[0]["score"] == 5
 
 
 # =============================================================================

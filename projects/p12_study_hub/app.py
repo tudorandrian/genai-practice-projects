@@ -34,6 +34,9 @@ CORPUS_DIR = HERE / "corpus"
 OUT_DIR = HERE / "output"
 
 DEMO_QUESTION = "What does the missing-value lesson recommend for a skewed numeric column?"
+# demo()'s synthetic 5/5 session goes here, never into output/history.json: that
+# file is the user's own quiz record and feeds progress.success_rate().
+DEMO_HISTORY_PATH = OUT_DIR / "demo-history.json"
 
 
 # =============================================================================
@@ -200,7 +203,8 @@ def build_ui() -> Any:
 
 def demo() -> DemoResult:
     """Build the merged bank from the corpus, run a seeded 5-question session with
-    the correct answers, scan progress and save ``output/progress.png``, index the
+    the correct answers (saved to ``output/demo-history.json``, not the user's
+    ``history.json``), scan progress and save ``output/progress.png``, index the
     lessons and ask one question through the ``stub`` provider, and write
     ``output/tutor_session.txt`` and a deterministic ``output/metrics.txt``.
 
@@ -223,7 +227,8 @@ def demo() -> DemoResult:
     session = quiz_engine.build_session(questions, n=5, seed=42)
     answers = [q["correct"] for q in session]
     summary = quiz_engine._session_summary(session, answers)  # same-package helper
-    quiz_engine.save_session(summary)
+    DEMO_HISTORY_PATH.unlink(missing_ok=True)  # one session per run, never accumulating
+    quiz_engine.save_session(summary, path=DEMO_HISTORY_PATH)
 
     status_df = progress.scan_statuses(CORPUS_DIR)
     pivot = progress.aggregate(status_df)
