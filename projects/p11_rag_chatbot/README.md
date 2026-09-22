@@ -43,16 +43,23 @@ uv run pytest projects/p11_rag_chatbot -q                  # core tests, no rag 
 uv run pytest projects/p11_rag_chatbot -m rag -q           # full pipeline, needs the rag group
 ```
 
-`--verbose` logs at `INFO`; by default only the summary lines print. On a fresh
-clone `data/` is empty: run `--demo` (or `uv run python -m
-projects.p11_rag_chatbot.synthetic_docs`) once before `--reindex`, `-q`, the loop
-or `--ui`, which otherwise stop with a message saying so. `--demo`
-generates the synthetic corpus into `data/` (never tracked - see "Datasets and
-licences"), rebuilds the index, asks three questions with the `stub` provider
-(force-pinned - see "Design notes"), and writes `output/session.txt` and
-`output/metrics.txt`. Questions asked with `-q`, the loop or the UI are logged to
-`output/runs/session.txt` instead, which Git ignores, so questions about your own
-documents never reach the committed session file.
+`--verbose` logs at `INFO`; by default only the summary lines print. `--demo`
+generates the synthetic corpus into `data/demo/` and its index into
+`data/demo-index/` (both never tracked - see "Datasets and licences"), asks
+three questions with the `stub` provider (force-pinned - see "Design notes"),
+and writes `output/session.txt` and `output/metrics.txt`. It never reads,
+writes or indexes anything else under `data/`, so your own documents and
+your index survive it.
+
+To ask questions about your own documents, copy your PDF, Markdown or text
+files into `data/` and run `--reindex` once; `-q`, the loop and `--ui` then
+answer from them. On a fresh clone `data/` is empty and those commands stop
+with a message saying so; `uv run python -m
+projects.p11_rag_chatbot.synthetic_docs` writes the sample corpus into `data/`
+instead (it refuses to overwrite a file of yours with the same name). Questions
+asked with `-q`, the loop or the UI are logged to `output/runs/session.txt`,
+which Git ignores, so questions about your own documents never reach the
+committed session file.
 
 To run the CLI against a real LLM instead of the stub (`--demo` always pins
 `stub`):
@@ -185,9 +192,9 @@ answer; see "Design notes" for why `demo()` pins `stub`.
 There is no external dataset. `synthetic_docs.py`'s `HANDBOOK`/`ENGINEERING`/`FAQ`
 are hand-written, fixed text, written specifically for this repository, with
 facts invented for the exercise (a fictional company, "ACME Robotics").
-`write_all()` renders them into `data/acme_handbook.pdf` (via `fpdf2`, pure
-Python), `data/engineering_notes.md` and `data/support_faq.txt`; none of the
-three is ever tracked by git (`.gitignore`: `projects/p11_rag_chatbot/data/*`,
+`write_all()` renders them into `acme_handbook.pdf` (via `fpdf2`, pure Python),
+`engineering_notes.md` and `support_faq.txt`, under `data/demo/` for `demo()`
+and under `data/` for the seeding command; none of the three is ever tracked by git (`.gitignore`: `projects/p11_rag_chatbot/data/*`,
 with an exception for `data/.gitkeep`) - `demo()` and the `rag`-marked tests
 regenerate the corpus on demand instead of committing it.
 
