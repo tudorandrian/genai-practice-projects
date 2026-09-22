@@ -60,7 +60,8 @@ saves `output/progress.png`,
 (force-pinned - see "Design notes"), and writes `output/tutor_session.txt`
 and `output/metrics.txt`. `--ask` and the UI's Tutor tab build the lesson
 index first if it does not exist yet (the first question on a fresh clone
-takes longer).
+takes longer), and re-embed only the changed files when a lesson was added,
+edited or removed since; `--reindex` rebuilds it from scratch.
 
 To run the tutor against a real LLM instead of the stub (`--demo` always
 pins `stub`):

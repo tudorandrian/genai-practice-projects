@@ -162,10 +162,12 @@ def _tab_progress(gr: Any) -> None:
 
 
 def _ensure_lesson_index() -> None:
-    """Build the lesson index if it has never been built. Without this, a fresh clone's
-    first question runs against an empty store, finds nothing, and is refused as if
-    the lessons did not cover it."""
-    if not tutor.MANIFEST_PATH.exists():
+    """Build the lesson index if it has never been built, and bring it up to date
+    when a lesson was added, edited or removed since (incremental: only the changed
+    files are re-embedded). Without this, a fresh clone's first question runs
+    against an empty store, and an edited corpus keeps answering from stale text
+    until an explicit --reindex."""
+    if tutor.index_is_stale():
         tutor.index_lessons()
 
 

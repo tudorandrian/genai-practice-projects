@@ -350,7 +350,7 @@ def test_ask_does_not_reindex_when_an_index_exists(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = tmp_path / "manifest.json"
-    manifest.write_text("{}", encoding="utf-8")
+    manifest.write_text(json.dumps(tutor.corpus_manifest()), encoding="utf-8")
     calls: list[str] = []
     monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
 
@@ -367,6 +367,51 @@ def test_ask_does_not_reindex_when_an_index_exists(
 
     assert app.main(["--ask", "q"]) == 0
     assert calls == ["ask"]
+
+
+@pytest.mark.core
+def test_ask_reindexes_when_a_lesson_changed_since_the_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F7 of the 2026-09-22 audit: an edited, added or removed lesson must be
+    picked up by --ask and the UI, not only by an explicit --reindex."""
+    manifest = tmp_path / "manifest.json"
+    stale = tutor.corpus_manifest()
+    first = next(iter(stale))
+    stale[first] = "0000000000000000"  # that lesson's content changed since indexing
+    manifest.write_text(json.dumps(stale), encoding="utf-8")
+    calls: list[str] = []
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
+
+    def fake_index_lessons(**_kwargs: object) -> dict[str, int]:
+        calls.append("index")
+        return {}
+
+    def fake_ask(question: str) -> dict[str, object]:
+        calls.append("ask")
+        return {"answer": "", "sources": []}
+
+    monkeypatch.setattr(tutor, "index_lessons", fake_index_lessons)
+    monkeypatch.setattr(tutor, "ask", fake_ask)
+
+    assert app.main(["--ask", "q"]) == 0
+    assert calls == ["index", "ask"]
+
+
+@pytest.mark.core
+def test_index_is_stale_reads_files_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    corpus = tmp_path / "corpus" / "c1" / "lessons"
+    corpus.mkdir(parents=True)
+    (corpus / "01-a.md").write_text("alpha", encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    monkeypatch.setattr(tutor, "MANIFEST_PATH", manifest)
+    assert tutor.index_is_stale(tmp_path / "corpus") is True  # no manifest yet
+    manifest.write_text(json.dumps(tutor.corpus_manifest(tmp_path / "corpus")), encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is False
+    (corpus / "01-a.md").write_text("alpha edited", encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is True
+    (corpus / "02-b.md").write_text("beta", encoding="utf-8")
+    assert tutor.index_is_stale(tmp_path / "corpus") is True
 
 
 @pytest.mark.rag

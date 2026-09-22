@@ -282,6 +282,28 @@ def _diagnostic_snapshot(question: str, k: int = RELEVANCE_POOL_K) -> str:
     return "\n".join(lines)
 
 
+def corpus_manifest(corpus_dir: str | Path = CORPUS_DIR) -> dict[str, str]:
+    """``{relative POSIX path: content hash}`` for every lesson: exactly what
+    ``index_lessons`` records in ``manifest.json``. Pure file reads, so it is cheap
+    enough to run before every question (``index_is_stale``)."""
+    corpus_dir = Path(corpus_dir)
+    return {
+        str(p.relative_to(corpus_dir)).replace("\\", "/"): _hash(
+            p.read_text(encoding="utf-8", errors="replace")
+        )
+        for p in find_lessons(corpus_dir)
+    }
+
+
+def index_is_stale(corpus_dir: str | Path = CORPUS_DIR) -> bool:
+    """True when the persisted index does not describe the current lessons: no
+    manifest yet, or any lesson added, removed or edited since it was written."""
+    if not MANIFEST_PATH.exists():
+        return True
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    return manifest != corpus_manifest(corpus_dir)
+
+
 def index_lessons(reindex: bool = False, corpus_dir: str | Path = CORPUS_DIR) -> dict[str, int]:
     """(Re)index the lessons into persistent Chroma; incremental unless ``reindex``.
 
@@ -291,12 +313,7 @@ def index_lessons(reindex: bool = False, corpus_dir: str | Path = CORPUS_DIR) ->
 
     corpus_dir = Path(corpus_dir)
     lessons = find_lessons(corpus_dir)
-    current = {
-        str(p.relative_to(corpus_dir)).replace("\\", "/"): _hash(
-            p.read_text(encoding="utf-8", errors="replace")
-        )
-        for p in lessons
-    }
+    current = corpus_manifest(corpus_dir)
     manifest = (
         {}
         if reindex or not MANIFEST_PATH.exists()
