@@ -157,7 +157,9 @@ def demo() -> DemoResult:
         f"device={selected_device}",
         f"model={MODEL_NAME}",
     ]
-    (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "metrics.txt").write_text(
+        "\n".join(metrics_lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     seconds = time.perf_counter() - start
     figures = {"images": str(len(rows)), "device": selected_device, "model": MODEL_NAME}

@@ -373,7 +373,9 @@ def index_lessons(reindex: bool = False, corpus_dir: str | Path = CORPUS_DIR) ->
             "total_files": len(lessons),
         }
 
-    MANIFEST_PATH.write_text(json.dumps(current, ensure_ascii=False), encoding="utf-8")
+    MANIFEST_PATH.write_text(
+        json.dumps(current, ensure_ascii=False), encoding="utf-8", newline="\n"
+    )
     log.info("index_lessons: %s", report)
     return report
 
@@ -509,7 +511,7 @@ def main(argv: list[str] | None = None) -> int:
         runs_dir.mkdir(parents=True, exist_ok=True)
         result = ask(args.ask)
         print(f"\nQ: {args.ask}\nA: {result['answer']}\nSources: {', '.join(result['sources'])}")
-        with (runs_dir / "tutor_session.txt").open("a", encoding="utf-8") as handle:
+        with (runs_dir / "tutor_session.txt").open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(
                 f"Q: {args.ask}\nA: {result['answer']}\nSources: {', '.join(result['sources'])}\n\n"
             )

@@ -408,7 +408,7 @@ def write_metrics(
         profile.round(2).to_string(),
         "",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 # =============================================================================
@@ -476,7 +476,7 @@ def write_summary(results: list[dict[str, Any]], path: Path) -> None:
             f"{r['name']:<13}{r['n']:>7}{r['feats']:>6}{r['best_k']:>8}"
             f"{r['silhouette']:>12.4f}{r['pca2'] * 100:>9.1f}%{ari:>8}"
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_demo_metrics(result: dict[str, Any], path: Path) -> None:
@@ -485,7 +485,7 @@ def _write_demo_metrics(result: dict[str, Any], path: Path) -> None:
     lines = [f"k={result['best_k']}", f"silhouette={result['silhouette']:.3f}"]
     if result["ari"] is not None:
         lines.append(f"ground_truth_agreement={result['ari']:.3f}")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def demo() -> DemoResult:

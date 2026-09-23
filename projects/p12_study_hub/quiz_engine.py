@@ -72,7 +72,9 @@ def build_bank_from_corpus(
     }
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    out_path.write_text(
+        json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
+    )
     return out_path
 
 
@@ -141,7 +143,9 @@ def save_session(summary: dict[str, Any], path: str | Path | None = None) -> Non
     path.parent.mkdir(parents=True, exist_ok=True)
     history = load_history(path)
     history.append(summary)
-    path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(
+        json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n"
+    )
 
 
 def _session_summary(session: list[Question], answers: list[Any]) -> dict[str, Any]:

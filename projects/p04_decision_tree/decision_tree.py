@@ -435,14 +435,14 @@ def write_metrics(
         "Decision rules - export_text (max_depth=4):",
         rules,
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_rules(rules: str, path: Path) -> None:
     """Standalone rules-only export - the same text embedded in metrics.txt,
     written on its own so a rule set can be diffed or read without the rest."""
     text = rules if rules.endswith("\n") else rules + "\n"
-    path.write_text(text, encoding="utf-8")
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 # =============================================================================
@@ -545,7 +545,7 @@ def write_summary(results: list[dict[str, str | int | float]], path: Path) -> No
             f"{r['name']:<15}{r['n']:>7}{r['classes']:>9}{r['feats']:>7}"
             f"{r['acc4']:>10.4f}{r['acc3']:>10.4f}"
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_demo_metrics(results: list[dict[str, str | int | float]], path: Path) -> None:
@@ -555,7 +555,7 @@ def _write_demo_metrics(results: list[dict[str, str | int | float]], path: Path)
     for r in results:
         lines.append(f"{r['name']}_acc4={r['acc4']:.3f}")
         lines.append(f"{r['name']}_acc3={r['acc3']:.3f}")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def demo() -> DemoResult:

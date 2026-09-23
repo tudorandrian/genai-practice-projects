@@ -99,8 +99,8 @@ def write_all(folder: str | Path, *, overwrite: bool = False) -> dict[str, Path]
                 "rename your file(s), or pass overwrite=True"
             )
     _write_pdf(HANDBOOK, paths["acme_handbook.pdf"])
-    paths["engineering_notes.md"].write_text(ENGINEERING, encoding="utf-8")
-    paths["support_faq.txt"].write_text(FAQ, encoding="utf-8")
+    paths["engineering_notes.md"].write_text(ENGINEERING, encoding="utf-8", newline="\n")
+    paths["support_faq.txt"].write_text(FAQ, encoding="utf-8", newline="\n")
     for name in paths:  # log the filename only - the path is a local absolute path
         log.info("write_all: wrote %s", name)
     return paths

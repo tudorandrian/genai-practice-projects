@@ -267,13 +267,17 @@ def demo() -> DemoResult:
         transcript.append("")
     if transcript and transcript[-1] == "":
         transcript.pop()  # no trailing blank line before the final newline
-    (OUT_DIR / "curl_demo.txt").write_text("\n".join(transcript) + "\n", encoding="utf-8")
+    (OUT_DIR / "curl_demo.txt").write_text(
+        "\n".join(transcript) + "\n", encoding="utf-8", newline="\n"
+    )
 
     metrics_lines = [
         f"lexicon_size={len(LEXICON)}",
         f"requests={len(DEMO_SENTENCES)}",
     ]
-    (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "metrics.txt").write_text(
+        "\n".join(metrics_lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     seconds = time.perf_counter() - start
     figures = {

@@ -199,7 +199,7 @@ def _write_curl_demo(client: Any, app_module: Any) -> None:
     lines.append("$ curl -s -o /dev/null -w 'GET / -> HTTP %{http_code}\\n' http://127.0.0.1:5000/")
     lines.append(f"GET / -> HTTP {client.get('/').status_code}")
 
-    (OUT_DIR / "curl_demo.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "curl_demo.txt").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     app_module.history.clear()
 
 
@@ -242,7 +242,7 @@ def demo() -> DemoResult:
     if transcript and transcript[-1] == "":
         transcript.pop()
     (OUT_DIR / "conversation_transcript.txt").write_text(
-        "\n".join(transcript) + "\n", encoding="utf-8"
+        "\n".join(transcript) + "\n", encoding="utf-8", newline="\n"
     )
 
     _write_curl_demo(client, app_module)
@@ -251,7 +251,9 @@ def demo() -> DemoResult:
         f"turns={len(DEMO_TURNS)}",
         f"model={MODEL_NAME}",
     ]
-    (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "metrics.txt").write_text(
+        "\n".join(metrics_lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     seconds = time.perf_counter() - start
     figures = {

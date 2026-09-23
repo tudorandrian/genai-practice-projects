@@ -204,7 +204,7 @@ def export(df: pd.DataFrame, out_dir: str, stem: str = "clean") -> list[str]:
     written: list[str] = []
 
     csv_path = out / f"{stem}.csv"
-    df.to_csv(csv_path, index=False)
+    df.to_csv(csv_path, index=False, lineterminator="\n")
     written.append(str(csv_path))
 
     json_path = out / f"{stem}.json"
@@ -264,7 +264,7 @@ def write_report(
     lines.append("Final dtypes:")
     lines.append(after["dtypes"].to_string())
 
-    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     return str(report_path)
 
 
@@ -277,7 +277,7 @@ def _write_metrics(report: dict[str, Any], path: Path) -> None:
         f"missing_after={report['missing_after']}",
         f"files_written={len(report['files'])}",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_demo_summary(report: dict[str, Any], path: Path) -> None:
@@ -292,7 +292,7 @@ def _write_demo_summary(report: dict[str, Any], path: Path) -> None:
         f"  missing_after: {report['missing_after']}",
         "  wrote: output/",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 # =============================================================================

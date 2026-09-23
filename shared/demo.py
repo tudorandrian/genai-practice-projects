@@ -119,7 +119,7 @@ def _write_summary(results: list[DemoResult], out_path: Path) -> None:
         lines.append(f"| {r.name} | {r.status} | {r.seconds} | {figures} | {_cell(r.note)} |")
     ok = sum(r.status == "ok" for r in results)
     lines += ["", f"{ok}/{len(results)} ok"]
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _parser() -> argparse.ArgumentParser:

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+
+- Every project writes its text output with LF line endings on every OS. On Windows the demos
+  wrote CRLF, so with git set to check files out as LF (`core.autocrlf=input` or `false`) every
+  `uv run demo` made the committed proofs look modified and `release_check` failed
+  `metrics-fresh`. A core test now rejects any text write without an explicit newline.
+
 ## 1.2.1 - 2026-09-23
 
 Fixes from a first-time-user run of 1.2.0 from a fresh clone. No command-line flag was removed or

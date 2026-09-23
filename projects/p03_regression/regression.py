@@ -301,7 +301,7 @@ def write_metrics(
     lines.append("")
     lines.append("Note: features standardized (fit on train only); coefficients are")
     lines.append("directly comparable across features in units of target-per-1-SD.")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def plot_predicted_vs_actual(
@@ -383,7 +383,7 @@ def write_summary(results: list[dict[str, str | int | float]], path: Path) -> No
             f"{r['name']:<12}{r['n']:>7}{r['p']:>4}"
             f"{r['MAE']:>12.3f}{r['RMSE']:>12.3f}{r['R2']:>8.3f}"
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_demo_metrics(results: list[dict[str, str | int | float]], path: Path) -> None:
@@ -393,7 +393,7 @@ def _write_demo_metrics(results: list[dict[str, str | int | float]], path: Path)
     for r in results:
         lines.append(f"{r['name']}_r2={r['R2']:.3f}")
         lines.append(f"{r['name']}_mae={r['MAE']:.3f}")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def demo() -> DemoResult:

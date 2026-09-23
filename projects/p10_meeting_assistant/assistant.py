@@ -412,8 +412,12 @@ def summarize_structured(transcript: str) -> str:
 
 def _write_outputs(transcript: str, summary: str, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "transcript.txt").write_text(transcript.rstrip("\n") + "\n", encoding="utf-8")
-    (out_dir / "summary.txt").write_text(summary.rstrip("\n") + "\n", encoding="utf-8")
+    (out_dir / "transcript.txt").write_text(
+        transcript.rstrip("\n") + "\n", encoding="utf-8", newline="\n"
+    )
+    (out_dir / "summary.txt").write_text(
+        summary.rstrip("\n") + "\n", encoding="utf-8", newline="\n"
+    )
     log.info("wrote transcript.txt and summary.txt to %s", out_dir)
 
 
@@ -552,7 +556,9 @@ def demo() -> DemoResult:
     _write_outputs(transcript, summary, OUT_DIR)
     sections = summary.count("## ")
     metrics_lines = ["provider=stub", f"words={words}", f"sections={sections}"]
-    (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "metrics.txt").write_text(
+        "\n".join(metrics_lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     seconds = time.perf_counter() - start
     figures = {"provider": "stub", "words": str(words), "sections": str(sections)}

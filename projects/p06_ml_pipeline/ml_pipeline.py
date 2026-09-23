@@ -405,7 +405,7 @@ def write_metrics(
         f"{'PASS' if roundtrip_ok else 'FAIL'}",
         "",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_model_card(
@@ -461,7 +461,7 @@ def write_model_card(
         f"({sklearn.__version__}); do not load it with a different one.",
         "",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 # =============================================================================
@@ -557,7 +557,7 @@ def write_summary(results: list[dict[str, Any]], path: Path) -> None:
     lines = ["ML PIPELINE - CROSS-DATASET SUMMARY (RF vs LR)", "=" * 60, header, "-" * 60]
     for r in results:
         lines.append(f"{r['dataset']:<18}{r['winner']:<22}{r['f1']:>8.4f}{r['roc_auc']:>10.4f}")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_demo_metrics(result: dict[str, Any], path: Path) -> None:
@@ -568,7 +568,7 @@ def _write_demo_metrics(result: dict[str, Any], path: Path) -> None:
         f"f1={result['f1']:.3f}",
         f"roc_auc={result['roc_auc']:.3f}",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def demo() -> DemoResult:
