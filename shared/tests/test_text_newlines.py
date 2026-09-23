@@ -4,6 +4,7 @@ git line-ending setting, so every text write is required to pin `newline="\n"` e
 from __future__ import annotations
 
 import ast
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -83,3 +84,25 @@ def test_write_text_with_explicit_newline_never_emits_crlf(tmp_path: Path) -> No
     path = tmp_path / "proof.txt"
     path.write_text("a\nb\n", encoding="utf-8", newline="\n")
     assert b"\r\n" not in path.read_bytes()
+
+
+def test_every_committed_proof_is_checked_out_as_lf() -> None:
+    """The writes above only keep proofs byte-identical if checkout also yields LF;
+    `.gitattributes` pins that, whatever the local `core.autocrlf`."""
+    proofs = subprocess.run(
+        ["git", "ls-files", "--", "projects/*/output/*.txt"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+    assert proofs, "no committed proofs found"
+    attrs = subprocess.run(
+        ["git", "check-attr", "eol", "--", *proofs],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+    not_lf = [line for line in attrs if not line.endswith(": eol: lf")]
+    assert not not_lf, "; ".join(not_lf)

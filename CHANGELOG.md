@@ -4,10 +4,11 @@
 
 ### Fixed
 
-- Every project writes its text output with LF line endings on every OS. On Windows the demos
-  wrote CRLF, so with git set to check files out as LF (`core.autocrlf=input` or `false`) every
-  `uv run demo` made the committed proofs look modified and `release_check` failed
-  `metrics-fresh`. A core test now rejects any text write without an explicit newline.
+- Every project writes its text output with LF line endings, and a new `.gitattributes` checks the
+  committed proofs out as LF whatever the local `core.autocrlf`. Before, on Windows, a demo run left
+  the proofs looking modified under some git line-ending settings (CRLF output against LF
+  checkouts, or the reverse), and `release_check` failed `metrics-fresh`. Core tests now reject any
+  text write without an explicit newline and any committed proof not checked out as LF.
 
 ## 1.2.1 - 2026-09-23
 

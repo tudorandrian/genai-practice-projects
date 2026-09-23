@@ -1,0 +1,3 @@
+# Committed demo proofs are LF in every checkout, whatever the local core.autocrlf, so
+# a demo run (which writes LF) leaves them byte-identical.
+projects/*/output/*.txt text eol=lf
