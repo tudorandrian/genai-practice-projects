@@ -38,9 +38,12 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
 
 MODEL_NAME = "Salesforce/blip-image-captioning-base"
-# The Hub commit the committed proofs were produced with. Pinned so that a re-published
-# model cannot silently change results or the code that loads it; bump it deliberately.
-MODEL_REVISION = "82a37760796d32b1411fe092ab5d4e227313294b"
+# The Hub commit the model loads from: the Hub's own `safetensors` conversion (refs/pr/52,
+# by SFconvertbot), a direct child of 82a3776 that only adds model.safetensors with
+# identical tensors. Pinning it (not 82a3776, which has only pytorch_model.bin) keeps
+# transformers from fetching weights from an unpinned ref and downloading them twice.
+# Bump it deliberately.
+MODEL_REVISION = "4c26dfece70e02028433dd192458a54b390b85d2"
 MAX_NEW_TOKENS = 50
 
 # Module-level singletons so the weights load exactly once per process.
@@ -77,6 +80,9 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
         )
 
         revision = MODEL_REVISION if model_name == MODEL_NAME else "main"
+        # The pinned default must load its own safetensors; another model keeps the
+        # library default (None), which may fall back to pytorch_model.bin.
+        use_safetensors = True if model_name == MODEL_NAME else None
         _PROCESSOR = BlipProcessor.from_pretrained(model_name, revision=revision)
         # Explicitly `Any`, not the inferred `BlipForConditionalGeneration`: with
         # transformers installed, its `from_pretrained`/`nn.Module.to()` overloads
@@ -86,7 +92,7 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
         # as unused in the other environment. Widening the type here avoids the
         # overload check altogether, so no ignore comment is needed in either case.
         blip_model: Any = BlipForConditionalGeneration.from_pretrained(
-            model_name, revision=revision
+            model_name, revision=revision, use_safetensors=use_safetensors
         )
         _MODEL = blip_model.to(device())
     return _PROCESSOR, _MODEL

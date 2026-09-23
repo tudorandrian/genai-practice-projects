@@ -11,6 +11,8 @@ Run:
 from __future__ import annotations
 
 import json
+import sys
+import types
 from collections.abc import Callable, Iterator
 from typing import Any
 
@@ -252,3 +254,33 @@ def test_index_serves_html(client: FlaskClient) -> None:
     assert r.status_code == 200
     assert "text/html" in r.content_type
     assert b"conversation" in r.data  # the chat container id
+
+
+@pytest.mark.core
+def test_load_model_reads_safetensors_at_the_pinned_revision(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str, dict[str, object]]] = []
+
+    class Fake:
+        @classmethod
+        def from_pretrained(cls, name: str, **kwargs: object) -> Fake:
+            calls.append((cls.__name__, name, kwargs))
+            return cls()
+
+    fake = types.SimpleNamespace(
+        AutoTokenizer=type("AutoTokenizer", (Fake,), {}),
+        AutoModelForSeq2SeqLM=type("AutoModelForSeq2SeqLM", (Fake,), {}),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    monkeypatch.setattr(engine, "_TOKENIZER", None)
+    monkeypatch.setattr(engine, "_MODEL", None)
+
+    engine.load_model()
+
+    assert engine.MODEL_REVISION == "a5c7ef0e7e1109ef7b4af6f03841305d7d46fa59"
+    assert calls[1] == (
+        "AutoModelForSeq2SeqLM",
+        engine.MODEL_NAME,
+        {"revision": engine.MODEL_REVISION, "use_safetensors": True},
+    )

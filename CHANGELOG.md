@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+
+- P08 and P09 pin the Hub's safetensors conversion of their models (identical tensors) and load
+  it explicitly. Before, the pinned commits had only `pytorch_model.bin`, so transformers also
+  fetched `model.safetensors` from an unpinned conversion branch: the weights in use were not
+  the pinned ones, and every new user downloaded them twice (BLIP 1.9 GB, BlenderBot 1.4 GB).
+
 ## 1.2.0 - 2026-09-23
 
 Fixes from the audit of 2026-09-22. Two demos no longer modify user data, and the demo runner can
