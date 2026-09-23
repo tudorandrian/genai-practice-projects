@@ -38,7 +38,9 @@ MODEL_NAME = "facebook/blenderbot-400M-distill"
 # by SFconvertbot), a direct child of eaaf64e that only adds model.safetensors with
 # identical tensors. Pinning it (not eaaf64e, which has only pytorch_model.bin) keeps
 # transformers from fetching weights from an unpinned ref and downloading them twice.
-# Bump it deliberately.
+# This commit lives on the Hub conversion PR ref (refs/pr/7), not on `main`, on purpose.
+# Bump it deliberately, and only to a commit that ships model.safetensors -
+# shared/tests/test_model_pins.py checks that.
 MODEL_REVISION = "a5c7ef0e7e1109ef7b4af6f03841305d7d46fa59"
 MAX_NEW_TOKENS = 60
 HISTORY_WINDOW = 6  # keep the last N turns as context

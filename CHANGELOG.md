@@ -10,8 +10,9 @@
   the pinned ones, and every new user downloaded them twice (BLIP 1.9 GB, BlenderBot 1.4 GB).
 - `uv run demo --models` or `--all` without the matching dependency group now reports each
   affected project as `skipped` with the `uv sync --group ...` command to run, instead of
-  `ModuleNotFoundError` or, for P09, `KeyError: 'reply'`. P09's demo also raises the real error
-  when the model cannot load or a reply fails.
+  `ModuleNotFoundError` or, for P09, `KeyError: 'reply'`. P09's demo now raises the model's own
+  error when it cannot load, and a clear error with the HTTP status (the cause is logged) when
+  a reply fails, instead of `KeyError: 'reply'`.
 - `release_check`: `metrics-fresh` passes after `uv run demo --all` leaves the committed proofs
   unchanged, instead of always reporting `skip` once code has changed after the proofs. It fails
   if the demo changed a committed proof.

@@ -163,9 +163,11 @@ def _output_is_clean(root: Path, project: Path) -> bool:
 
 
 def check_metrics_fresh(root: Path) -> Check:
-    """Every project must have a committed `output/metrics.txt` (fail if missing); a
-    proof whose last commit predates the project's last code commit is reported as a
-    `skip` naming the required action, never a `fail`.
+    """Every project must have a committed `output/metrics.txt`: fail if it is missing,
+    or if a `uv run demo` run newer than the project's last code commit changed a stale
+    proof. A stale proof (its last commit predates the project's last code commit)
+    passes once a later demo run reproduces it; otherwise it is reported as a `skip`
+    naming the required action.
 
     Git commit history, not `Path.stat().st_mtime`, is what "predates" means here: a
     fresh clone (or CI checkout) writes every tracked file to disk in whatever order
@@ -176,9 +178,10 @@ def check_metrics_fresh(root: Path) -> Check:
     change can leave a project's output byte-identical, and git records no new commit
     for an unchanged file. The proof's commit timestamp then stays behind the code's
     permanently, with no honest action able to advance it - "touching" the file without
-    a real content change would only game the check. So a stale timestamp is real evidence
-    worth surfacing (as `skip`, with the action to take), but a missing proof is the
-    only state this check can call an unambiguous defect.
+    a real content change would only game the check. So a stale timestamp alone is real
+    evidence worth surfacing (as `skip`, with the action to take), not by itself an
+    unambiguous defect; it becomes one only once a demo run reproduces it and still
+    leaves the committed proof different from what the code now produces.
 
     A stale timestamp is cleared by evidence instead: a `uv run demo` summary written
     after the project's last code commit that lists the project as `ok`, with no tracked

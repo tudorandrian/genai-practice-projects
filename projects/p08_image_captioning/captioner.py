@@ -42,7 +42,9 @@ MODEL_NAME = "Salesforce/blip-image-captioning-base"
 # by SFconvertbot), a direct child of 82a3776 that only adds model.safetensors with
 # identical tensors. Pinning it (not 82a3776, which has only pytorch_model.bin) keeps
 # transformers from fetching weights from an unpinned ref and downloading them twice.
-# Bump it deliberately.
+# This commit lives on the Hub conversion PR ref (refs/pr/52), not on `main`, on purpose.
+# Bump it deliberately, and only to a commit that ships model.safetensors -
+# shared/tests/test_model_pins.py checks that.
 MODEL_REVISION = "4c26dfece70e02028433dd192458a54b390b85d2"
 MAX_NEW_TOKENS = 50
 
