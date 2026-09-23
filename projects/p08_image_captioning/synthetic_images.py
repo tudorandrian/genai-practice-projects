@@ -75,7 +75,7 @@ def generate(out_dir: Path = OUT) -> Path:
     _text_image().save(out_dir / "text.png")
     _transparent().save(out_dir / "transparent.png")  # RGBA
     _grayscale().save(out_dir / "gradient_gray.jpg")  # grayscale
-    (out_dir / "not_an_image.txt").write_text("not an image\n", encoding="utf-8")
+    (out_dir / "not_an_image.txt").write_text("not an image\n", encoding="utf-8", newline="\n")
     return out_dir
 
 

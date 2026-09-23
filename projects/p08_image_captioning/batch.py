@@ -59,7 +59,7 @@ def caption_folder(folder: Path, output_path: Path) -> list[tuple[str, str]]:
             log.warning("skip: %s: not a valid image (%s)", path.name, exc)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as handle:
+    with open(output_path, "w", encoding="utf-8", newline="\n") as handle:
         for name, text in results:
             handle.write(f"{name}: {text}\n")
     log.info("wrote %d captions to %s", len(results), output_path)

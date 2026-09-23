@@ -418,7 +418,7 @@ def _write_session(question: str, result: dict[str, Any], session_path: Path | N
     # end-of-file-fixer pre-commit hook, so the separator is a *prefix* on every
     # entry but the first rather than a suffix on every entry.
     prefix = "\n" if session_path.exists() and session_path.stat().st_size > 0 else ""
-    with session_path.open("a", encoding="utf-8") as handle:
+    with session_path.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(prefix + entry)
 
 
@@ -495,7 +495,9 @@ def demo() -> DemoResult:
         _write_session(question, ask(qa, question), session_path)
 
     metrics_lines = [f"chunks={len(chunks)}", "provider=stub", f"questions={len(questions)}"]
-    (OUT_DIR / "metrics.txt").write_text("\n".join(metrics_lines) + "\n", encoding="utf-8")
+    (OUT_DIR / "metrics.txt").write_text(
+        "\n".join(metrics_lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
     seconds = time.perf_counter() - start
     figures = {"chunks": str(len(chunks)), "provider": "stub", "questions": str(len(questions))}

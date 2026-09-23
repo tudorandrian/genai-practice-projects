@@ -391,7 +391,9 @@ def assemble(
 
 def write_bank(bank: Bank, out_path: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(bank, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    out_path.write_text(
+        json.dumps(bank, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 def _write_summary(bank: Bank, path: Path) -> None:
@@ -405,7 +407,7 @@ def _write_summary(bank: Bank, path: Path) -> None:
             f"  - {unit['source_file']}: {c['multiple_choice']} MC, "
             f"{c['true_false']} T/F, {c['open_ended']} OE"
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 # ---------------------------------------------------------------------------
@@ -481,7 +483,7 @@ def demo() -> DemoResult:
 
     for stem in ("e00_valid_baseline", "e15_multi_select_valid"):
         text = (fixtures / f"{stem}.md").read_text(encoding="utf-8")
-        (demo_dir / f"{stem}.md").write_text(text, encoding="utf-8")
+        (demo_dir / f"{stem}.md").write_text(text, encoding="utf-8", newline="\n")
 
     out_path = output_dir / "question-bank.json"
     rc = run(demo_dir, out_path, check_only=False, course_id="p02-demo")
@@ -505,7 +507,7 @@ def _write_metrics(figures: dict[str, int], path: Path) -> None:
     """Deterministic figures-only proof file: no timestamps, no absolute paths."""
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"{key}={value}" for key, value in figures.items()]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

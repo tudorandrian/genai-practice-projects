@@ -4,6 +4,7 @@
 .*
 !.git
 !.github
+!.gitattributes
 !.gitignore
 !.gitleaks.toml
 !.pre-commit-config.yaml

@@ -240,7 +240,7 @@ def demo() -> DemoResult:
     session_path = OUT_DIR / "tutor_session.txt"
     session_path.unlink(missing_ok=True)
     result = tutor.ask(DEMO_QUESTION, provider="stub")
-    with session_path.open("a", encoding="utf-8") as handle:
+    with session_path.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(
             f"Q: {DEMO_QUESTION}\nA: {result['answer']}\nSources: {', '.join(result['sources'])}\n"
         )
@@ -252,7 +252,9 @@ def demo() -> DemoResult:
         "provider": "stub",
     }
     (OUT_DIR / "metrics.txt").write_text(
-        "\n".join(f"{key}={value}" for key, value in figures.items()) + "\n", encoding="utf-8"
+        "\n".join(f"{key}={value}" for key, value in figures.items()) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
     seconds = time.perf_counter() - start
