@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.1 - 2026-09-23
+
+Fixes from a first-time-user run of 1.2.0 from a fresh clone. No command-line flag was removed or
+renamed, and the results committed in `output/` are unchanged.
+
 ### Fixed
 
 - P08 and P09 pin the Hub's safetensors conversion of their models (identical tensors) and load
