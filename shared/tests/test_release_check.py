@@ -120,6 +120,77 @@ def test_metrics_fresh_reports_a_stale_proof_as_skip_with_the_action_to_take(
     assert "git status" in result.detail
 
 
+def _stale_project(tmp_path: Path, name: str) -> Path:
+    project = tmp_path / "projects" / name
+    (project / "output").mkdir(parents=True)
+    (project / "app.py").write_text("x = 1\n", encoding="utf-8")
+    (project / "output" / "metrics.txt").write_text("ok\n", encoding="utf-8")
+    return project
+
+
+def _code_newer_than_proof(_root: Path, paths: list[Path]) -> int:
+    return 200 if any(p.suffix == ".py" for p in paths) else 100
+
+
+def test_metrics_fresh_passes_a_stale_proof_that_a_later_demo_run_reproduced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Fresh-clone test 2026-09-23: after `uv run demo --all` and a clean `git status`
+    # the check still said SKIP for all twelve projects - it could never pass.
+    _stale_project(tmp_path, "p99_stale")
+    monkeypatch.setattr(release_check, "_last_commit_epoch", _code_newer_than_proof)
+    monkeypatch.setattr(release_check, "_demo_run_evidence", lambda _r: (300, {"p99-stale": "ok"}))
+    monkeypatch.setattr(release_check, "_output_is_clean", lambda _r, _p: True)
+    assert release_check.check_metrics_fresh(tmp_path).status == "pass"
+
+
+def test_metrics_fresh_fails_when_the_demo_changed_a_committed_proof(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _stale_project(tmp_path, "p99_stale")
+    monkeypatch.setattr(release_check, "_last_commit_epoch", _code_newer_than_proof)
+    monkeypatch.setattr(release_check, "_demo_run_evidence", lambda _r: (300, {"p99-stale": "ok"}))
+    monkeypatch.setattr(release_check, "_output_is_clean", lambda _r, _p: False)
+    result = release_check.check_metrics_fresh(tmp_path)
+    assert result.status == "fail"
+    assert "p99_stale" in result.detail
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [(150, {"p99-stale": "ok"}), (300, {"p99-stale": "skipped"}), (0, {})],
+    ids=["demo-older-than-code", "project-not-ok", "no-summary"],
+)
+def test_metrics_fresh_still_skips_without_valid_demo_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, evidence: tuple[int, dict[str, str]]
+) -> None:
+    _stale_project(tmp_path, "p99_stale")
+    monkeypatch.setattr(release_check, "_last_commit_epoch", _code_newer_than_proof)
+    monkeypatch.setattr(release_check, "_demo_run_evidence", lambda _r: evidence)
+    monkeypatch.setattr(release_check, "_output_is_clean", lambda _r, _p: True)
+    assert release_check.check_metrics_fresh(tmp_path).status == "skip"
+
+
+def test_demo_run_evidence_reads_the_summary_the_demo_runner_writes(tmp_path: Path) -> None:
+    # Round trip through the real writer, so a format change in shared/demo.py breaks here.
+    from shared import demo
+
+    demo._write_summary(
+        [demo.DemoResult("p01-mini-etl", "ok"), demo.DemoResult("p09-chatbot", "skipped")],
+        tmp_path / "output" / "demo-summary.md",
+    )
+    when, statuses = release_check._demo_run_evidence(tmp_path)
+    assert when > 1_700_000_000
+    assert statuses == {"p01-mini-etl": "ok", "p09-chatbot": "skipped"}
+
+
+def test_every_project_folder_maps_to_its_registry_slug() -> None:
+    from shared.registry import ENTRIES
+
+    folders = {p.name.replace("_", "-") for p in (release_check.ROOT / "projects").glob("p*")}
+    assert folders == {entry.slug for entry in ENTRIES}
+
+
 def _project_tree(tmp_path: Path, readmes: dict[str, str]) -> Path:
     (tmp_path / "README.md").write_text("", encoding="utf-8")
     for slug, text in readmes.items():

@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -122,6 +123,45 @@ def _last_commit_epoch(root: Path, paths: list[Path]) -> int:
     return int(out) if out else 0
 
 
+DEMO_SUMMARY = Path("output") / "demo-summary.md"
+_SUMMARY_HEADER = re.compile(r"^# Demo summary - (\d{4}-\d{2}-\d{2} \d{2}:\d{2}) UTC$")
+_SUMMARY_ROW = re.compile(r"^\| (p\d\d-[a-z0-9-]+) \| (ok|skipped|failed) \|")
+
+
+def _demo_run_evidence(root: Path) -> tuple[int, dict[str, str]]:
+    """When `uv run demo` last wrote its summary (UTC epoch, minute precision) and each
+    project's status in it; `(0, {})` if there is no readable summary."""
+    path = root / DEMO_SUMMARY
+    if not path.exists():
+        return 0, {}
+    lines = path.read_text(encoding="utf-8").splitlines()
+    header = _SUMMARY_HEADER.match(lines[0]) if lines else None
+    if header is None:
+        return 0, {}
+    when = datetime.strptime(header.group(1), "%Y-%m-%d %H:%M").replace(tzinfo=UTC)
+    statuses = {m.group(1): m.group(2) for line in lines if (m := _SUMMARY_ROW.match(line))}
+    return int(when.timestamp()), statuses
+
+
+def _output_is_clean(root: Path, project: Path) -> bool:
+    """True when no tracked file under `project/output` differs from the last commit."""
+    out = subprocess.run(
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--untracked-files=no",
+            "--",
+            str((project / "output").relative_to(root)),
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    return out == ""
+
+
 def check_metrics_fresh(root: Path) -> Check:
     """Every project must have a committed `output/metrics.txt` (fail if missing); a
     proof whose last commit predates the project's last code commit is reported as a
@@ -139,20 +179,40 @@ def check_metrics_fresh(root: Path) -> Check:
     a real content change would only game the check. So a stale timestamp is real evidence
     worth surfacing (as `skip`, with the action to take), but a missing proof is the
     only state this check can call an unambiguous defect.
+
+    A stale timestamp is cleared by evidence instead: a `uv run demo` summary written
+    after the project's last code commit that lists the project as `ok`, with no tracked
+    change under its `output/`. That is exactly the action the skip message asks for. If
+    the demo ran and changed a committed proof, the proof is wrong, and that is a fail.
     """
-    missing = []
-    stale = []
+    missing: list[str] = []
+    stale: list[str] = []
+    changed: list[str] = []
+    demo_time, demo_status = _demo_run_evidence(root)
     for project in sorted((root / "projects").glob("p*")):
         metrics = project / "output" / "metrics.txt"
         if not metrics.exists():
             missing.append(project.name)
             continue
         code_time = _last_commit_epoch(root, sorted(project.glob("*.py")))
-        metrics_time = _last_commit_epoch(root, [metrics])
-        if metrics_time < code_time:
+        if _last_commit_epoch(root, [metrics]) >= code_time:
+            continue
+        reproduced = (
+            demo_time >= code_time and demo_status.get(project.name.replace("_", "-")) == "ok"
+        )
+        if not reproduced:
             stale.append(project.name)
+        elif not _output_is_clean(root, project):
+            changed.append(project.name)
     if missing:
         return Check("metrics-fresh", "fail", f"missing output/metrics.txt: {', '.join(missing)}")
+    if changed:
+        return Check(
+            "metrics-fresh",
+            "fail",
+            f"proof differs from what the code produces now: {', '.join(changed)} - "
+            "review `git diff -- projects/*/output` and commit the regenerated proof",
+        )
     if stale:
         return Check(
             "metrics-fresh",
