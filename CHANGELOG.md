@@ -17,6 +17,11 @@
   unchanged, instead of always reporting `skip` once code has changed after the proofs. It fails
   if the demo changed a committed proof.
 
+### Maintenance
+
+- `.gitignore` and `.dockerignore` no longer list personal tool folders. `.dockerignore` keeps every
+  top-level dot entry out of the test image except the tracked files the build and the tests need.
+
 ## 1.2.0 - 2026-09-23
 
 Fixes from the audit of 2026-09-22. Two demos no longer modify user data, and the demo runner can

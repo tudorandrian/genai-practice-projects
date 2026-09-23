@@ -1,21 +1,21 @@
 # .git is kept on purpose: core tests call `git ls-files`.
-.venv/
+# Every top-level dot entry stays out of the image (editor, tool and cache state),
+# except the tracked ones the build and the tests need.
+.*
+!.git
+!.github
+!.gitignore
+!.gitleaks.toml
+!.pre-commit-config.yaml
+!.python-version
+!.env.example
+!.dockerignore
 __pycache__/
 *.pyc
-.mypy_cache/
-.ruff_cache/
-.pytest_cache/
-.coverage
 htmlcov/
 /output/
-.superpowers/
-.claude/
-.env
 projects/*/chroma_index/
 projects/*/data/cache/
-.env.*
-!.env.example
-.cache/
 **/*.wav
 projects/*/output/runs/
 projects/*/index/
