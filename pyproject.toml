@@ -1,6 +1,6 @@
 [project]
 name = "genai-practice-projects"
-version = "1.2.0"
+version = "1.2.1"
 description = "Twelve practice projects in data, machine learning and generative AI - reproducible, tested, English."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"

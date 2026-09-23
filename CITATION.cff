@@ -9,7 +9,7 @@ abstract: >-
 authors:
   - given-names: Tudor
     family-names: Andrian
-version: 1.2.0
+version: 1.2.1
 license: MIT
 repository-code: "https://github.com/tudorandrian/genai-practice-projects"
 keywords:
