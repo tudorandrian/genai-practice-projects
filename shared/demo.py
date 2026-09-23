@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # Import names that prove a tier's dependency group is installed (pyproject.toml
 # [dependency-groups]); `rag` includes `models`, as the group itself does. Checked with
 # find_spec, which does not import (pyttsx3 or torch would be slow or noisy to import).
-_MODELS_MODULES = ("torch", "transformers", "gradio", "pyttsx3")
+_MODELS_MODULES = ("torch", "transformers", "gradio", "pyttsx3", "PIL")
 TIER_MODULES: dict[str, tuple[str, ...]] = {
     "models": _MODELS_MODULES,
     "rag": (
@@ -33,6 +33,10 @@ TIER_MODULES: dict[str, tuple[str, ...]] = {
         "sentence_transformers",
         "pypdf",
         "fpdf",
+        "langchain_text_splitters",
+        "langchain_huggingface",
+        "langchain_ollama",
+        "langchain_openai",
     ),
 }
 

@@ -155,3 +155,18 @@ def test_missing_group_is_empty_when_everything_imports(monkeypatch: pytest.Monk
     monkeypatch.setattr(demo, "_module_available", lambda _name: True)
     assert demo.missing_group("rag") == []
     assert demo.missing_group("core") == []
+
+
+def test_tier_modules_covers_every_module_level_import_of_its_group() -> None:
+    """Fix round 1 (2026-09-23 review): pins the exact module names, rather than
+    asserting `find_spec` succeeds for each in the current environment - the latter
+    would pass in CI's `rag`-synced venv even if a used import name were missing from
+    TIER_MODULES, exactly the gap the review found (PIL, and four langchain_* names)."""
+    assert "PIL" in demo.TIER_MODULES["models"]  # projects/p08_image_captioning
+    for name in (
+        "langchain_text_splitters",
+        "langchain_huggingface",
+        "langchain_ollama",
+        "langchain_openai",
+    ):
+        assert name in demo.TIER_MODULES["rag"]  # projects/p11_rag_chatbot, p12_study_hub
