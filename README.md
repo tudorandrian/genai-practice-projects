@@ -133,8 +133,9 @@ uv run demo --all --strict  # also fail if a selected demo was skipped (what CI 
 
 The runner writes a summary table to `output/demo-summary.md`. LLM steps in the demos always
 use a deterministic stub, so the results do not depend on a running model. A demo that cannot
-run on the machine (for example P10 without a speech engine) reports `skipped`; `--strict`
-turns that into a non-zero exit.
+run on the machine reports `skipped` with the reason: for example P10 without a speech engine,
+or a project whose dependency group is not installed, where the note gives the
+`uv sync --group` command to run; `--strict` turns that into a non-zero exit.
 
 ## Tests and quality checks
 

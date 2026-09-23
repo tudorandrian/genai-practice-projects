@@ -215,6 +215,9 @@ def demo() -> DemoResult:
     vary between runs, because generation is greedy and deterministic.
     """
     start = time.perf_counter()
+    # Load first: a missing or broken model then raises its own error here, instead of
+    # surfacing later as a Flask 500 and a KeyError on the reply (fresh-clone test).
+    load_model()
 
     from projects.p09_chatbot import app as app_module
 
@@ -225,7 +228,12 @@ def demo() -> DemoResult:
     transcript = ["# P09 chatbot - demo conversation transcript", ""]
     for turn in DEMO_TURNS:
         response = client.post("/chatbot", json={"message": turn})
-        answer = response.get_json()["reply"]
+        payload = response.get_json() or {}
+        if response.status_code != 200 or "reply" not in payload:
+            raise RuntimeError(
+                f"/chatbot returned HTTP {response.status_code}: {payload.get('error', payload)}"
+            )
+        answer = payload["reply"]
         transcript.append(f"user: {turn}")
         transcript.append(f"bot: {answer}")
         transcript.append("")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.util
 import sys
 import time
 from collections.abc import Callable
@@ -17,6 +18,32 @@ from shared.registry import ENTRIES, Entry
 Status = Literal["ok", "skipped", "failed"]
 # Anchored to the repository, not the working directory, like every project's output/.
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# Import names that prove a tier's dependency group is installed (pyproject.toml
+# [dependency-groups]); `rag` includes `models`, as the group itself does. Checked with
+# find_spec, which does not import (pyttsx3 or torch would be slow or noisy to import).
+_MODELS_MODULES = ("torch", "transformers", "gradio", "pyttsx3")
+TIER_MODULES: dict[str, tuple[str, ...]] = {
+    "models": _MODELS_MODULES,
+    "rag": (
+        *_MODELS_MODULES,
+        "langchain_core",
+        "langchain_chroma",
+        "chromadb",
+        "sentence_transformers",
+        "pypdf",
+        "fpdf",
+    ),
+}
+
+
+def _module_available(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
+
+
+def missing_group(tier: str) -> list[str]:
+    """The modules of `tier`'s dependency group that are not installed ([] if none)."""
+    return [name for name in TIER_MODULES.get(tier, ()) if not _module_available(name)]
 
 
 @dataclass
@@ -38,6 +65,15 @@ def run_demo(entries: list[Entry], tiers: set[str], out_path: Path) -> list[Demo
     for entry in entries:
         if entry.tier not in tiers:
             result = DemoResult(entry.slug, "skipped", note=f"tier {entry.tier} not selected")
+        elif missing := missing_group(entry.tier):
+            result = DemoResult(
+                entry.slug,
+                "skipped",
+                note=(
+                    f"needs the {entry.tier} group: run `uv sync --group {entry.tier}` "
+                    f"(missing: {', '.join(missing)})"
+                ),
+            )
         else:
             start = time.perf_counter()
             try:

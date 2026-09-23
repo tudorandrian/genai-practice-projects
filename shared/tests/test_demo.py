@@ -128,3 +128,30 @@ def test_strict_mode_catches_a_skip_even_when_the_result_name_differs_from_the_s
     monkeypatch.setattr(demo, "REPO_ROOT", tmp_path)
     assert demo.main([]) == 0  # permissive: skipped is not failed
     assert demo.main(["--strict"]) == 1  # selected, skipped, name != slug - still fails
+
+
+def test_a_selected_tier_without_its_group_is_skipped_with_the_install_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Fresh-clone test 2026-09-23: `uv run demo --models` before `uv sync --group models`
+    # printed ModuleNotFoundError / KeyError instead of saying what to install.
+    monkeypatch.setattr(demo, "_module_available", lambda name: name != "transformers")
+    entries = [
+        registry.Entry("p00-ok", "core", "shared.tests.test_demo:ok_demo"),
+        registry.Entry("p00-heavy", "models", "shared.tests.test_demo:boom_demo"),
+    ]
+    results = demo.run_demo(entries, tiers={"core", "models"}, out_path=tmp_path / "s.md")
+    assert [r.status for r in results] == ["ok", "skipped"]
+    assert "uv sync --group models" in results[1].note
+    assert "transformers" in results[1].note
+
+
+def test_rag_tier_also_needs_the_models_modules() -> None:
+    assert set(demo.TIER_MODULES["models"]) <= set(demo.TIER_MODULES["rag"])
+    assert demo.TIER_MODULES.get("core", ()) == ()
+
+
+def test_missing_group_is_empty_when_everything_imports(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(demo, "_module_available", lambda _name: True)
+    assert demo.missing_group("rag") == []
+    assert demo.missing_group("core") == []
