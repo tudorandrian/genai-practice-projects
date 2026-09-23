@@ -179,3 +179,40 @@ def test_captions_a_real_image() -> None:
     text = captioner.caption(img)
     assert isinstance(text, str)
     assert len(text.strip()) > 0
+
+
+@pytest.mark.core
+def test_load_model_reads_safetensors_at_the_pinned_revision(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The pinned commit must ship model.safetensors and the loader must insist on it:
+    # otherwise transformers fetches the safetensors from an unpinned conversion PR and
+    # downloads the weights twice (fresh-clone test, 2026-09-23).
+    calls: list[tuple[str, str, dict[str, object]]] = []
+
+    class Fake:
+        @classmethod
+        def from_pretrained(cls, name: str, **kwargs: object) -> Fake:
+            calls.append((cls.__name__, name, kwargs))
+            return cls()
+
+        def to(self, _device: str) -> Fake:
+            return self
+
+    fake = types.SimpleNamespace(
+        BlipProcessor=type("BlipProcessor", (Fake,), {}),
+        BlipForConditionalGeneration=type("BlipForConditionalGeneration", (Fake,), {}),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    monkeypatch.setattr(captioner, "_PROCESSOR", None)
+    monkeypatch.setattr(captioner, "_MODEL", None)
+    monkeypatch.setattr(captioner, "device", lambda: "cpu")
+
+    captioner.load_model()
+
+    assert captioner.MODEL_REVISION == "4c26dfece70e02028433dd192458a54b390b85d2"
+    assert calls[1] == (
+        "BlipForConditionalGeneration",
+        captioner.MODEL_NAME,
+        {"revision": captioner.MODEL_REVISION, "use_safetensors": True},
+    )

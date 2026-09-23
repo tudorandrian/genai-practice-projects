@@ -34,9 +34,14 @@ HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
 
 MODEL_NAME = "facebook/blenderbot-400M-distill"
-# The Hub commit the committed proofs were produced with. Pinned so that a re-published
-# model cannot silently change results or the code that loads it; bump it deliberately.
-MODEL_REVISION = "eaaf64e3be20ad1f1fb0bdf689565ba52c97eafe"
+# The Hub commit the model loads from: the Hub's own `safetensors` conversion (refs/pr/7,
+# by SFconvertbot), a direct child of eaaf64e that only adds model.safetensors with
+# identical tensors. Pinning it (not eaaf64e, which has only pytorch_model.bin) keeps
+# transformers from fetching weights from an unpinned ref and downloading them twice.
+# This commit lives on the Hub conversion PR ref (refs/pr/7), not on `main`, on purpose.
+# Bump it deliberately, and only to a commit that ships model.safetensors -
+# shared/tests/test_model_pins.py checks that.
+MODEL_REVISION = "a5c7ef0e7e1109ef7b4af6f03841305d7d46fa59"
 MAX_NEW_TOKENS = 60
 HISTORY_WINDOW = 6  # keep the last N turns as context
 
@@ -75,13 +80,18 @@ def load_model(model_name: str = MODEL_NAME) -> tuple[Any, Any]:
         )
 
         revision = MODEL_REVISION if model_name == MODEL_NAME else "main"
+        # The pinned default must load its own safetensors; another model keeps the
+        # library default (None), which may fall back to pytorch_model.bin.
+        use_safetensors = True if model_name == MODEL_NAME else None
         _TOKENIZER = AutoTokenizer.from_pretrained(model_name, revision=revision)
         # Explicit `Any`: with transformers installed, `from_pretrained`'s overloads
         # would need a `# type: ignore` on some call sites; without transformers
         # installed (`ignore_missing_imports` makes the import `Any` already), that
         # ignore would be flagged as unused. Widening the type here avoids the
         # overload check in either environment, so no ignore comment is needed.
-        model: Any = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=revision)
+        model: Any = AutoModelForSeq2SeqLM.from_pretrained(
+            model_name, revision=revision, use_safetensors=use_safetensors
+        )
         _MODEL = model
     return _TOKENIZER, _MODEL
 
@@ -207,6 +217,9 @@ def demo() -> DemoResult:
     vary between runs, because generation is greedy and deterministic.
     """
     start = time.perf_counter()
+    # Load first: a missing or broken model then raises its own error here, instead of
+    # surfacing later as a Flask 500 and a KeyError on the reply (fresh-clone test).
+    load_model()
 
     from projects.p09_chatbot import app as app_module
 
@@ -217,7 +230,12 @@ def demo() -> DemoResult:
     transcript = ["# P09 chatbot - demo conversation transcript", ""]
     for turn in DEMO_TURNS:
         response = client.post("/chatbot", json={"message": turn})
-        answer = response.get_json()["reply"]
+        payload = response.get_json() or {}
+        if response.status_code != 200 or "reply" not in payload:
+            raise RuntimeError(
+                f"/chatbot returned HTTP {response.status_code}: {payload.get('error', payload)}"
+            )
+        answer = payload["reply"]
         transcript.append(f"user: {turn}")
         transcript.append(f"bot: {answer}")
         transcript.append("")

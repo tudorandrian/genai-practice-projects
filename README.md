@@ -72,8 +72,8 @@ engineering standard, not products.
 - **[uv](https://docs.astral.sh/uv/getting-started/installation/) 0.12.15 or a later 0.12
   release**, and Git. uv installs Python 3.13 itself when it is missing.
 - **Disk and network.** The `core` group is small. The `models` and `rag` groups install
-  PyTorch and download model weights on first use: BLIP (P08) about 950 MB, BlenderBot (P09)
-  about 700 MB, Whisper tiny.en (P10) about 150 MB, the embedding model (P11, P12) about 90 MB.
+  PyTorch and download model weights on first use: BLIP (P08) about 1 GB, BlenderBot (P09)
+  about 730 MB, Whisper tiny.en (P10) about 150 MB, the embedding model (P11, P12) about 90 MB.
 - **Optional.** Docker, for the Linux test container and the local Ollama LLM. On Linux,
   `espeak-ng` for P10's synthetic recording.
 
@@ -133,8 +133,9 @@ uv run demo --all --strict  # also fail if a selected demo was skipped (what CI 
 
 The runner writes a summary table to `output/demo-summary.md`. LLM steps in the demos always
 use a deterministic stub, so the results do not depend on a running model. A demo that cannot
-run on the machine (for example P10 without a speech engine) reports `skipped`; `--strict`
-turns that into a non-zero exit.
+run on the machine reports `skipped` with the reason: for example P10 without a speech engine,
+or a project whose dependency group is not installed, where the note gives the
+`uv sync --group` command to run; `--strict` turns that into a non-zero exit.
 
 ## Tests and quality checks
 

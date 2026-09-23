@@ -11,7 +11,10 @@ Run:
 from __future__ import annotations
 
 import json
+import sys
+import types
 from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -252,3 +255,62 @@ def test_index_serves_html(client: FlaskClient) -> None:
     assert r.status_code == 200
     assert "text/html" in r.content_type
     assert b"conversation" in r.data  # the chat container id
+
+
+@pytest.mark.core
+def test_load_model_reads_safetensors_at_the_pinned_revision(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str, dict[str, object]]] = []
+
+    class Fake:
+        @classmethod
+        def from_pretrained(cls, name: str, **kwargs: object) -> Fake:
+            calls.append((cls.__name__, name, kwargs))
+            return cls()
+
+    fake = types.SimpleNamespace(
+        AutoTokenizer=type("AutoTokenizer", (Fake,), {}),
+        AutoModelForSeq2SeqLM=type("AutoModelForSeq2SeqLM", (Fake,), {}),
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    monkeypatch.setattr(engine, "_TOKENIZER", None)
+    monkeypatch.setattr(engine, "_MODEL", None)
+
+    engine.load_model()
+
+    assert engine.MODEL_REVISION == "a5c7ef0e7e1109ef7b4af6f03841305d7d46fa59"
+    assert calls[1] == (
+        "AutoModelForSeq2SeqLM",
+        engine.MODEL_NAME,
+        {"revision": engine.MODEL_REVISION, "use_safetensors": True},
+    )
+
+
+@pytest.mark.core
+def test_demo_raises_the_real_load_error_not_keyerror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_transformers(*_args: object, **_kwargs: object) -> None:
+        raise ModuleNotFoundError("No module named 'transformers'")
+
+    monkeypatch.setattr(engine, "OUT_DIR", tmp_path)
+    monkeypatch.setattr(engine, "load_model", no_transformers)
+    with pytest.raises(ModuleNotFoundError, match="transformers"):
+        engine.demo()
+
+
+@pytest.mark.core
+def test_demo_reports_a_non_200_reply_instead_of_keyerror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken_reply(_history: list[str], _message: str) -> str:
+        raise RuntimeError("generation broke")
+
+    monkeypatch.setattr(engine, "OUT_DIR", tmp_path)
+    monkeypatch.setattr(engine, "load_model", lambda *_a, **_k: (None, None))
+    # app.py:74 calls engine.reply(history, message), the same seam the existing
+    # stub_reply fixture patches; raising there makes the route answer HTTP 500.
+    monkeypatch.setattr(engine, "reply", broken_reply)
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        engine.demo()
