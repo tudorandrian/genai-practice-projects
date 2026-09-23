@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.2 - 2026-09-23
+
+Demo proofs stay byte-identical on Windows whatever the local git line-ending setting. No
+command-line flag or committed result changed.
+
 ### Fixed
 
 - Every project writes its text output with LF line endings, and a new `.gitattributes` checks the
